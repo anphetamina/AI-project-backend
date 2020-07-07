@@ -60,4 +60,8 @@ public class Team {
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     List<VirtualMachine> virtual_machines = new ArrayList<>();
+
+    @OneToOne
+    @JoinColumn(name = "vm_conf")
+    VirtualMachineConfiguration vm_configuration;
 }

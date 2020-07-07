@@ -9,18 +9,14 @@ import javax.persistence.OneToOne;
 
 @Entity
 @Data
-public class VirtualMachineModel {
-
+public class VirtualMachineConfiguration {
     @Id
     @GeneratedValue
     Long id;
-    int min_vcpu;
-    int max_vcpu;
-    int min_disk;
-    int max_disk;
-    int min_ram;
-    int max_ram;
+    int num_vcpu;
+    int disk_space;
+    int ram;
 
-    @OneToOne(mappedBy = "vm_model")
-    Course course;
+    @OneToOne(mappedBy = "vm_configuration")
+    Team team;
 }
