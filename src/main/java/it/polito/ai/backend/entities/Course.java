@@ -50,4 +50,11 @@ public class Course {
         teams.remove(team);
         // team.setCourse(null)
     }
+
+    @OneToOne
+    @JoinColumn(name = "vm_conf")
+    VirtualMachineModel configuration;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<VirtualMachine> virtual_machines = new ArrayList<>();
 }

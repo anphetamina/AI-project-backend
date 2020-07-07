@@ -12,7 +12,6 @@ import javax.validation.constraints.NotBlank;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TeacherDTO extends RepresentationModel<TeacherDTO> {
-    @Id
     @NotBlank
     String id;
     @NotBlank

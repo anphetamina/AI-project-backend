@@ -57,4 +57,7 @@ public class Team {
                 break;
         }*/
     }
+
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<VirtualMachine> virtual_machines = new ArrayList<>();
 }

@@ -15,7 +15,6 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 @Builder
 public class StudentDTO extends RepresentationModel<StudentDTO> {
-    @Id
     @CsvBindByName
     @NotBlank
     String id;

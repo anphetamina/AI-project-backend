@@ -19,7 +19,7 @@ public class Student {
             joinColumns = @JoinColumn(name = "student_id"),
             inverseJoinColumns = @JoinColumn(name = "course_name")
     )
-    List<Course> courses = new ArrayList<Course>();
+    List<Course> courses = new ArrayList<>();
 
     public void addCourse(Course course) {
         courses.add(course);
@@ -27,7 +27,7 @@ public class Student {
     }
 
     @ManyToMany(mappedBy = "members")
-    List<Team> teams = new ArrayList<Team>();
+    List<Team> teams = new ArrayList<>();
 
     public void addTeam(Team team) {
         teams.add(team);
@@ -38,4 +38,11 @@ public class Student {
         teams.remove(team);
         team.getMembers().remove(this);
     }
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "student_vm",
+            joinColumns = @JoinColumn(name = "student_id"),
+            inverseJoinColumns = @JoinColumn(name = "vm_id")
+    )
+    List<VirtualMachine> virtual_machines = new ArrayList<>();
 }

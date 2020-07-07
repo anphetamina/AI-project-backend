@@ -15,7 +15,6 @@ import javax.validation.constraints.*;
 @NoArgsConstructor
 @Builder
 public class CourseDTO extends RepresentationModel<CourseDTO> {
-    @Id
     @NotBlank
     String name;
     @Positive

@@ -14,7 +14,6 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TokenDTO extends RepresentationModel<TokenDTO> {
-    @Id
     @NotBlank
     String id;
     @NotNull

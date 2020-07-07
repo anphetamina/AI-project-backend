@@ -14,7 +14,6 @@ import javax.validation.constraints.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TeamDTO extends RepresentationModel<TeamDTO> {
-    @Id
     @NotNull
     Long id;
     @NotBlank

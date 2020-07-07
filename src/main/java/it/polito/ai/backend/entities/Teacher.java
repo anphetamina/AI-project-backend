@@ -24,7 +24,7 @@ public class Teacher {
             joinColumns = @JoinColumn(name = "teacher_id"),
             inverseJoinColumns = @JoinColumn(name = "course_name")
     )
-    List<Course> courses = new ArrayList<Course>();
+    List<Course> courses = new ArrayList<>();
 
     public void addCourse(Course course) {
         courses.add(course);
