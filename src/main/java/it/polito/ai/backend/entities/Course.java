@@ -55,6 +55,6 @@ public class Course {
     @JoinColumn(name = "vm_model")
     VirtualMachineModel vm_model;
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<VirtualMachine> virtual_machines = new ArrayList<>();
+    /*@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<VirtualMachine> virtual_machines = new ArrayList<>();*/
 }

@@ -9,6 +9,8 @@ import java.util.List;
 @Entity
 @Data
 public class Student {
+    // todo add photo
+
     @Id
     String id;
     String name;

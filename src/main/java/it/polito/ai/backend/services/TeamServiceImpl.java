@@ -7,18 +7,17 @@ import it.polito.ai.backend.dtos.StudentDTO;
 import it.polito.ai.backend.dtos.TeacherDTO;
 import it.polito.ai.backend.dtos.TeamDTO;
 import it.polito.ai.backend.entities.*;
-import it.polito.ai.backend.repositories.*;
-import org.apache.commons.lang3.RandomStringUtils;
+import it.polito.ai.backend.repositories.CourseRepository;
+import it.polito.ai.backend.repositories.StudentRepository;
+import it.polito.ai.backend.repositories.TeacherRepository;
+import it.polito.ai.backend.repositories.TeamRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.io.Reader;
-import java.util.Arrays;
+import java.security.Principal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+// @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class TeamServiceImpl implements TeamService {
 
     @Autowired

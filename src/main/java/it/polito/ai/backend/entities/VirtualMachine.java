@@ -21,9 +21,9 @@ public class VirtualMachine {
     @ManyToMany(mappedBy = "virtual_machines")
     List<Student> owners = new ArrayList<>();
 
-    @ManyToOne
+    /*@ManyToOne
     @JoinColumn(name = "course_name")
-    Course course;
+    Course course;*/
 
     @ManyToOne
     @JoinColumn(name = "team_id")
