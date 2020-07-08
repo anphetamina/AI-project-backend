@@ -10,7 +10,6 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -29,9 +28,9 @@ public class TeacherController {
     TeacherDTO getOne(@PathVariable String id) {
         try {
             return ModelHelper.enrich(teamService.getTeacher(id).orElseThrow(() -> new TeacherNotFoundException(id)));
-        } catch (AccessDeniedException exception) {
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch(TeamServiceException exception) {
+        }*/ catch(TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -43,10 +42,10 @@ public class TeacherController {
         try {
             List<CourseDTO> courses = teamService.getCoursesForTeacher(id).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeacherController.class).getCourses(id)).withSelfRel();
-            return new CollectionModel<>(courses, selfLink);
-        } catch (AccessDeniedException exception) {
+            return CollectionModel.of(courses, selfLink);
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -60,9 +59,9 @@ public class TeacherController {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, teacherDTO.getId());
             }
             return ModelHelper.enrich(teacherDTO);
-        } catch (AccessDeniedException exception) {
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (ResponseStatusException exception) {
+        }*/ catch (ResponseStatusException exception) {
             throw exception;
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());

@@ -20,7 +20,6 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -51,10 +50,10 @@ public class CourseController {
         try {
             List<CourseDTO> courses = teamService.getAllCourses().stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).all()).withSelfRel();
-            return new CollectionModel<>(courses, selfLink);
-        } catch (AccessDeniedException exception) {
+            return CollectionModel.of(courses, selfLink);
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (Exception exception) {
+        }*/ catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }
     }
@@ -63,9 +62,9 @@ public class CourseController {
     CourseDTO getOne(@PathVariable String name) {
         try {
             return ModelHelper.enrich(teamService.getCourse(name).orElseThrow(() -> new CourseNotFoundException(name)));
-        } catch (AccessDeniedException exception) {
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -77,10 +76,10 @@ public class CourseController {
         try {
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(name)).withSelfRel();
             List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(name).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            return new CollectionModel<>(enrolledStudents, selfLink);
-        } catch (AccessDeniedException exception) {
+            return CollectionModel.of(enrolledStudents, selfLink);
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -92,10 +91,10 @@ public class CourseController {
         try {
             List<TeamDTO> teams = teamService.getTeamsForCourse(name).stream().map(t -> ModelHelper.enrich(t, name)).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeams(name)).withSelfRel();
-            return new CollectionModel<>(teams, selfLink);
-        } catch (AccessDeniedException exception) {
+            return CollectionModel.of(teams, selfLink);
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -107,10 +106,10 @@ public class CourseController {
         try {
             List<TeacherDTO> teachers = teamService.getTeachersForCourse(name).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeachers(name)).withSelfRel();
-            return new CollectionModel<>(teachers, selfLink);
-        } catch (AccessDeniedException exception) {
+            return CollectionModel.of(teachers, selfLink);
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -124,9 +123,9 @@ public class CourseController {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, courseDTO.getName());
             }
             return ModelHelper.enrich(courseDTO);
-        } catch (AccessDeniedException exception) {
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (ResponseStatusException exception) {
             throw exception;
@@ -140,10 +139,10 @@ public class CourseController {
         try {
             List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(name).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getStudentsInTeams(name)).withSelfRel();
-            return new CollectionModel<>(studentsInTeams, selfLink);
-        } catch (AccessDeniedException exception) {
+            return CollectionModel.of(studentsInTeams, selfLink);
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -155,10 +154,10 @@ public class CourseController {
         try {
             List<StudentDTO> availableStudents = teamService.getAvailableStudents(name).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAvailableStudents(name)).withSelfRel();
-            return new CollectionModel<>(availableStudents, selfLink);
-        } catch (AccessDeniedException exception) {
+            return CollectionModel.of(availableStudents, selfLink);
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -170,9 +169,9 @@ public class CourseController {
     void enable(@PathVariable String name) {
         try {
             teamService.enableCourse(name);
-        } catch (AccessDeniedException exception) {
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -184,9 +183,9 @@ public class CourseController {
     void disable(@PathVariable String name) {
         try {
             teamService.disableCourse(name);
-        } catch (AccessDeniedException exception) {
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (TeamServiceException exception) {
+        }*/ catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -203,9 +202,9 @@ public class CourseController {
                 if (!teamService.addStudentToCourse(map.get("studentId"), name)) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, map.get("studentId"));
                 }
-            } catch (AccessDeniedException exception) {
+            }/* catch (AccessDeniedException exception) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-            } catch (TeamServiceException exception) {
+            }*/ catch (TeamServiceException exception) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
             } catch (ResponseStatusException exception) {
                 throw exception;
@@ -225,9 +224,9 @@ public class CourseController {
                 if (!teamService.addTeacherToCourse(map.get("teacherId"), name)) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, map.get("teacherId"));
                 }
-            } catch (AccessDeniedException exception) {
+            }/* catch (AccessDeniedException exception) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-            } catch (TeamServiceException exception) {
+            }*/ catch (TeamServiceException exception) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
             } catch (ResponseStatusException exception) {
                 throw exception;
@@ -275,9 +274,9 @@ public class CourseController {
             }
 
             return addedAndEnrolledStudents;
-        } catch (AccessDeniedException exception) {
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (CourseNotFoundException | StudentNotFoundException exception) {
+        }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
@@ -321,9 +320,9 @@ public class CourseController {
             }
 
             return enrolledStudents;
-        } catch (AccessDeniedException exception) {
+        }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        } catch (CourseNotFoundException | StudentNotFoundException exception) {
+        }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
@@ -355,9 +354,9 @@ public class CourseController {
                 } else {
                     throw new NotValidRequestException(teamName);
                 }
-            } catch (AccessDeniedException exception) {
+            }/* catch (AccessDeniedException exception) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-            } catch (CourseNotFoundException | StudentNotFoundException exception) {
+            }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
             } catch (NotValidRequestException | IllegalArgumentException | MappingException | ConfigurationException exception) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());

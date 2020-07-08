@@ -22,7 +22,7 @@ public class VirtualMachine {
     List<Student> owners = new ArrayList<>();
 
     @ManyToOne
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_name")
     Course course;
 
     @ManyToOne
