@@ -3,6 +3,7 @@ package it.polito.ai.backend.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -13,8 +14,10 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Teacher {
     @Id
+    @EqualsAndHashCode.Include
     String id;
     String name;
     String firstName;

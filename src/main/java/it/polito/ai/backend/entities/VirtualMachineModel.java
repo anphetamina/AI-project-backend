@@ -1,6 +1,7 @@
 package it.polito.ai.backend.entities;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -9,10 +10,12 @@ import javax.persistence.OneToOne;
 
 @Entity
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class VirtualMachineModel {
 
     @Id
     @GeneratedValue
+    @EqualsAndHashCode.Include
     Long id;
     /**
      * min-max resources per vm

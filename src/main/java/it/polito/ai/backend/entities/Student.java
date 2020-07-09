@@ -1,6 +1,7 @@
 package it.polito.ai.backend.entities;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -8,10 +9,12 @@ import java.util.List;
 
 @Entity
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Student {
     // todo add photo
 
     @Id
+    @EqualsAndHashCode.Include
     String id;
     String name;
     String firstName;
