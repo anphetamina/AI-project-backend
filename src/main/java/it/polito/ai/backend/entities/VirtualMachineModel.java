@@ -1,7 +1,6 @@
 package it.polito.ai.backend.entities;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -12,6 +11,9 @@ import javax.validation.constraints.NotNull;
 @Data
 @Entity
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class VirtualMachineModel {
     @Id
     @GeneratedValue

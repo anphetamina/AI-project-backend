@@ -110,6 +110,17 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    public boolean deleteAllVirtualMachinesForTeam(Long teamId) {
+        Team t = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+        if (t.getVirtual_machines().size() == 0) {
+            return false;
+        }
+        t.getVirtual_machines()
+                .forEach(vm -> virtualMachineRepository.delete(vm));
+        return true;
+    }
+
+    @Override
     public void turnOnVirtualMachine(Long id) {
         VirtualMachine vm = virtualMachineRepository.findById(id).orElseThrow(() -> new VirtualMachineNotFoundException(id.toString()));
         List<VirtualMachine> activeVMs = vm.getTeam().getVirtual_machines()
@@ -174,38 +185,67 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public VirtualMachineModelDTO createVirtualMachineModel(String studentId, OperatingSystem os) {
-        return null;
+    public VirtualMachineModelDTO createVirtualMachineModel(OperatingSystem os) {
+
+        VirtualMachineModel vmm = VirtualMachineModel.builder()
+                .os(os)
+                .build();
+        virtualMachineModelRepository.save(vmm);
+
+        return modelMapper.map(vmm, VirtualMachineModelDTO.class);
     }
 
     @Override
     public boolean deleteVirtualMachineModel(Long id) {
-        return false;
+
+        VirtualMachineModel vmm = virtualMachineModelRepository.findById(id).orElseThrow(() -> new VirtualMachineModelNotFoundException(id.toString()));
+
+        if (vmm.getTeam().getVirtual_machines().stream().anyMatch(vm -> vm.getStatus() == VirtualMachineStatus.ON)) {
+            return false;
+        }
+
+        vmm.getTeam().getVirtual_machines().forEach(vm -> virtualMachineRepository.delete(vm));
+
+        virtualMachineModelRepository.delete(vmm);
+        return true;
     }
 
     @Override
-    public VirtualMachineModelDTO updateVirtualMachineModel(VirtualMachineModelDTO model) {
+    public boolean addVirtualMachineModelToTeam(Long vmmId, Long teamId) {
+        Team t = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+        VirtualMachineModel vmm = virtualMachineModelRepository.findById(vmmId).orElseThrow(() -> new VirtualMachineModelNotFoundException(vmmId.toString()));
+
+        if (t.getVm_model() != null) {
+            return false;
+        }
+
+        t.setVirtualMachineModel(vmm);
+        return true;
+    }
+
+    @Override
+    public Optional<VirtualMachineModelDTO> getVirtualMachineModel(Long id) {
+        return Optional.ofNullable(virtualMachineModelRepository.findById(id)
+                .map(vmm -> modelMapper.map(vmm, VirtualMachineModelDTO.class))
+                .orElseThrow(() -> new VirtualMachineModelNotFoundException(id.toString())));
+    }
+
+    @Override
+    public VirtualMachineConfigurationDTO createVirtualMachineConfiguration(Long teamId, int min_vcpu, int max_vcpu, int min_disk, int max_disk, int min_ram, int max_ram, int tot, int max_on) {
         return null;
     }
 
     @Override
-    public boolean addVirtualMachineModelToTeam(VirtualMachineModelDTO model, Long teamId) {
-        return false;
-    }
+    public boolean addVirtualMachineConfigurationToTeam(Long vmcId, Long teamId) {
+        Team t = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+        VirtualMachineConfiguration vmc = virtualMachineConfigurationRepository.findById(vmcId).orElseThrow(() -> new VirtualMachineConfigurationNotFoundException(vmcId.toString()));
 
-    @Override
-    public VirtualMachineModelDTO getVirtualMachineModel(Long id) {
-        return null;
-    }
+        if (t.getVm_configuration() != null) {
+            return false;
+        }
 
-    @Override
-    public VirtualMachineConfigurationDTO createVirtualMachineConfiguration(String teacherId, Long teamId, int min_vcpu, int max_vcpu, int min_disk, int max_disk, int min_ram, int max_ram, int tot, int max_on) {
-        return null;
-    }
-
-    @Override
-    public boolean addVirtualMachineConfigurationToTeam(VirtualMachineConfigurationDTO configuration, Long teamId) {
-        return false;
+        t.setVirtualMachineConfiguration(vmc);
+        return true;
     }
 
     @Override
@@ -235,7 +275,9 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
     @Override
     public Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfiguration(Long id) {
-        return Optional.empty();
+        return Optional.ofNullable(virtualMachineConfigurationRepository.findById(id)
+                .map(vmc -> modelMapper.map(vmc, VirtualMachineConfigurationDTO.class))
+                .orElseThrow(() -> new VirtualMachineConfigurationNotFoundException(id.toString())));
     }
 
     @Override

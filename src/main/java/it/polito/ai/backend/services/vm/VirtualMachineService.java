@@ -15,24 +15,24 @@ public interface VirtualMachineService {
      */
     VirtualMachineDTO createVirtualMachine(String studentId, Long teamId, int numVcpu, int diskSpace, int ram);
     boolean deleteVirtualMachine(Long id);
+    boolean deleteAllVirtualMachinesForTeam(Long teamId);
     // VirtualMachineDTO updateVirtualMachine(VirtualMachineDTO vm);
     void turnOnVirtualMachine(Long id);
     void turnOffVirtualMachine(Long id);
     boolean addOwnerToVirtualMachine(String studentId, Long vmId);
     boolean removeOwnerFromVirtualMachine(String studentId, Long vmId);
 
-    VirtualMachineModelDTO createVirtualMachineModel(String studentId, OperatingSystem os);
+    VirtualMachineModelDTO createVirtualMachineModel(OperatingSystem os);
     boolean deleteVirtualMachineModel(Long id);
-    VirtualMachineModelDTO updateVirtualMachineModel(VirtualMachineModelDTO model);
-    boolean addVirtualMachineModelToTeam(VirtualMachineModelDTO model, Long teamId);
-    VirtualMachineModelDTO getVirtualMachineModel(Long id);
+    // VirtualMachineModelDTO updateVirtualMachineModel(VirtualMachineModelDTO model);
+    boolean addVirtualMachineModelToTeam(Long vmmId, Long teamId);
+    Optional<VirtualMachineModelDTO> getVirtualMachineModel(Long id);
 
 
     /**
      * teacher
      */
     VirtualMachineConfigurationDTO createVirtualMachineConfiguration(
-                                                String teacherId,
                                                 Long teamId,
                                                 int min_vcpu,
                                                 int max_vcpu,
@@ -44,7 +44,7 @@ public interface VirtualMachineService {
                                                 int max_on
     );
     VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(VirtualMachineConfigurationDTO configuration);
-    boolean addVirtualMachineConfigurationToTeam(VirtualMachineConfigurationDTO configuration, Long teamId);
+    boolean addVirtualMachineConfigurationToTeam(Long vmcId, Long teamId);
 
     /**
      * teacher/student
