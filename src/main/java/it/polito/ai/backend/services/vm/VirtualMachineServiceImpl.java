@@ -40,17 +40,39 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         Student s = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
         Team t = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
 
-        Integer activeVcpu = this.getVcpuForTeam(teamId);
-        Integer activeDiskSpace = this.getDiskSpaceForTeam(teamId);
-        Integer activeRam = this.getRAMForTeam(teamId);
+        /**
+         * check vm instances number
+         */
 
-        if (numVcpu > activeVcpu) {
+        if (t.getVirtual_machines().size() + 1 > t.getVm_configuration().getTot()) {
+            throw new TooManyVirtualMachinesException(teamId.toString());
+        }
+
+        /**
+         * check available resources
+         */
+
+        Integer currentNumVcpu = this.getVcpuForTeam(teamId);
+        if (numVcpu < t.getVm_configuration().getMin_vcpu()) {
+            throw new WrongNumVcpuException(String.valueOf(numVcpu));
+        }
+        if (numVcpu > t.getVm_configuration().getMax_vcpu() - currentNumVcpu) {
             throw new NumVcpuNotAvailableException(String.valueOf(numVcpu));
         }
-        if (diskSpace > activeDiskSpace) {
+
+        Integer currentDiskSpace = this.getDiskSpaceForTeam(teamId);
+        if (currentDiskSpace < t.getVm_configuration().getMin_disk_space()) {
+            throw new WrongDiskSpaceException(String.valueOf(diskSpace));
+        }
+        if (diskSpace > t.getVm_configuration().getMax_disk_space() - currentDiskSpace) {
             throw new DiskSpaceNotAvailableException(String.valueOf(diskSpace));
         }
-        if (ram > activeRam) {
+
+        Integer currentRam = this.getRAMForTeam(teamId);
+        if (ram < t.getVm_configuration().getMin_ram()) {
+            throw new WrongRamException(String.valueOf(ram));
+        }
+        if (ram > t.getVm_configuration().getMax_ram() - currentRam) {
             throw new RamNotAvailableException(String.valueOf(ram));
         }
 
