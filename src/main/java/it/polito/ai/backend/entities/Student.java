@@ -11,6 +11,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Student {
+
     // todo add photo
 
     @Id
@@ -36,12 +37,12 @@ public class Student {
 
     public void addTeam(Team team) {
         teams.add(team);
-        team.getMembers().add(this);
+        team.members.add(this);
     }
 
     public void removeTeam(Team team) {
         teams.remove(team);
-        team.getMembers().remove(this);
+        team.members.remove(this);
     }
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -50,4 +51,14 @@ public class Student {
             inverseJoinColumns = @JoinColumn(name = "vm_id")
     )
     List<VirtualMachine> virtual_machines = new ArrayList<>();
+
+    public void addVirtualMachine(VirtualMachine vm) {
+        virtual_machines.add(vm);
+        vm.owners.add(this);
+    }
+
+    public void removeVirtualMachine(VirtualMachine vm) {
+        virtual_machines.remove(vm);
+        vm.owners.remove(this);
+    }
 }

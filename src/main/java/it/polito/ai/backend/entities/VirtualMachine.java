@@ -1,8 +1,6 @@
 package it.polito.ai.backend.entities;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -10,8 +8,10 @@ import java.util.List;
 
 @Entity
 @Data
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@AllArgsConstructor
+@NoArgsConstructor
 public class VirtualMachine {
 
     @Id
@@ -36,10 +36,6 @@ public class VirtualMachine {
         s.virtual_machines.remove(this);
     }
 
-    /*@ManyToOne
-    @JoinColumn(name = "course_name")
-    Course course;*/
-
     @ManyToOne
     @JoinColumn(name = "team_id")
     Team team;
@@ -54,3 +50,4 @@ public class VirtualMachine {
         }
     }
 }
+

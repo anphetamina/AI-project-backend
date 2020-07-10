@@ -7,43 +7,31 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
+import javax.validation.constraints.NotNull;
 
-@Entity
 @Data
+@Entity
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class VirtualMachineModel {
-
     @Id
     @GeneratedValue
     @EqualsAndHashCode.Include
     Long id;
-    /**
-     * min-max resources per vm
-     */
-    int min_vcpu;
-    int max_vcpu;
-    int min_disk;
-    int max_disk;
-    int min_ram;
-    int max_ram;
+    @NotNull OperatingSystem os;
 
-    /**
-     * tot max resources per vms
-     */
-    int tot_vcpu;
-    int tot_disk;
-    int tot_ram;
-
-    /**
-     * total number of vms both active and inactive
-     */
-    int tot;
-
-    /**
-     * total number of active vms
-     */
-    int max_on;
+    // todo add more fields
 
     @OneToOne(mappedBy = "vm_model")
-    Course course;
+    Team team;
+
+    public void setTeam(Team team) {
+        if (this.team != null) {
+            this.team.vm_model = null;
+        }
+        this.team = team;
+        if (team != null) {
+            team.vm_model = this;
+        }
+    }
+
 }

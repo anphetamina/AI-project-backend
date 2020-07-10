@@ -35,7 +35,7 @@ public class Course {
     }
 
     @OneToMany(mappedBy = "course"/*, cascade = CascadeType.ALL, orphanRemoval = true*/)
-    List<Team> teams = new ArrayList<Team>();
+    List<Team> teams = new ArrayList<>();
 
     public void addTeam(Team team) {
         team.course = this;
@@ -50,11 +50,4 @@ public class Course {
         teams.remove(team);
         // team.setCourse(null)
     }
-
-    @OneToOne
-    @JoinColumn(name = "vm_model")
-    VirtualMachineModel vm_model;
-
-    /*@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<VirtualMachine> virtual_machines = new ArrayList<>();*/
 }

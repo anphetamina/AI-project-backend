@@ -41,12 +41,12 @@ public class Team {
 
     public void addStudent(Student student) {
         members.add(student);
-        student.getTeams().add(this);
+        student.teams.add(this);
     }
 
     public void removeStudent(Student student) {
         members.remove(student);
-        student.getTeams().remove(this);
+        student.teams.remove(this);
     }
 
     public void setStatus(TeamStatus status) {
@@ -64,12 +64,12 @@ public class Team {
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     List<VirtualMachine> virtual_machines = new ArrayList<>();
 
-    public void addVM(VirtualMachine v) {
+    public void addVirtualMachine(VirtualMachine v) {
         virtual_machines.add(v);
         v.team = this;
     }
 
-    public void removeVM(VirtualMachine v) {
+    public void removeVirtualMachine(VirtualMachine v) {
         virtual_machines.remove(v);
         v.team = null;
     }
@@ -78,13 +78,27 @@ public class Team {
     @JoinColumn(name = "vm_conf")
     VirtualMachineConfiguration vm_configuration;
 
-    public void setVMConfiguration(VirtualMachineConfiguration vmConfiguration) {
+    public void setVirtualMachineConfiguration(VirtualMachineConfiguration vmConfiguration) {
         if (this.vm_configuration != null) {
             vm_configuration.team = null;
         }
         this.vm_configuration = vmConfiguration;
         if (vmConfiguration != null) {
             vmConfiguration.team = this;
+        }
+    }
+
+    @OneToOne
+    @JoinColumn(name = "vm_model")
+    VirtualMachineModel vm_model;
+
+    public void setVirtualMachineModel(VirtualMachineModel vm_model) {
+        if (this.vm_model != null) {
+            this.vm_model.team = null;
+        }
+        this.vm_model = vm_model;
+        if (vm_model != null) {
+            vm_model.team = this;
         }
     }
 }
