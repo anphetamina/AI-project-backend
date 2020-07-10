@@ -15,7 +15,7 @@ public interface VirtualMachineService {
      */
     VirtualMachineDTO createVirtualMachine(String studentId, Long teamId, int numVcpu, int diskSpace, int ram);
     boolean deleteVirtualMachine(Long id);
-    VirtualMachineDTO updateVirtualMachine(VirtualMachineDTO vm);
+    // VirtualMachineDTO updateVirtualMachine(VirtualMachineDTO vm);
     void turnOnVirtualMachine(Long id);
     void turnOffVirtualMachine(Long id);
     boolean addOwnerToVirtualMachine(String studentId, Long vmId);
@@ -56,4 +56,5 @@ public interface VirtualMachineService {
     Integer getVcpuForTeam(Long teamId);
     Integer getDiskSpaceForTeam(Long teamId);
     Integer getRAMForTeam(Long teamId);
+    Integer getOnVirtualMachinesForTeam(Long teamId);
 }

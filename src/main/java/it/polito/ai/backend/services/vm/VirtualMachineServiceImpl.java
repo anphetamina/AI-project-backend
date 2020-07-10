@@ -1,5 +1,6 @@
 package it.polito.ai.backend.services.vm;
 
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import it.polito.ai.backend.dtos.VirtualMachineConfigurationDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
 import it.polito.ai.backend.dtos.VirtualMachineModelDTO;
@@ -45,14 +46,21 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
          */
 
         if (t.getVirtual_machines().size() + 1 > t.getVm_configuration().getTot()) {
-            throw new TooManyVirtualMachinesException(teamId.toString());
+            throw new TooManyVirtualMachinesException(String.valueOf(t.getVirtual_machines().size()));
         }
 
         /**
          * check available resources
          */
 
-        Integer currentNumVcpu = this.getVcpuForTeam(teamId);
+        List<VirtualMachine> activeVMs = t.getVirtual_machines()
+                .stream()
+                .filter(vm -> vm.getStatus() == VirtualMachineStatus.ON)
+                .collect(Collectors.toList());
+
+        int currentNumVcpu = activeVMs
+                .stream()
+                .reduce(0, (partial, current) -> partial + current.getNum_vcpu(), Integer::sum);
         if (numVcpu < t.getVm_configuration().getMin_vcpu()) {
             throw new WrongNumVcpuException(String.valueOf(numVcpu));
         }
@@ -60,7 +68,9 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
             throw new NumVcpuNotAvailableException(String.valueOf(numVcpu));
         }
 
-        Integer currentDiskSpace = this.getDiskSpaceForTeam(teamId);
+        int currentDiskSpace = activeVMs
+                .stream()
+                .reduce(0, (partial, current) -> partial + current.getDisk_space(), Integer::sum);
         if (currentDiskSpace < t.getVm_configuration().getMin_disk_space()) {
             throw new WrongDiskSpaceException(String.valueOf(diskSpace));
         }
@@ -68,7 +78,9 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
             throw new DiskSpaceNotAvailableException(String.valueOf(diskSpace));
         }
 
-        Integer currentRam = this.getRAMForTeam(teamId);
+        int currentRam = activeVMs
+                .stream()
+                .reduce(0, (partial, current) -> partial + current.getRam(), Integer::sum);
         if (ram < t.getVm_configuration().getMin_ram()) {
             throw new WrongRamException(String.valueOf(ram));
         }
@@ -98,15 +110,38 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public VirtualMachineDTO updateVirtualMachine(VirtualMachineDTO vm) {
-        return virtualMachineRepository.findById(vm.getId())
-                .map(v -> modelMapper.map(virtualMachineRepository.save(v), VirtualMachineDTO.class))
-                .orElseThrow(() -> new VirtualMachineNotFoundException(String.valueOf(vm.getId())));
-    }
-
-    @Override
     public void turnOnVirtualMachine(Long id) {
         VirtualMachine vm = virtualMachineRepository.findById(id).orElseThrow(() -> new VirtualMachineNotFoundException(id.toString()));
+        List<VirtualMachine> activeVMs = vm.getTeam().getVirtual_machines()
+                .stream()
+                .filter(v -> v.getStatus() == VirtualMachineStatus.ON)
+                .collect(Collectors.toList());
+
+        if (activeVMs.size() + 1 > vm.getTeam().getVm_configuration().getMax_on()) {
+            throw new TooManyOnVirtualMachinesException(String.valueOf(activeVMs.size()));
+        }
+
+        int currentNumVcpu = activeVMs
+                .stream()
+                .reduce(0, (partial, current) -> partial + current.getNum_vcpu(), Integer::sum);
+        if (currentNumVcpu + vm.getNum_vcpu() > vm.getTeam().getVm_configuration().getMax_vcpu()) {
+            throw new NumVcpuNotAvailableException(String.valueOf(vm.getNum_vcpu()));
+        }
+
+        int currentDiskSpace = activeVMs
+                .stream()
+                .reduce(0, (partial, current) -> partial + current.getDisk_space(), Integer::sum);
+        if (currentDiskSpace + vm.getDisk_space() > vm.getTeam().getVm_configuration().getMax_disk_space()) {
+            throw new DiskSpaceNotAvailableException(String.valueOf(vm.getDisk_space()));
+        }
+
+        int currentRam = activeVMs
+                .stream()
+                .reduce(0, (partial, current) -> partial + current.getRam(), Integer::sum);
+        if (currentRam + vm.getRam() > vm.getTeam().getVm_configuration().getMax_ram()) {
+            throw new RamNotAvailableException(String.valueOf(vm.getRam()));
+        }
+
         vm.setStatus(VirtualMachineStatus.ON);
     }
 
@@ -232,5 +267,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
             throw new TeamNotFoundException(teamId.toString());
         }
         return virtualMachineRepository.getRamInUseByTeam(teamId);
+    }
+
+    @Override
+    public Integer getOnVirtualMachinesForTeam(Long teamId) {
+        return virtualMachineRepository.countVirtualMachinesByStatusEqualsAndTeamId(VirtualMachineStatus.ON, teamId);
     }
 }
