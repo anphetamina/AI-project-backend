@@ -1,4 +1,4 @@
-package it.polito.ai.backend.services;
+package it.polito.ai.backend.services.team;
 
 import it.polito.ai.backend.dtos.CourseDTO;
 import it.polito.ai.backend.dtos.StudentDTO;

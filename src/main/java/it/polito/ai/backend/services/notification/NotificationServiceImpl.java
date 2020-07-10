@@ -1,4 +1,4 @@
-package it.polito.ai.backend.services;
+package it.polito.ai.backend.services.notification;
 
 import it.polito.ai.backend.controllers.ModelHelper;
 import it.polito.ai.backend.dtos.StudentDTO;
@@ -6,6 +6,8 @@ import it.polito.ai.backend.dtos.TeamDTO;
 import it.polito.ai.backend.dtos.TokenDTO;
 import it.polito.ai.backend.entities.Token;
 import it.polito.ai.backend.repositories.TokenRepository;
+import it.polito.ai.backend.services.team.StudentNotFoundException;
+import it.polito.ai.backend.services.team.TeamService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;

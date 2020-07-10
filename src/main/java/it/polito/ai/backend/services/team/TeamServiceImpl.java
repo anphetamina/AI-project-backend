@@ -1,4 +1,4 @@
-package it.polito.ai.backend.services;
+package it.polito.ai.backend.services.team;
 
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
@@ -11,13 +11,13 @@ import it.polito.ai.backend.repositories.CourseRepository;
 import it.polito.ai.backend.repositories.StudentRepository;
 import it.polito.ai.backend.repositories.TeacherRepository;
 import it.polito.ai.backend.repositories.TeamRepository;
+import it.polito.ai.backend.services.notification.NotificationService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.io.Reader;
-import java.security.Principal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;

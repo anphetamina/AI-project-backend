@@ -1,4 +1,4 @@
-package it.polito.ai.backend.services;
+package it.polito.ai.backend.services.vm;
 
 import it.polito.ai.backend.dtos.VirtualMachineConfigurationDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
@@ -8,6 +8,9 @@ import it.polito.ai.backend.entities.Team;
 import it.polito.ai.backend.entities.VirtualMachine;
 import it.polito.ai.backend.entities.VirtualMachineStatus;
 import it.polito.ai.backend.repositories.*;
+import it.polito.ai.backend.services.team.CourseNotFoundException;
+import it.polito.ai.backend.services.team.StudentNotFoundException;
+import it.polito.ai.backend.services.team.TeamNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

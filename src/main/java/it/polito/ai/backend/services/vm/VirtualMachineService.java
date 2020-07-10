@@ -1,4 +1,4 @@
-package it.polito.ai.backend.services;
+package it.polito.ai.backend.services.vm;
 
 import it.polito.ai.backend.dtos.VirtualMachineConfigurationDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;

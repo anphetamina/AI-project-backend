@@ -1,4 +1,4 @@
-package it.polito.ai.backend.services;
+package it.polito.ai.backend.services.notification;
 
 import it.polito.ai.backend.dtos.TeamDTO;
 import it.polito.ai.backend.dtos.TokenDTO;

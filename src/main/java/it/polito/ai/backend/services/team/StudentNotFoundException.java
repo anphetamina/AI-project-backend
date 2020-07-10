@@ -1,4 +1,4 @@
-package it.polito.ai.backend.services;
+package it.polito.ai.backend.services.team;
 
 public class StudentNotFoundException extends TeamServiceException {
     public StudentNotFoundException(String message) {

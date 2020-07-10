@@ -2,9 +2,9 @@ package it.polito.ai.backend.controllers;
 
 import it.polito.ai.backend.dtos.CourseDTO;
 import it.polito.ai.backend.dtos.TeacherDTO;
-import it.polito.ai.backend.services.TeacherNotFoundException;
-import it.polito.ai.backend.services.TeamService;
-import it.polito.ai.backend.services.TeamServiceException;
+import it.polito.ai.backend.services.team.TeacherNotFoundException;
+import it.polito.ai.backend.services.team.TeamService;
+import it.polito.ai.backend.services.team.TeamServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;

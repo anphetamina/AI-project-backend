@@ -1,7 +1,8 @@
-package it.polito.ai.backend.services;
+package it.polito.ai.backend.services.notification;
 
 import it.polito.ai.backend.entities.Token;
 import it.polito.ai.backend.repositories.TokenRepository;
+import it.polito.ai.backend.services.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
