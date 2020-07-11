@@ -13,6 +13,7 @@ import java.util.List;
 public class Course {
     @Id
     @EqualsAndHashCode.Include
+    String id;
     String name;
     int min;
     int max;

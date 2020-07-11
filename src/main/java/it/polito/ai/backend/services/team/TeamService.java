@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface TeamService {
     boolean addCourse(CourseDTO course);
 
-    Optional<CourseDTO> getCourse(String name);
+    Optional<CourseDTO> getCourse(String courseId);
 
     List<CourseDTO> getAllCourses();
 
@@ -22,17 +22,17 @@ public interface TeamService {
 
     List<StudentDTO> getAllStudents();
 
-    List<StudentDTO> getEnrolledStudents(String courseName);
+    List<StudentDTO> getEnrolledStudents(String courseId);
 
-    boolean addStudentToCourse(String studentId, String courseName);
+    boolean addStudentToCourse(String studentId, String courseId);
 
-    void enableCourse(String courseName);
+    void enableCourse(String  courseId);
 
-    void disableCourse(String courseName);
+    void disableCourse(String  courseId);
 
     List<Boolean> addAll(List<StudentDTO> students);
-    List<Boolean> enrollAll(List<String> studentIds, String courseName);
-    List<Boolean> addAndEnroll(Reader r, String courseName);
+    List<Boolean> enrollAll(List<String> studentIds, String courseId);
+    List<Boolean> addAndEnroll(Reader r, String  courseId);
 
     List<CourseDTO> getCourses(String studentId);
 
@@ -41,11 +41,11 @@ public interface TeamService {
 
     TeamDTO proposeTeam(String courseId, String name, List<String> memberIds);
 
-    List<TeamDTO> getTeamsForCourse(String courseName);
-    List<TeacherDTO> getTeachersForCourse(String courseName);
+    List<TeamDTO> getTeamsForCourse(String  courseId);
+    List<TeacherDTO> getTeachersForCourse(String  courseId);
 
-    List<StudentDTO> getStudentsInTeams(String courseName);
-    List<StudentDTO> getAvailableStudents(String courseName);
+    List<StudentDTO> getStudentsInTeams(String courseId);
+    List<StudentDTO> getAvailableStudents(String courseId);
 
     Optional<TeamDTO> getTeam(Long teamId);
     Optional<CourseDTO> getCourse(Long teamId);
@@ -53,7 +53,10 @@ public interface TeamService {
     void evictTeam(Long teamId);
 
     boolean addTeacher(TeacherDTO teacher);
-    boolean addTeacherToCourse(String teacherId, String courseName);
+    boolean addTeacherToCourse(String teacherId, String courseId);
     Optional<TeacherDTO> getTeacher(String id);
     List<CourseDTO> getCoursesForTeacher(String id);
+    void deleteCourse(String courseId);
+    boolean update(CourseDTO courseDTO);
+
 }

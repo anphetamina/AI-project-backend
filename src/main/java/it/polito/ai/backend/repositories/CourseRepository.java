@@ -16,6 +16,7 @@ public interface CourseRepository extends JpaRepository<Course, String> {
     // @Query("SELECT s FROM Student s JOIN s.courses c LEFT OUTER JOIN s.teams t ON t.course.name=:courseName WHERE c.name=:courseName AND t.id IS NULL")
     List<Student> getStudentsNotInTeams(String courseName);
 
+
     /*
     select s.id, s.name, s.first_name
     from student s, course c, student_course sc

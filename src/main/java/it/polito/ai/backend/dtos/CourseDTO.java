@@ -16,6 +16,8 @@ import javax.validation.constraints.*;
 @Builder
 public class CourseDTO extends RepresentationModel<CourseDTO> {
     @NotBlank
+    String id;
+    @NotBlank
     String name;
     @Positive
     int min;

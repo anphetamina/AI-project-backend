@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,9 +20,14 @@ import java.util.List;
 public class Teacher {
     @Id
     @EqualsAndHashCode.Include
-    String id;
-    String name;
-    String firstName;
+    private String id;
+    @NotBlank(message = "The name is mandatory")
+    private String name;
+    @NotBlank(message = "The firstName is mandatory")
+    private String firstName;
+    @Email
+    private String email;
+    //todo foto
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "teacher_course",

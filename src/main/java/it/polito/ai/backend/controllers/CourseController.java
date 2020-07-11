@@ -33,6 +33,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -59,10 +60,10 @@ public class CourseController {
         }
     }
 
-    @GetMapping("/{name}")
-    CourseDTO getOne(@PathVariable String name) {
+    @GetMapping("/{courseId}")
+    CourseDTO getOne(@PathVariable String courseId) {
         try {
-            return ModelHelper.enrich(teamService.getCourse(name).orElseThrow(() -> new CourseNotFoundException(name)));
+            return ModelHelper.enrich(teamService.getCourse(courseId).orElseThrow(() -> new CourseNotFoundException(courseId)));
         }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
         }*/ catch (TeamServiceException exception) {
@@ -72,11 +73,11 @@ public class CourseController {
         }
     }
 
-    @GetMapping("/{name}/enrolled")
-    CollectionModel<StudentDTO> enrolledStudents(@PathVariable String name) {
+    @GetMapping("/{courseId}/enrolled")
+    CollectionModel<StudentDTO> enrolledStudents(@PathVariable String courseId) {
         try {
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(name)).withSelfRel();
-            List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(name).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(courseId)).withSelfRel();
+            List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             return CollectionModel.of(enrolledStudents, selfLink);
         }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
@@ -87,11 +88,11 @@ public class CourseController {
         }
     }
 
-    @GetMapping("/{name}/teams")
-    CollectionModel<TeamDTO> getTeams(@PathVariable String name) {
+    @GetMapping("/{courseId}/teams")
+    CollectionModel<TeamDTO> getTeams(@PathVariable String courseId) {
         try {
-            List<TeamDTO> teams = teamService.getTeamsForCourse(name).stream().map(t -> ModelHelper.enrich(t, name)).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeams(name)).withSelfRel();
+            List<TeamDTO> teams = teamService.getTeamsForCourse(courseId).stream().map(t -> ModelHelper.enrich(t, courseId)).collect(Collectors.toList());
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeams(courseId)).withSelfRel();
             return CollectionModel.of(teams, selfLink);
         }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
@@ -102,11 +103,11 @@ public class CourseController {
         }
     }
 
-    @GetMapping("/{name}/teachers")
-    CollectionModel<TeacherDTO> getTeachers(@PathVariable String name) {
+    @GetMapping("/{courseId}/teachers")
+    CollectionModel<TeacherDTO> getTeachers(@PathVariable String courseId) {
         try {
-            List<TeacherDTO> teachers = teamService.getTeachersForCourse(name).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeachers(name)).withSelfRel();
+            List<TeacherDTO> teachers = teamService.getTeachersForCourse(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeachers(courseId)).withSelfRel();
             return CollectionModel.of(teachers, selfLink);
         }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
@@ -117,11 +118,68 @@ public class CourseController {
         }
     }
 
+    @DeleteMapping({"/{courseId}"})
+    void deleteCourse(@PathVariable String courseId){
+        teamService.deleteCourse(courseId);
+    }
+
+    @PutMapping("/{courseId}")
+    CourseDTO updateNameCourse(@RequestBody Map<String, String> map, @PathVariable String courseId){
+        if (map.containsKey("name")) {
+            String name = map.get("name");
+            try {
+                Optional<CourseDTO> courseDTOOptional = teamService.getCourse(courseId);
+                if (!courseDTOOptional.isPresent())
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, courseId);
+                courseDTOOptional.get().setName(name);
+                if (!teamService.update(courseDTOOptional.get()))
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, courseId);
+                return ModelHelper.enrich(courseDTOOptional.get());
+            } catch (TeamServiceException exception) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
+            } catch (ResponseStatusException exception) {
+                throw exception;
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
+
+    @PutMapping("/{courseId}/setCourse")
+    CourseDTO updateCourse(@RequestBody Map<String, String> map, @PathVariable String courseId){
+        if (map.containsKey("name") && map.containsKey("min") && map.containsKey("max") && map.containsKey("enabled")) {
+            String name = map.get("name");
+            int min = Integer.parseInt(map.get("min"));
+            int max = Integer.parseInt(map.get("max"));
+            boolean enabled = Boolean.parseBoolean(map.get("enabled"));
+            try {
+                Optional<CourseDTO> courseDTOOptional = teamService.getCourse(courseId);
+                if (!courseDTOOptional.isPresent())
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, courseId);
+                courseDTOOptional.get().setName(name);
+                courseDTOOptional.get().setMin(min);
+                courseDTOOptional.get().setMax(max);
+                courseDTOOptional.get().setEnabled(enabled);
+                if (!teamService.update(courseDTOOptional.get()))
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, courseId);
+                return ModelHelper.enrich(courseDTOOptional.get());
+            } catch (TeamServiceException exception) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
+            } catch (ResponseStatusException exception) {
+                throw exception;
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+    }
+
     @PostMapping({"", "/"})
     CourseDTO addCourse(@RequestBody @Valid CourseDTO courseDTO) {
         try {
             if (!teamService.addCourse(courseDTO)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, courseDTO.getName());
+                throw new ResponseStatusException(HttpStatus.CONFLICT, courseDTO.getId());
             }
             return ModelHelper.enrich(courseDTO);
         }/* catch (AccessDeniedException exception) {
@@ -135,11 +193,11 @@ public class CourseController {
         }
     }
 
-    @GetMapping("/{name}/teams/students")
-    CollectionModel<StudentDTO> getStudentsInTeams(@PathVariable String name) {
+    @GetMapping("/{courseId}/teams/students")
+    CollectionModel<StudentDTO> getStudentsInTeams(@PathVariable String courseId) {
         try {
-            List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(name).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getStudentsInTeams(name)).withSelfRel();
+            List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getStudentsInTeams(courseId)).withSelfRel();
             return CollectionModel.of(studentsInTeams, selfLink);
         }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
@@ -150,11 +208,11 @@ public class CourseController {
         }
     }
 
-    @GetMapping("/{name}/teams/availableStudents")
-    CollectionModel<StudentDTO> getAvailableStudents(@PathVariable String name) {
+    @GetMapping("/{courseId}/teams/availableStudents")
+    CollectionModel<StudentDTO> getAvailableStudents(@PathVariable String courseId) {
         try {
-            List<StudentDTO> availableStudents = teamService.getAvailableStudents(name).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAvailableStudents(name)).withSelfRel();
+            List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAvailableStudents(courseId)).withSelfRel();
             return CollectionModel.of(availableStudents, selfLink);
         }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
@@ -165,11 +223,11 @@ public class CourseController {
         }
     }
 
-    @PostMapping("/{name}/enable")
+    @PostMapping("/{courseId}/enable")
     @ResponseStatus(HttpStatus.OK)
-    void enable(@PathVariable String name) {
+    void enable(@PathVariable String courseId) {
         try {
-            teamService.enableCourse(name);
+            teamService.enableCourse(courseId);
         }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
         }*/ catch (TeamServiceException exception) {
@@ -179,11 +237,11 @@ public class CourseController {
         }
     }
 
-    @PostMapping("/{name}/disable")
+    @PostMapping("/{courseId}/disable")
     @ResponseStatus(HttpStatus.OK)
-    void disable(@PathVariable String name) {
+    void disable(@PathVariable String courseId) {
         try {
-            teamService.disableCourse(name);
+            teamService.disableCourse(courseId);
         }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
         }*/ catch (TeamServiceException exception) {
@@ -195,12 +253,12 @@ public class CourseController {
 
 
     // http -v POST http://localhost:8080/API/courses/ai/enrollOne studentId=265000
-    @PostMapping("/{name}/enrollOne")
+    @PostMapping("/{courseId}/enrollOne")
     @ResponseStatus(HttpStatus.CREATED)
-    void addStudent(@RequestBody Map<String, String> map, @PathVariable String name) {
+    void addStudent(@RequestBody Map<String, String> map, @PathVariable String courseId) {
         if (map.containsKey("studentId")) {
             try {
-                if (!teamService.addStudentToCourse(map.get("studentId"), name)) {
+                if (!teamService.addStudentToCourse(map.get("studentId"), courseId)) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, map.get("studentId"));
                 }
             }/* catch (AccessDeniedException exception) {
@@ -217,12 +275,12 @@ public class CourseController {
         }
     }
 
-    @PostMapping("/{name}/addTeacher")
+    @PostMapping("/{courseId}/addTeacher")
     @ResponseStatus(HttpStatus.CREATED)
-    void addTeacher(@RequestBody Map<String, String> map, @PathVariable String name) {
+    void addTeacher(@RequestBody Map<String, String> map, @PathVariable String courseId) {
         if (map.containsKey("teacherId")) {
             try {
-                if (!teamService.addTeacherToCourse(map.get("teacherId"), name)) {
+                if (!teamService.addTeacherToCourse(map.get("teacherId"), courseId)) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, map.get("teacherId"));
                 }
             }/* catch (AccessDeniedException exception) {
@@ -250,8 +308,8 @@ public class CourseController {
             "text/x-comma-separated-values",
             "text/tab-separated-values");*/
 
-    @PostMapping("/{name}/enrollMany")
-    List<Boolean> enrollStudents(@RequestParam("file") MultipartFile file, @PathVariable String name) {
+    @PostMapping("/{courseId}/enrollMany")
+    List<Boolean> enrollStudents(@RequestParam("file") MultipartFile file, @PathVariable String courseId) {
 
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -271,7 +329,7 @@ public class CourseController {
 
             if (!file.isEmpty()) {
                 Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
-                addedAndEnrolledStudents = teamService.addAndEnroll(reader, name);
+                addedAndEnrolledStudents = teamService.addAndEnroll(reader, courseId);
             }
 
             return addedAndEnrolledStudents;
@@ -290,8 +348,9 @@ public class CourseController {
 
     }
 
-    @PostMapping("/{name}/enrollAll")
-    List<Boolean> enrollAll(@RequestParam("file") MultipartFile file, @PathVariable String name) {
+
+    @PostMapping("/{courseId}/enrollAll")
+    List<Boolean> enrollAll(@RequestParam("file") MultipartFile file, @PathVariable String courseId) {
 
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -317,7 +376,7 @@ public class CourseController {
                         .build();
                 List<StudentDTO> students = csvToBean.parse();
                 List<String> studentIds = students.stream().map(StudentDTO::getId).collect(Collectors.toList());
-                enrolledStudents = teamService.enrollAll(studentIds, name);
+                enrolledStudents = teamService.enrollAll(studentIds, courseId);
             }
 
             return enrolledStudents;
@@ -337,8 +396,8 @@ public class CourseController {
     }
 
     // http -v POST http://localhost:8080/API/courses/ase/createTeam teamName=aseTeam0 memberIds:=[\"264000\",\"264001\",\"264002\",\"264004\"]
-    @PostMapping("/{name}/createTeam")
-    TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable String name) {
+    @PostMapping("/{courseId}/createTeam")
+    TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable String courseId) {
         if (map.containsKey("teamName") && map.containsKey("memberIds")) {
             try {
                 String teamName = modelMapper.map(map.get("teamName"), String.class);
@@ -346,9 +405,9 @@ public class CourseController {
                     Type listType = new TypeToken<List<String>>() {}.getType();
                     List<String> memberIds = modelMapper.map(map.get("memberIds"), listType);
                     if (memberIds.stream().noneMatch(id -> id == null) && memberIds.stream().allMatch(id -> id.matches("[0-9]+"))) {
-                        TeamDTO team = teamService.proposeTeam(name, teamName, memberIds);
+                        TeamDTO team = teamService.proposeTeam(courseId, teamName, memberIds);
                         notificationService.notifyTeam(team, memberIds);
-                        return ModelHelper.enrich(team, name);
+                        return ModelHelper.enrich(team, courseId);
                     } else {
                         throw new NotValidRequestException(memberIds.toString());
                     }
