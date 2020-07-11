@@ -37,16 +37,16 @@ public class VirtualMachine {
     }
 
     @ManyToOne
-    @JoinColumn(name = "team_id")
-    Team team;
+    @JoinColumn(name = "vm_model")
+    VirtualMachineModel vm_model;
 
-    public void setTeam(Team team) {
-        if (this.team != null) {
-            this.team.virtual_machines.remove(this);
+    public void setVirtualMachineModel(VirtualMachineModel vm_model) {
+        if (this.vm_model != null) {
+            this.vm_model.virtual_machines.remove(this);
         }
-        this.team = team;
-        if (team != null) {
-            team.virtual_machines.add(this);
+        this.vm_model = vm_model;
+        if (vm_model != null) {
+            vm_model.virtual_machines.add(this);
         }
     }
 }

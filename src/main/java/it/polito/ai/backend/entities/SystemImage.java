@@ -1,6 +1,6 @@
 package it.polito.ai.backend.entities;
 
-public enum OperatingSystem {
+public enum SystemImage {
     WINDOWS_10,
     WINDOWS_7,
     UBUNTU,

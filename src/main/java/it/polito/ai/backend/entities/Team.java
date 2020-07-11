@@ -61,19 +61,6 @@ public class Team {
         }*/
     }
 
-    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<VirtualMachine> virtual_machines = new ArrayList<>();
-
-    public void addVirtualMachine(VirtualMachine v) {
-        virtual_machines.add(v);
-        v.team = this;
-    }
-
-    public void removeVirtualMachine(VirtualMachine v) {
-        virtual_machines.remove(v);
-        v.team = null;
-    }
-
     @OneToOne
     @JoinColumn(name = "vm_conf")
     VirtualMachineConfiguration vm_configuration;
@@ -88,17 +75,16 @@ public class Team {
         }
     }
 
-    @OneToOne
-    @JoinColumn(name = "vm_model")
-    VirtualMachineModel vm_model;
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<VirtualMachineModel> vm_models = new ArrayList<>();
 
-    public void setVirtualMachineModel(VirtualMachineModel vm_model) {
-        if (this.vm_model != null) {
-            this.vm_model.team = null;
-        }
-        this.vm_model = vm_model;
-        if (vm_model != null) {
-            vm_model.team = this;
-        }
+    public void addVirtualMachineModel(VirtualMachineModel model) {
+        vm_models.add(model);
+        model.team = this;
+    }
+
+    public void removeVirtualMachineModel(VirtualMachineModel model) {
+        vm_models.remove(model);
+        model.team = null;
     }
 }
