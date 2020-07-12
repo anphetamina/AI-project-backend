@@ -18,11 +18,19 @@ public class VirtualMachineConfiguration {
     @GeneratedValue
     @EqualsAndHashCode.Include
     Long id;
+
+    /**
+     * minimum values per vm
+     */
     int min_vcpu;
-    int max_vcpu;
     int min_disk_space;
-    int max_disk_space;
     int min_ram;
+
+    /**
+     * maximum values per vms
+     */
+    int max_vcpu;
+    int max_disk_space;
     int max_ram;
 
     /**

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class VirtualMachineServiceImpl implements VirtualMachineService {
 
     // todo change exception messages
+    // todo repository optimizations
 
     @Autowired
     VirtualMachineRepository virtualMachineRepository;
@@ -42,6 +43,11 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         Student student = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
         VirtualMachineModel model = virtualMachineModelRepository.findById(modelId).orElseThrow(() -> new VirtualMachineModelNotFoundException(modelId.toString()));
         Team team = model.getTeam();
+
+        if (team.getVm_configuration() == null) {
+            throw new ConfigurationNotDefinedException(team.getId().toString());
+        }
+
         VirtualMachineConfiguration configuration = team.getVm_configuration();
 
         /**
@@ -112,16 +118,86 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
     @Override
     public VirtualMachineDTO updateVirtualMachine(String studentId, VirtualMachineDTO vm) {
-        // todo
-        return null;
+        Student student = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
+        VirtualMachine virtualMachine = virtualMachineRepository.findById(vm.getId()).orElseThrow(() -> new VirtualMachineNotFoundException(String.valueOf(vm.getId())));
+
+
+        /**
+         * first check if the current student is one of the owner of the vm
+         * and if the vm has been turned off before the update
+         */
+
+        if (!virtualMachine.getOwners().contains(student)) {
+            throw new OwnerNotFoundException(studentId);
+        }
+
+        if (virtualMachine.getStatus() != VirtualMachineStatus.OFF) {
+            throw new VirtualMachineStillActiveException(String.valueOf(virtualMachine.getId()));
+        }
+
+        /**
+         * checks if, excluding the old resource, the sum of the new one does not exceeds the maximum allowed in the configuration
+         * and the minimum
+         */
+
+        VirtualMachineConfiguration configuration = virtualMachine.getVm_model().getTeam().getVm_configuration();
+        List<VirtualMachine> activeVMs = virtualMachine.getVm_model().getTeam().getVm_models()
+                .stream()
+                .flatMap(m -> m.getVirtual_machines().stream().filter(v -> v.getStatus() == VirtualMachineStatus.ON))
+                .collect(Collectors.toList());
+
+        int currentNumVcpu = activeVMs
+                .stream()
+                .reduce(0, (partial, current) -> partial + current.getNum_vcpu(), Integer::sum);
+
+        int maxNumVcpu = configuration.getMax_vcpu();
+        int minNumVcpu = configuration.getMin_vcpu();
+        int newNumVcpu = vm.getNum_vcpu();
+        int oldNumVcpu = virtualMachine.getNum_vcpu();
+
+        if (newNumVcpu < minNumVcpu || (currentNumVcpu - oldNumVcpu) + newNumVcpu > maxNumVcpu) {
+            throw new InvalidNumVcpuException(String.valueOf(newNumVcpu));
+        }
+
+        int currentDiskSpace = activeVMs
+                .stream()
+                .reduce(0, (partial, current) -> partial + current.getDisk_space(), Integer::sum);
+
+        int maxDiskSpace = configuration.getMax_disk_space();
+        int minDiskSpace = configuration.getMin_disk_space();
+        int newDiskSpace = vm.getDisk_space();
+        int oldDiskSpace = virtualMachine.getDisk_space();
+
+        if (newDiskSpace < minDiskSpace || (currentDiskSpace - oldDiskSpace) + newDiskSpace > maxDiskSpace) {
+            throw new InvalidNumVcpuException(String.valueOf(newDiskSpace));
+        }
+
+        int currentRam = activeVMs
+                .stream()
+                .reduce(0, (partial, current) -> partial + current.getRam(), Integer::sum);
+
+        int maxRam = configuration.getMax_ram();
+        int minRam = configuration.getMin_ram();
+        int newRam = vm.getRam();
+        int oldRam = virtualMachine.getRam();
+
+        if (newRam < minRam || (currentRam - oldRam) + newRam > maxRam) {
+            throw new InvalidNumVcpuException(String.valueOf(newRam));
+        }
+
+        virtualMachine.setNum_vcpu(newNumVcpu);
+        virtualMachine.setDisk_space(newDiskSpace);
+        virtualMachine.setRam(newRam);
+
+        return modelMapper.map(virtualMachineRepository.save(virtualMachine), VirtualMachineDTO.class);
     }
 
     @Override
     public boolean deleteVirtualMachine(Long id) {
-        if (virtualMachineRepository.existsById(id)) {
-            virtualMachineRepository.deleteById(id);
-            return true;
-        }
+        VirtualMachine virtualMachine = virtualMachineRepository.findById(id).orElseThrow(() -> new VirtualMachineNotFoundException(id.toString()));
+        virtualMachine.setVirtualMachineModel(null);
+        virtualMachine.getOwners().forEach(virtualMachine::removeOwner); // todo check
+        virtualMachineRepository.delete(virtualMachine);
         return false;
     }
 
@@ -185,7 +261,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         VirtualMachine virtualMachine = virtualMachineRepository.findById(vmId).orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
         Student student = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
         if (virtualMachine.getOwners().contains(student)) {
-            virtualMachine.getOwners().remove(student);
+            virtualMachine.removeOwner(student);
             return true;
         }
         return false;
@@ -208,12 +284,14 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         VirtualMachineModel model = virtualMachineModelRepository.findById(id).orElseThrow(() -> new VirtualMachineModelNotFoundException(id.toString()));
 
         /**
-         * if there is atleast one virtual machine using this model
+         * if there is at least one virtual machine using this model
          * do not cancel the model
          */
         if (model.getVirtual_machines().size() > 0) {
             return false;
         }
+
+        model.setTeam(null);
 
         virtualMachineModelRepository.delete(model);
         return true;
@@ -268,6 +346,8 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
     @Override
     public VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(VirtualMachineConfigurationDTO configuration) {
+
+        // todo check minimums
 
         VirtualMachineConfiguration vmc = virtualMachineConfigurationRepository.findById(configuration.getId()).orElseThrow(() -> new VirtualMachineConfigurationNotFoundException(configuration.getId().toString()));
 
@@ -378,7 +458,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public Integer getOnVirtualMachinesForTeam(Long teamId) {
+    public Integer getActiveVirtualMachinesForTeam(Long teamId) {
         if (!teamRepository.existsById(teamId)) {
             throw new TeamNotFoundException(teamId.toString());
         }

@@ -54,5 +54,5 @@ public interface VirtualMachineService {
     Integer getVcpuForTeam(Long teamId);
     Integer getDiskSpaceForTeam(Long teamId);
     Integer getRAMForTeam(Long teamId);
-    Integer getOnVirtualMachinesForTeam(Long teamId);
+    Integer getActiveVirtualMachinesForTeam(Long teamId);
 }
