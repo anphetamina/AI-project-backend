@@ -137,7 +137,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
         /**
          * checks if, excluding the old resource, the sum of the new one does not exceeds the maximum allowed in the configuration
-         * and the minimum
+         * and is not lower than the minimum
          */
 
         VirtualMachineConfiguration configuration = virtualMachine.getVm_model().getTeam().getVm_configuration();
@@ -203,6 +203,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
     @Override
     public void turnOnVirtualMachine(Long id) {
+
         VirtualMachine virtualMachine = virtualMachineRepository.findById(id).orElseThrow(() -> new VirtualMachineNotFoundException(id.toString()));
         Team team = virtualMachine.getVm_model().getTeam();
         VirtualMachineConfiguration configuration = team.getVm_configuration();
@@ -220,6 +221,8 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
                 .reduce(0, (partial, current) -> partial + current.getNum_vcpu(), Integer::sum);
         if (currentNumVcpu + virtualMachine.getNum_vcpu() > configuration.getMax_vcpu()) {
             throw new NumVcpuNotAvailableException(String.valueOf(virtualMachine.getNum_vcpu()));
+        } else if (virtualMachine.getNum_vcpu() < configuration.getMin_vcpu()) {
+            throw new InvalidNumVcpuException(String.valueOf(virtualMachine.getNum_vcpu()));
         }
 
         int currentDiskSpace = activeVMs
@@ -227,6 +230,8 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
                 .reduce(0, (partial, current) -> partial + current.getDisk_space(), Integer::sum);
         if (currentDiskSpace + virtualMachine.getDisk_space() > configuration.getMax_disk_space()) {
             throw new DiskSpaceNotAvailableException(String.valueOf(virtualMachine.getDisk_space()));
+        } else if (virtualMachine.getDisk_space() < configuration.getMin_disk_space()) {
+            throw new InvalidDiskSpaceException(String.valueOf(virtualMachine.getDisk_space()));
         }
 
         int currentRam = activeVMs
@@ -234,6 +239,8 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
                 .reduce(0, (partial, current) -> partial + current.getRam(), Integer::sum);
         if (currentRam + virtualMachine.getRam() > configuration.getMax_ram()) {
             throw new RamNotAvailableException(String.valueOf(virtualMachine.getRam()));
+        } else if (virtualMachine.getRam() < configuration.getMin_ram()) {
+            throw new InvalidRamException(String.valueOf(virtualMachine.getRam()));
         }
 
         virtualMachine.setStatus(VirtualMachineStatus.ON);
@@ -347,8 +354,6 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @Override
     public VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(VirtualMachineConfigurationDTO configuration) {
 
-        // todo check minimums
-
         VirtualMachineConfiguration vmc = virtualMachineConfigurationRepository.findById(configuration.getId()).orElseThrow(() -> new VirtualMachineConfigurationNotFoundException(configuration.getId().toString()));
 
         long vm_tot = vmc.getTeam().getVm_models().stream()
@@ -369,24 +374,29 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
             throw new InvalidMaxOnNumException(String.valueOf(configuration.getMax_on()));
         }
 
+        /**
+         * check if the current num of vcpu in use does not exceed the configuration one
+         * and if any of the active vm is lower then the minimum resource threshold
+         */
+
         int currentNumVcpu = activeVMs
                 .stream()
                 .reduce(0, (partial, current) -> partial + current.getNum_vcpu(), Integer::sum);
-        if (currentNumVcpu > configuration.getMax_vcpu()) {
+        if (currentNumVcpu > configuration.getMax_vcpu() || activeVMs.stream().anyMatch(vm -> vm.getNum_vcpu() < configuration.getMin_vcpu())) {
             throw new InvalidNumVcpuException(String.valueOf(configuration.getMax_vcpu()));
         }
 
         int currentDiskSpace = activeVMs
                 .stream()
                 .reduce(0, (partial, current) -> partial + current.getDisk_space(), Integer::sum);
-        if (currentDiskSpace > configuration.getMax_disk()) {
+        if (currentDiskSpace > configuration.getMax_disk() || activeVMs.stream().anyMatch(vm -> vm.getDisk_space() < configuration.getMin_disk())) {
             throw new InvalidDiskSpaceException(String.valueOf(configuration.getMax_disk()));
         }
 
         int currentRam = activeVMs
                 .stream()
                 .reduce(0, (partial, current) -> partial + current.getRam(), Integer::sum);
-        if (currentRam > configuration.getMax_ram()) {
+        if (currentRam > configuration.getMax_ram() || activeVMs.stream().anyMatch(vm -> vm.getRam() < configuration.getMin_ram())) {
             throw new InvalidRamException(String.valueOf(configuration.getMax_ram()));
         }
 
