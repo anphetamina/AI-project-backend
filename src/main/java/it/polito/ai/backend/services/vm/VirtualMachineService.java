@@ -4,6 +4,7 @@ import it.polito.ai.backend.dtos.VirtualMachineConfigurationDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
 import it.polito.ai.backend.dtos.VirtualMachineModelDTO;
 import it.polito.ai.backend.entities.SystemImage;
+import it.polito.ai.backend.entities.VirtualMachine;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,8 +52,9 @@ public interface VirtualMachineService {
     List<VirtualMachineDTO> getVirtualMachinesForTeam(Long teamId);
     Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfiguration(Long id);
     Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfigurationForTeam(Long teamId);
-    Integer getVcpuForTeam(Long teamId);
-    Integer getDiskSpaceForTeam(Long teamId);
-    Integer getRAMForTeam(Long teamId);
-    Integer getActiveVirtualMachinesForTeam(Long teamId);
+    int getActiveVcpuForTeam(Long teamId);
+    int getActiveDiskSpaceForTeam(Long teamId);
+    int getActiveRAMForTeam(Long teamId);
+    int getCountActiveVirtualMachinesForTeam(Long teamId);
+    List<VirtualMachine> getActiveVirtualMachinesForTeam(Long teamId);
 }

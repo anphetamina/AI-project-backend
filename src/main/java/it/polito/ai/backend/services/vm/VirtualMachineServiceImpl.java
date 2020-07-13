@@ -444,34 +444,42 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public Integer getVcpuForTeam(Long teamId) {
+    public int getActiveVcpuForTeam(Long teamId) {
         if (!teamRepository.existsById(teamId)) {
             throw new TeamNotFoundException(teamId.toString());
         }
-        return teamRepository.getNumVcpuInUseByTeam(teamId);
+        return teamRepository.getActiveNumVcpuByTeam(teamId);
     }
 
     @Override
-    public Integer getDiskSpaceForTeam(Long teamId) {
+    public int getActiveDiskSpaceForTeam(Long teamId) {
         if (!teamRepository.existsById(teamId)) {
             throw new TeamNotFoundException(teamId.toString());
         }
-        return teamRepository.getDiskSpaceInUseByTeam(teamId);
+        return teamRepository.getActiveDiskSpaceByTeam(teamId);
     }
 
     @Override
-    public Integer getRAMForTeam(Long teamId) {
+    public int getActiveRAMForTeam(Long teamId) {
         if (!teamRepository.existsById(teamId)) {
             throw new TeamNotFoundException(teamId.toString());
         }
-        return teamRepository.getRamInUseByTeam(teamId);
+        return teamRepository.getActiveRamByTeam(teamId);
     }
 
     @Override
-    public Integer getActiveVirtualMachinesForTeam(Long teamId) {
+    public int getCountActiveVirtualMachinesForTeam(Long teamId) {
         if (!teamRepository.existsById(teamId)) {
             throw new TeamNotFoundException(teamId.toString());
         }
         return teamRepository.countVirtualMachinesByStatusAndTeam(VirtualMachineStatus.ON, teamId);
+    }
+
+    @Override
+    public List<VirtualMachine> getActiveVirtualMachinesForTeam(Long teamId) {
+        if (!teamRepository.existsById(teamId)) {
+            throw new TeamNotFoundException(teamId.toString());
+        }
+        return teamRepository.getVirtualMachinesByStatusAndTeam(VirtualMachineStatus.ON, teamId);
     }
 }
