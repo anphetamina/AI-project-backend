@@ -23,7 +23,7 @@ public class VirtualMachine {
     int ram;
     VirtualMachineStatus status;
 
-    @ManyToMany(mappedBy = "virtual_machines")
+    @ManyToMany(mappedBy = "virtual_machines", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     List<Student> owners = new ArrayList<>();
 
     public void addOwner(Student s) {
@@ -36,17 +36,31 @@ public class VirtualMachine {
         s.virtual_machines.remove(this);
     }
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "vm_model")
-    VirtualMachineModel vm_model;
+    VirtualMachineModel virtualMachineModel;
 
-    public void setVirtualMachineModel(VirtualMachineModel vm_model) {
-        if (this.vm_model != null) {
-            this.vm_model.virtual_machines.remove(this);
+    public void setVirtualMachineModel(VirtualMachineModel virtualMachineModel) {
+        if (this.virtualMachineModel != null) {
+            this.virtualMachineModel.virtualMachines.remove(this);
         }
-        this.vm_model = vm_model;
-        if (vm_model != null) {
-            vm_model.virtual_machines.add(this);
+        this.virtualMachineModel = virtualMachineModel;
+        if (virtualMachineModel != null) {
+            virtualMachineModel.virtualMachines.add(this);
+        }
+    }
+
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "team_id")
+    Team team;
+
+    public void setTeam(Team team) {
+        if (this.team != null) {
+            this.team.getVirtualMachines().remove(this);
+        }
+        this.team = team;
+        if (team != null) {
+            team.getVirtualMachines().add(this);
         }
     }
 }

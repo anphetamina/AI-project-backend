@@ -18,8 +18,8 @@ public class Course {
     int max;
     boolean enabled;
 
-    @ManyToMany(mappedBy = "courses")
-    List<Student> students = new ArrayList<Student>();
+    @ManyToMany(mappedBy = "courses", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    List<Student> students = new ArrayList<>();
 
     public void addStudent(Student student) {
         students.add(student);
@@ -27,14 +27,14 @@ public class Course {
     }
 
     @ManyToMany(mappedBy = "courses", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    List<Teacher> teachers = new ArrayList<Teacher>();
+    List<Teacher> teachers = new ArrayList<>();
 
     public void addTeacher(Teacher teacher) {
         teachers.add(teacher);
         teacher.courses.add(this);
     }
 
-    @OneToMany(mappedBy = "course"/*, cascade = CascadeType.ALL, orphanRemoval = true*/)
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     List<Team> teams = new ArrayList<>();
 
     public void addTeam(Team team) {
@@ -49,5 +49,19 @@ public class Course {
         }
         teams.remove(team);
         // team.setCourse(null)
+    }
+
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @JoinColumn(name = "vm_model")
+    VirtualMachineModel virtualMachineModel;
+
+    public void setVirtualMachineModel(VirtualMachineModel virtualMachineModel) {
+        if (this.virtualMachineModel != null) {
+            this.virtualMachineModel.course = null;
+        }
+        this.virtualMachineModel = virtualMachineModel;
+        if (virtualMachineModel != null) {
+            virtualMachineModel.course = this;
+        }
     }
 }

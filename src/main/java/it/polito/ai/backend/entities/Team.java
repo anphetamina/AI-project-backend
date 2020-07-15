@@ -20,17 +20,17 @@ public class Team {
     String name;
     TeamStatus status;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "course_id")
     Course course;
 
     public void setCourse(Course course) {
         if (this.course != null) {
-            this.course.getTeams().remove(this);
+            this.course.teams.remove(this);
         }
         this.course = course;
         if (course != null) {
-            course.getTeams().add(this);
+            course.teams.add(this);
         }
     }
 
@@ -39,7 +39,7 @@ public class Team {
             joinColumns = @JoinColumn(name = "team_id"),
             inverseJoinColumns = @JoinColumn(name = "student_id")
     )
-    List<Student> members = new ArrayList<Student>();
+    List<Student> members = new ArrayList<>();
 
     public void addStudent(Student student) {
         members.add(student);
@@ -63,30 +63,30 @@ public class Team {
         }*/
     }
 
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @JoinColumn(name = "vm_conf")
-    VirtualMachineConfiguration vm_configuration;
+    VirtualMachineConfiguration virtualMachineConfiguration;
 
-    public void setVirtualMachineConfiguration(VirtualMachineConfiguration vmConfiguration) {
-        if (this.vm_configuration != null) {
-            vm_configuration.team = null;
+    public void setVirtualMachineConfiguration(VirtualMachineConfiguration virtualMachineConfiguration) {
+        if (this.virtualMachineConfiguration != null) {
+            virtualMachineConfiguration.team = null;
         }
-        this.vm_configuration = vmConfiguration;
-        if (vmConfiguration != null) {
-            vmConfiguration.team = this;
+        this.virtualMachineConfiguration = virtualMachineConfiguration;
+        if (virtualMachineConfiguration != null) {
+            virtualMachineConfiguration.team = this;
         }
     }
 
-    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<VirtualMachineModel> vm_models = new ArrayList<>();
+    @OneToMany(mappedBy = "team", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    List<VirtualMachine> virtualMachines = new ArrayList<>();
 
-    public void addVirtualMachineModel(VirtualMachineModel model) {
-        vm_models.add(model);
-        model.team = this;
+    public void addVirtualMachine(VirtualMachine virtualMachine) {
+        virtualMachines.add(virtualMachine);
+        virtualMachine.team = this;
     }
 
-    public void removeVirtualMachineModel(VirtualMachineModel model) {
-        vm_models.remove(model);
-        model.team = null;
+    public void removeVirtualMachine(VirtualMachine virtualMachine) {
+        virtualMachines.remove(virtualMachine);
+        virtualMachine.team = null;
     }
 }

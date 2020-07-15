@@ -40,16 +40,16 @@ public class VirtualMachineConfiguration {
      */
     int max_on;
 
-    @OneToOne(mappedBy = "vm_configuration")
+    @OneToOne(mappedBy = "virtualMachineConfiguration", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     Team team;
 
     public void setTeam(Team team) {
         if (this.team != null) {
-            this.team.vm_configuration = null;
+            this.team.virtualMachineConfiguration = null;
         }
         this.team = team;
         if (team != null) {
-            team.vm_configuration = this;
+            team.virtualMachineConfiguration = this;
         }
     }
 }

@@ -20,32 +20,31 @@ public class VirtualMachineModel {
     Long id;
     @NotNull SystemImage system_image;
 
-    // todo add more fields
 
-    @ManyToOne
-    @JoinColumn(name = "team_id")
-    Team team;
+    @OneToMany(mappedBy = "virtualMachineModel", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    List<VirtualMachine> virtualMachines = new ArrayList<>();
 
-    public void setTeam(Team team) {
-        if (this.team != null) {
-            this.team.vm_models.remove(this);
+    public void addVirtualMachine(VirtualMachine virtualMachine) {
+        virtualMachines.add(virtualMachine);
+        virtualMachine.virtualMachineModel = this;
+    }
+
+    public void removeVirtualMachine(VirtualMachine virtualMachine) {
+        virtualMachines.remove(virtualMachine);
+        virtualMachine.virtualMachineModel = null;
+    }
+
+    @OneToOne(mappedBy = "virtualMachineModel", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    Course course;
+
+    public void setCourse(Course course) {
+        if (this.course != null) {
+            this.course.virtualMachineModel = null;
         }
-        this.team = team;
-        if (team != null) {
-            team.vm_models.add(this);
+        this.course = course;
+        if (course != null) {
+            course.virtualMachineModel = this;
         }
     }
 
-    @OneToMany(mappedBy = "vm_model", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<VirtualMachine> virtual_machines = new ArrayList<>();
-
-    public void addVirtualMachine(VirtualMachine vm) {
-        virtual_machines.add(vm);
-        vm.vm_model = this;
-    }
-
-    public void removeVirtualMachine(VirtualMachine vm) {
-        virtual_machines.remove(vm);
-        vm.vm_model = null;
-    }
 }
