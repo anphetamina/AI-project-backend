@@ -23,7 +23,7 @@ public interface VirtualMachineService {
                                            int numVcpu,
                                            int diskSpace,
                                            int ram);
-    VirtualMachineDTO updateVirtualMachine(String studentId, VirtualMachineDTO virtualMachine);
+    VirtualMachineDTO updateVirtualMachine(Long vmId, VirtualMachineDTO virtualMachine);
     boolean deleteVirtualMachine(Long id);
     void turnOnVirtualMachine(Long id);
     void turnOffVirtualMachine(Long id);
@@ -44,10 +44,9 @@ public interface VirtualMachineService {
                                                 int max_on,
                                                 int tot
                                                 );
-    VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(VirtualMachineConfigurationDTO configuration);
+    VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(Long configurationId, VirtualMachineConfigurationDTO configuration);
     VirtualMachineModelDTO createVirtualMachineModel(String courseName, SystemImage os);
-    boolean deleteVirtualMachineModel(Long id);
-    List<VirtualMachineDTO> getVirtualMachinesForModel(Long modelId);
+    boolean deleteVirtualMachineModel(Long id, String courseName);
     List<VirtualMachineDTO> getVirtualMachinesForCourse(String courseName);
 
     /**
@@ -55,14 +54,10 @@ public interface VirtualMachineService {
      */
     Optional<VirtualMachineDTO> getVirtualMachine(Long id);
     List<VirtualMachineDTO> getVirtualMachinesForTeam(Long teamId);
-    Optional<VirtualMachineModelDTO> getVirtualMachineModel(Long id);
     Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseName);
-    Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfiguration(Long id);
     Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfigurationForTeam(Long teamId);
     int getActiveVcpuForTeam(Long teamId);
     int getActiveDiskSpaceForTeam(Long teamId);
     int getActiveRAMForTeam(Long teamId);
     int getCountActiveVirtualMachinesForTeam(Long teamId);
-    List<VirtualMachine> getActiveVirtualMachinesForTeam(Long teamId);
-    int getCountVirtualMachinesForTeam(Long teamId);
 }

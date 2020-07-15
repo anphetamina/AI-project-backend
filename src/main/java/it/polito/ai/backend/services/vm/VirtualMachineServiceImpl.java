@@ -124,13 +124,11 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public VirtualMachineDTO updateVirtualMachine(String studentId, VirtualMachineDTO vm) {
+    public VirtualMachineDTO updateVirtualMachine(Long vmId, VirtualMachineDTO vm) {
 
-        Student student = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
-        /*if (!virtualMachine.getOwners().contains(student)) {
-            throw new OwnerNotFoundException(studentId);
-        }*/
-        VirtualMachine virtualMachine = virtualMachineRepository.findById(vm.getId()).orElseThrow(() -> new VirtualMachineNotFoundException(String.valueOf(vm.getId())));
+        // todo check
+
+        VirtualMachine virtualMachine = virtualMachineRepository.findById(vmId).orElseThrow(() -> new VirtualMachineNotFoundException(String.valueOf(vmId)));
 
 
         /**
@@ -296,20 +294,9 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public List<VirtualMachineDTO> getVirtualMachinesForModel(Long modelId) {
-        return null;
-    }
-
-    @Override
     public List<VirtualMachineDTO> getVirtualMachinesForCourse(String courseName) {
+        // todo
         return null;
-    }
-
-    @Override
-    public Optional<VirtualMachineModelDTO> getVirtualMachineModel(Long id) {
-        return Optional.ofNullable(virtualMachineModelRepository.findById(id)
-                .map(vmm -> modelMapper.map(vmm, VirtualMachineModelDTO.class))
-                .orElseThrow(() -> new VirtualMachineModelNotFoundException(id.toString())));
     }
 
     @Override
@@ -343,9 +330,11 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(VirtualMachineConfigurationDTO configuration) {
+    public VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(Long configurationId, VirtualMachineConfigurationDTO configuration) {
 
-        VirtualMachineConfiguration vmc = virtualMachineConfigurationRepository.findById(configuration.getId()).orElseThrow(() -> new ConfigurationNotFoundException(configuration.getId().toString()));
+        // todo check
+
+        VirtualMachineConfiguration vmc = virtualMachineConfigurationRepository.findById(configurationId).orElseThrow(() -> new ConfigurationNotFoundException(configurationId.toString()));
 
         int vm_tot = this.getCountVirtualMachinesForTeam(vmc.getTeam().getId());
 
@@ -416,7 +405,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public boolean deleteVirtualMachineModel(Long id) {
+    public boolean deleteVirtualMachineModel(Long id, String courseName) {
+
+        // todo check
+
         VirtualMachineModel model = virtualMachineModelRepository.findById(id).orElseThrow(() -> new VirtualMachineModelNotFoundException(id.toString()));
 
         /**
@@ -449,13 +441,6 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
                 .stream()
                 .map(vm -> modelMapper.map(vm, VirtualMachineDTO.class))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfiguration(Long id) {
-        return Optional.ofNullable(virtualMachineConfigurationRepository.findById(id)
-                .map(vmc -> modelMapper.map(vmc, VirtualMachineConfigurationDTO.class))
-                .orElseThrow(() -> new ConfigurationNotFoundException(id.toString())));
     }
 
     @Override
@@ -497,16 +482,14 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         return teamRepository.countVirtualMachinesByTeamAndStatus(teamId, VirtualMachineStatus.ON);
     }
 
-    @Override
-    public List<VirtualMachine> getActiveVirtualMachinesForTeam(Long teamId) {
+    private List<VirtualMachine> getActiveVirtualMachinesForTeam(Long teamId) {
         if (!teamRepository.existsById(teamId)) {
             throw new TeamNotFoundException(teamId.toString());
         }
         return teamRepository.getVirtualMachinesByTeamAndStatus(teamId, VirtualMachineStatus.ON);
     }
 
-    @Override
-    public int getCountVirtualMachinesForTeam(Long teamId) {
+    private int getCountVirtualMachinesForTeam(Long teamId) {
         if (!teamRepository.existsById(teamId)) {
             throw new TeamNotFoundException(teamId.toString());
         }

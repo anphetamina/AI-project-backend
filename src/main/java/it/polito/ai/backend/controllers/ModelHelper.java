@@ -39,4 +39,19 @@ public class ModelHelper {
         Link coursesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeacherController.class).getCourses(teacherDTO.getId())).withRel("teaches");
         return teacherDTO.add(selfLink).add(coursesLink);
     }
+
+    public static VirtualMachineDTO enrich(VirtualMachineDTO virtualMachineDTO) {
+        // todo
+        return virtualMachineDTO;
+    }
+
+    public static VirtualMachineConfigurationDTO enrich(VirtualMachineConfigurationDTO virtualMachineConfigurationDTO) {
+        // todo
+        return virtualMachineConfigurationDTO;
+    }
+
+    public static VirtualMachineModelDTO enrich(VirtualMachineModelDTO virtualMachineModelDTO) {
+        // todo
+        return virtualMachineModelDTO;
+    }
 }
