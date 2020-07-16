@@ -50,6 +50,10 @@ public class VirtualMachine {
         }
     }
 
+    /**
+     * a student can be part of multiple teams
+     * so a link is needed to get the team configuration
+     */
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "team_id")
     Team team;

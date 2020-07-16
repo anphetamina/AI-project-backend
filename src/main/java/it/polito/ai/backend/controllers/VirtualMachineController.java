@@ -1,12 +1,16 @@
 package it.polito.ai.backend.controllers;
 
-import it.polito.ai.backend.dtos.VirtualMachineConfigurationDTO;
-import it.polito.ai.backend.dtos.VirtualMachineDTO;
+import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.services.team.TeamNotFoundException;
+import it.polito.ai.backend.services.team.TeamService;
 import it.polito.ai.backend.services.team.TeamServiceConflictException;
 import it.polito.ai.backend.services.team.TeamServiceNotFoundException;
 import it.polito.ai.backend.services.vm.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,7 +18,9 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/API/virtual-machines")
@@ -23,13 +29,75 @@ public class VirtualMachineController {
     @Autowired
     VirtualMachineService virtualMachineService;
     @Autowired
+    TeamService teamService;
+    @Autowired
     ModelMapper modelMapper;
+
+    @GetMapping("/{id}")
+    VirtualMachineDTO getOne(@PathVariable @NotNull Long id) {
+        try {
+            VirtualMachineDTO virtualMachineDTO = virtualMachineService.getVirtualMachine(id).orElseThrow(() -> new VirtualMachineServiceNotFoundException(id.toString()));
+            Long teamId = virtualMachineService.getTeamForVirtualMachine(id).map(TeamDTO::getId).orElse(null);
+            return ModelHelper.enrich(virtualMachineDTO, teamId);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/virtual-machines/{vmId}/owners")
+    CollectionModel<StudentDTO> getOwners(@PathVariable @NotNull Long vmId) {
+        try {
+            List<StudentDTO> studentDTOList = virtualMachineService.getOwnersForVirtualMachine(vmId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineController.class).getOwners(vmId)).withSelfRel();
+            return CollectionModel.of(studentDTOList, selfLink);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/virtual-machines/{vmId}/model")
+    VirtualMachineModelDTO getModel(@PathVariable @NotNull Long vmId) {
+        try {
+            VirtualMachineModelDTO virtualMachineModelDTO = virtualMachineService.getVirtualMachineModelForVirtualMachine(vmId).orElseThrow(() -> new VirtualMachineModelNotDefinedException(vmId.toString()));
+            String courseName = virtualMachineService.getCourseForVirtualMachineModel(virtualMachineModelDTO.getId()).map(CourseDTO::getName).orElse(null);
+            return ModelHelper.enrich(virtualMachineModelDTO, courseName);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/virtual-machines/{vmId}/team")
+    TeamDTO getTeam(@PathVariable @NotNull Long vmId) {
+        try {
+            TeamDTO teamDTO = virtualMachineService.getTeamForVirtualMachine(vmId).orElseThrow(() -> new TeamNotFoundException(vmId.toString()));
+            String courseName = teamService.getCourse(teamDTO.getId()).map(CourseDTO::getName).orElse(null);
+            return ModelHelper.enrich(teamDTO, courseName);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
     VirtualMachineDTO addVirtualMachine(@RequestBody @NotNull Map<String, Object> map) {
 
-        if (!(map.containsKey("studentId") && map.containsKey("teamId") && map.containsKey("configurationId") && map.containsKey("courseName") && map.containsKey("modelId") && map.containsKey("numVcpu") && map.containsKey("diskSpace") && map.containsKey("ram"))) {
+        if (!(map.containsKey("studentId") && map.containsKey("teamId") && map.containsKey("numVcpu") && map.containsKey("diskSpace") && map.containsKey("ram"))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid number of parameters");
         } else {
 
@@ -37,9 +105,6 @@ public class VirtualMachineController {
 
                 String studentId = modelMapper.map(map.get("studentId"), String.class);
                 Long teamId = modelMapper.map(map.get("teamId"), Long.class);
-                Long configurationId = modelMapper.map(map.get("configurationId"), Long.class);
-                String courseName = modelMapper.map(map.get("courseName"), String.class);
-                Long modelId = modelMapper.map(map.get("modelId"), Long.class);
                 int numVcpu = modelMapper.map(map.get("numVcpu"), int.class);
                 int diskSpace = modelMapper.map(map.get("diskSpace"), int.class);
                 int ram = modelMapper.map(map.get("ram"), int.class);
@@ -51,17 +116,8 @@ public class VirtualMachineController {
                 if (studentId.isEmpty() || studentId.trim().isEmpty()) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid student id" + studentId);
                 }
-                if (courseName.isEmpty() || courseName.trim().isEmpty()) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid course name" + courseName);
-                }
                 if (teamId == null || teamId <= 0) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid team id" + teamId);
-                }
-                if (configurationId == null || configurationId <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid configuration id" + configurationId);
-                }
-                if (modelId == null || modelId <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid model id" + modelId);
                 }
                 if (numVcpu <= 0) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid num vcpu" + numVcpu);
@@ -73,12 +129,14 @@ public class VirtualMachineController {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid ram" + ram);
                 }
 
-                VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(studentId, teamId, configurationId, courseName, modelId, numVcpu, diskSpace, ram);
-                return ModelHelper.enrich(virtualMachine);
+                VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(studentId, teamId, numVcpu, diskSpace, ram);
+                return ModelHelper.enrich(virtualMachine, teamId);
             } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
             } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+            } catch (ResponseStatusException e) {
+                throw e;
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -91,7 +149,8 @@ public class VirtualMachineController {
     VirtualMachineDTO setVirtualMachine(@PathVariable @NotNull Long id, @RequestBody @Valid VirtualMachineDTO virtualMachineDTO) {
         try {
             VirtualMachineDTO newVirtualMachine = virtualMachineService.updateVirtualMachine(id, virtualMachineDTO);
-            return ModelHelper.enrich(newVirtualMachine);
+            Long teamId = virtualMachineService.getTeamForVirtualMachine(id).map(TeamDTO::getId).orElse(null);
+            return ModelHelper.enrich(newVirtualMachine, teamId);
         } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
@@ -111,13 +170,15 @@ public class VirtualMachineController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
-    @PutMapping("/{id}/turnOn")
+    @PutMapping("/{id}/on")
     @ResponseStatus(HttpStatus.OK)
     void turnOn(@PathVariable @NotNull Long id) {
         try {
@@ -131,7 +192,7 @@ public class VirtualMachineController {
         }
     }
 
-    @PutMapping("/{id}/turnOff")
+    @PutMapping("/{id}/off")
     @ResponseStatus(HttpStatus.OK)
     void turnOff(@PathVariable @NotNull Long id) {
         try {
@@ -145,7 +206,7 @@ public class VirtualMachineController {
         }
     }
 
-    @PostMapping("/{id}/addOwner")
+    @PostMapping("/{id}/owners")
     @ResponseStatus(HttpStatus.OK)
     void shareOwnership(@PathVariable @NotNull Long id, @RequestBody @NotBlank String studentId) {
         try {
@@ -156,38 +217,13 @@ public class VirtualMachineController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @PostMapping("/{id}/removeOwner")
-    @ResponseStatus(HttpStatus.OK)
-    void removeOwnership(@PathVariable @NotNull Long id, @RequestBody @NotBlank String studentId) {
-        try {
-            if (!virtualMachineService.removeOwnerFromVirtualMachine(studentId, id)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot remove " + studentId + " from the owners");
-            }
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
-    @GetMapping("/{id}")
-    VirtualMachineDTO getOne(@PathVariable @NotNull Long id) {
-        try {
-            return ModelHelper.enrich(virtualMachineService.getVirtualMachine(id).orElseThrow(() -> new VirtualMachineServiceNotFoundException(id.toString())));
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
 }

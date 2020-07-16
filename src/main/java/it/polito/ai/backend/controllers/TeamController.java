@@ -37,7 +37,7 @@ public class TeamController {
     TeamDTO getOne(@PathVariable Long teamId) {
         try {
             TeamDTO teamDTO = teamService.getTeam(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
-            String courseName = teamService.getCourse(teamId).map(CourseDTO::getName).orElseThrow(() -> new CourseNotFoundException(teamId.toString()));
+            String courseName = teamService.getCourse(teamId).map(CourseDTO::getName).orElse(null);
             return ModelHelper.enrich(teamDTO, courseName);
         }/* catch (AccessDeniedException exception) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
@@ -63,7 +63,8 @@ public class TeamController {
         }
     }
 
-    @PostMapping("/{teamId}/addConfiguration")
+    @PostMapping("/{teamId}/configuration")
+    @ResponseStatus(HttpStatus.CREATED)
     VirtualMachineConfigurationDTO addConfiguration(@PathVariable @NotNull Long teamId, @RequestBody @NotNull Map<String, Object> map) {
         if (!(map.containsKey("min_vcpu") && map.containsKey("max_vcpu") && map.containsKey("min_disk_space") && map.containsKey("max_disk_space") && map.containsKey("min_ram") && map.containsKey("max_ram") && map.containsKey("max_on") && map.containsKey("tot"))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -106,11 +107,13 @@ public class TeamController {
                 }
 
                 VirtualMachineConfigurationDTO virtualMachineConfiguration = virtualMachineService.createVirtualMachineConfiguration(teamId, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram, max_on, tot);
-                return ModelHelper.enrich(virtualMachineConfiguration);
+                return ModelHelper.enrich(virtualMachineConfiguration, teamId);
             } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
             } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+            } catch (ResponseStatusException e) {
+                throw e;
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -118,11 +121,11 @@ public class TeamController {
 
     }
 
-    @PutMapping("{teamId}/setConfiguration")
+    @PutMapping("{teamId}/configuration")
     VirtualMachineConfigurationDTO setConfiguration(@PathVariable @NotNull Long teamId, @RequestBody @Valid VirtualMachineConfigurationDTO configurationDTO) {
         try {
             VirtualMachineConfigurationDTO virtualMachineConfiguration = virtualMachineService.updateVirtualMachineConfiguration(teamId, configurationDTO);
-            return ModelHelper.enrich(virtualMachineConfiguration);
+            return ModelHelper.enrich(virtualMachineConfiguration, teamId);
         } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
@@ -135,9 +138,9 @@ public class TeamController {
     @GetMapping("/{teamId}/virtual-machines")
     CollectionModel<VirtualMachineDTO> getVirtualMachines(@PathVariable @NotNull Long teamId) {
         try {
-            // todo
             List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForTeam(teamId);
-            return CollectionModel.of(virtualMachineDTOList);
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getVirtualMachines(teamId)).withSelfRel();
+            return CollectionModel.of(virtualMachineDTOList, selfLink);
         } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
@@ -150,7 +153,7 @@ public class TeamController {
     @GetMapping("/{teamId}/configuration")
     VirtualMachineConfigurationDTO getConfiguration(@PathVariable @NotNull Long teamId) {
         try {
-            return ModelHelper.enrich(virtualMachineService.getVirtualMachineConfigurationForTeam(teamId).orElseThrow(() -> new ConfigurationNotDefinedException(teamId.toString())));
+            return ModelHelper.enrich(virtualMachineService.getVirtualMachineConfigurationForTeam(teamId).orElseThrow(() -> new ConfigurationNotDefinedException(teamId.toString())), teamId);
         } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
@@ -159,4 +162,70 @@ public class TeamController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/{teamId}/virtual-machines/active-cpu")
+    int getActiveVcpu(@PathVariable @NotNull Long teamId) {
+        try {
+            return virtualMachineService.getActiveVcpuForTeam(teamId);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/{teamId}/virtual-machines/active-disk-space")
+    int getActiveDiskSpace(@PathVariable @NotNull Long teamId) {
+        try {
+            return virtualMachineService.getActiveDiskSpaceForTeam(teamId);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/{teamId}/virtual-machines/active-ram")
+    int getActiveRam(@PathVariable @NotNull Long teamId) {
+        try {
+            return virtualMachineService.getActiveRAMForTeam(teamId);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/{teamId}/virtual-machines/tot-on")
+    int getCountActiveVirtualMachines(@PathVariable @NotNull Long teamId) {
+        try {
+            return virtualMachineService.getCountActiveVirtualMachinesForTeam(teamId);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/{teamId}/virtual-machines/resources")
+    Map<String, Integer> getResources(@PathVariable @NotNull Long teamId) {
+        try {
+            return virtualMachineService.getResourcesByTeam(teamId);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

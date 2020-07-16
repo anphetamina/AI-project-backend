@@ -4,7 +4,6 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.entities.SystemImage;
-import it.polito.ai.backend.entities.VirtualMachine;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.*;
 import it.polito.ai.backend.services.vm.*;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.jws.WebParam;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -355,16 +353,16 @@ public class CourseController {
                         notificationService.notifyTeam(team, memberIds);
                         return ModelHelper.enrich(team, name);
                     } else {
-                        throw new NotValidRequestException(memberIds.toString());
+                        throw new InvalidRequestException(memberIds.toString());
                     }
                 } else {
-                    throw new NotValidRequestException(teamName);
+                    throw new InvalidRequestException(teamName);
                 }
             }/* catch (AccessDeniedException exception) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
             }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-            } catch (NotValidRequestException | IllegalArgumentException | MappingException | ConfigurationException exception) {
+            } catch (InvalidRequestException | IllegalArgumentException | MappingException | ConfigurationException exception) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
             } catch (TeamServiceException exception) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
@@ -376,7 +374,8 @@ public class CourseController {
         }
     }
 
-    @PostMapping("/{courseName}/addModel")
+    @PostMapping("/{courseName}/model")
+    @ResponseStatus(HttpStatus.CREATED)
     VirtualMachineModelDTO addVirtualMachineModel(@PathVariable @NotBlank String courseName, @NotNull Map<String, Object> map) {
 
         if (!map.containsKey("systemImage")) {
@@ -385,7 +384,7 @@ public class CourseController {
             try {
                 SystemImage os = modelMapper.map(map.get("systemImage"), SystemImage.class);
                 VirtualMachineModelDTO virtualMachineModel = virtualMachineService.createVirtualMachineModel(courseName, os);
-                return ModelHelper.enrich(virtualMachineModel);
+                return ModelHelper.enrich(virtualMachineModel, courseName);
             } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
             } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
@@ -398,30 +397,17 @@ public class CourseController {
     }
 
     @DeleteMapping("/{courseName}/deleteModel")
-    void deleteVirtualMachineModel(@PathVariable @NotBlank String courseName, @RequestBody @NotNull Long modelId) {
+    void deleteVirtualMachineModel(@PathVariable @NotBlank String courseName) {
         try {
-            if (!virtualMachineService.deleteVirtualMachineModel(modelId, courseName)) {
+            if (!virtualMachineService.deleteVirtualMachineModel(courseName)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Please turn off all the virtual machines using this model");
             }
         } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseName}/virtual-machines")
-    CollectionModel<VirtualMachineDTO> getVirtualMachines(@PathVariable @NotBlank String courseName) {
-        try {
-            // todo
-            List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForCourse(courseName);
-            return CollectionModel.of(virtualMachineDTOList);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -430,7 +416,7 @@ public class CourseController {
     @GetMapping("{courseName}/model")
     VirtualMachineModelDTO getVirtualMachineModel(@PathVariable @NotBlank String courseName) {
         try {
-            return ModelHelper.enrich(virtualMachineService.getVirtualMachineModelForCourse(courseName).orElseThrow(() -> new VirtualMachineModelNotDefinedException(courseName)));
+            return ModelHelper.enrich(virtualMachineService.getVirtualMachineModelForCourse(courseName).orElseThrow(() -> new VirtualMachineModelNotDefinedException(courseName)), courseName);
         } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {

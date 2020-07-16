@@ -2,13 +2,14 @@ package it.polito.ai.backend.dtos;
 
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.hateoas.RepresentationModel;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 
 @Data
 @Builder
-public class VirtualMachineConfigurationDTO {
+public class VirtualMachineConfigurationDTO extends RepresentationModel<VirtualMachineConfigurationDTO> {
 
     @NotNull Long id;
     @Positive int min_vcpu;

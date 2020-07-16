@@ -1,13 +1,10 @@
 package it.polito.ai.backend.services.vm;
 
-import it.polito.ai.backend.dtos.VirtualMachineConfigurationDTO;
-import it.polito.ai.backend.dtos.VirtualMachineDTO;
-import it.polito.ai.backend.dtos.VirtualMachineModelDTO;
+import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.entities.SystemImage;
-import it.polito.ai.backend.entities.VirtualMachine;
-import it.polito.ai.backend.entities.VirtualMachineModel;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface VirtualMachineService {
@@ -17,9 +14,6 @@ public interface VirtualMachineService {
      */
     VirtualMachineDTO createVirtualMachine(String studentId, // owner of the vm
                                            Long teamId, // to fetch the configuration
-                                           Long configurationId, // to check if the configuration is owned by the team
-                                           String courseName, // to check if the model is valid
-                                           Long modelId, // to create the vm
                                            int numVcpu,
                                            int diskSpace,
                                            int ram);
@@ -28,7 +22,6 @@ public interface VirtualMachineService {
     void turnOnVirtualMachine(Long id);
     void turnOffVirtualMachine(Long id);
     boolean addOwnerToVirtualMachine(String studentId, Long vmId);
-    boolean removeOwnerFromVirtualMachine(String studentId, Long vmId);
 
     /**
      * teacher
@@ -44,16 +37,20 @@ public interface VirtualMachineService {
                                                 int max_on,
                                                 int tot
                                                 );
-    VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(Long configurationId, VirtualMachineConfigurationDTO configuration);
+    VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(Long teamId, VirtualMachineConfigurationDTO configuration);
     VirtualMachineModelDTO createVirtualMachineModel(String courseName, SystemImage os);
-    boolean deleteVirtualMachineModel(Long id, String courseName);
-    List<VirtualMachineDTO> getVirtualMachinesForCourse(String courseName);
+    boolean deleteVirtualMachineModel(String courseName);
 
     /**
      * teacher/student
      */
     Optional<VirtualMachineDTO> getVirtualMachine(Long id);
+    List<StudentDTO> getOwnersForVirtualMachine(Long id);
+    Optional<VirtualMachineModelDTO> getVirtualMachineModelForVirtualMachine(Long id);
+    Optional<CourseDTO> getCourseForVirtualMachineModel(Long modelId);
+    Optional<TeamDTO> getTeamForVirtualMachine(Long id);
     List<VirtualMachineDTO> getVirtualMachinesForTeam(Long teamId);
+    List<VirtualMachineDTO> getVirtualMachinesForStudent(String studentId);
     Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseName);
     Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfigurationForTeam(Long teamId);
     int getActiveVcpuForTeam(Long teamId);
@@ -61,4 +58,5 @@ public interface VirtualMachineService {
     int getActiveRAMForTeam(Long teamId);
     int getCountActiveVirtualMachinesForTeam(Long teamId);
     int getCountVirtualMachinesForTeam(Long teamId);
+    Map<String, Integer> getResourcesByTeam(Long teamId);
 }
