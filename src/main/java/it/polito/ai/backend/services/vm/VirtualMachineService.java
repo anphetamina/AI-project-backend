@@ -60,4 +60,5 @@ public interface VirtualMachineService {
     int getActiveDiskSpaceForTeam(Long teamId);
     int getActiveRAMForTeam(Long teamId);
     int getCountActiveVirtualMachinesForTeam(Long teamId);
+    int getCountVirtualMachinesForTeam(Long teamId);
 }

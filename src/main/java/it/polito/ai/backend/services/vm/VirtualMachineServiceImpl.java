@@ -482,17 +482,18 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         return teamRepository.countVirtualMachinesByTeamAndStatus(teamId, VirtualMachineStatus.ON);
     }
 
+    @Override
+    public int getCountVirtualMachinesForTeam(Long teamId) {
+        if (!teamRepository.existsById(teamId)) {
+            throw new TeamNotFoundException(teamId.toString());
+        }
+        return teamRepository.countVirtualMachinesByTeam(teamId);
+    }
+
     private List<VirtualMachine> getActiveVirtualMachinesForTeam(Long teamId) {
         if (!teamRepository.existsById(teamId)) {
             throw new TeamNotFoundException(teamId.toString());
         }
         return teamRepository.getVirtualMachinesByTeamAndStatus(teamId, VirtualMachineStatus.ON);
-    }
-
-    private int getCountVirtualMachinesForTeam(Long teamId) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new TeamNotFoundException(teamId.toString());
-        }
-        return teamRepository.countVirtualMachinesByTeam(teamId);
     }
 }
