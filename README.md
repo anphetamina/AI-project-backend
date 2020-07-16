@@ -6,7 +6,7 @@
 |Get VM owners|GET|/virtual-machines/{vmId}/owners|Student/Teacher||
 |Get VM model|GET|/virtual-machines/{vmId}/model|Student/Teacher||
 |Get VM team|GET|/virtual-machines/{vmId}/team|Student/Teacher||
-|Create virtual machine|POST|/virtual-machines|Student|<ul><li>String studentId<li>Long teamId<li>Long configurationId<li>String courseName<li>Long modelId<li>int numVcpu<li>int diskSpace<li>int ram</ul>|
+|Create virtual machine|POST|/virtual-machines|Student|<ul><li>String studentId<li>Long teamId<li>int numVcpu<li>int diskSpace<li>int ram</ul>|
 |Delete virtual machine|DELETE|/virtual-machines/{vmId}|Student||
 |Update virtual machine|PUT|/virtual-machines/{vmId}|Student|<ul><li>VirtualMachineDTO vm</ul>|
 |Turn on virtual machine|POST|/virtual-machines/{vmId}|Student||
@@ -20,9 +20,9 @@
 |Delete VM model|DELETE|/courses/{courseName}/model|Teacher||
 |Get VM model by course|GET|/courses/{courseName}/model|Teacher||
 |Get VM configuration by team|GET|/teams/{teamId}/configuration|Teacher||
-|Get CPU in use|GET|/teams/{teamId}/virtual-machines/cpu|Student/Teacher||
-|Get disk space in use|GET|/teams/{teamId}/virtual-machines/disk-space|Student/Teacher||
-|Get RAM in use|GET|/teams/{teamId}/virtual-machines/ram|Student/Teacher||
+|Get CPU (cores) in use|GET|/teams/{teamId}/virtual-machines/cpu|Student/Teacher||
+|Get disk space (MB) in use|GET|/teams/{teamId}/virtual-machines/disk-space|Student/Teacher||
+|Get RAM (GB) in use|GET|/teams/{teamId}/virtual-machines/ram|Student/Teacher||
 |Get total VM number|GET|/teams/{teamId}/virtual-machines/tot|Student/Teacher||
 |Get active VM number|GET|/teams/{teamId}/virtual-machines/on|Student/Teacher||
 |Get total/active resources|GET|/teams/{teamId}/virtual-machines/resources|Student/Teacher||
