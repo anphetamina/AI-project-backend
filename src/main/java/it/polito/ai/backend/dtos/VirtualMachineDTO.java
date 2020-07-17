@@ -1,5 +1,6 @@
 package it.polito.ai.backend.dtos;
 
+import it.polito.ai.backend.entities.VirtualMachineStatus;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.hateoas.RepresentationModel;
@@ -14,5 +15,6 @@ public class VirtualMachineDTO extends RepresentationModel<VirtualMachineDTO> {
     @Positive int disk_space;
     @Positive int ram;
 
+    VirtualMachineStatus status;
 
 }
