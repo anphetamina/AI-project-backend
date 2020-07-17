@@ -18,4 +18,5 @@ public class TeacherDTO extends RepresentationModel<TeacherDTO> {
     String name;
     @NotBlank
     String firstName;
+    byte[] profilePicture;
 }

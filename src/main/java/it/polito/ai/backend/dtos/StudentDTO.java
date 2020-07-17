@@ -24,4 +24,5 @@ public class StudentDTO extends RepresentationModel<StudentDTO> {
     @CsvBindByName(column = "first_name")
     @NotBlank
     String firstName;
+    byte[] profilePicture;
 }

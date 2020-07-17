@@ -41,7 +41,7 @@ public class Course {
     public void addTeam(Team team) {
         team.course = this;
         teams.add(team);
-        // team.setCourse(this)
+        team.setCourse(this);
     }
 
     public void removeTeam(Team team) {
@@ -58,4 +58,12 @@ public class Course {
 
     /*@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     List<VirtualMachine> virtual_machines = new ArrayList<>();*/
+
+    @OneToMany(mappedBy = "course")
+    private List<Exercise> exercises =new ArrayList<Exercise>();
+    public void addExercise(Exercise exercise) {
+        exercise.course = this;
+        exercises.add(exercise);
+        exercise.setCourse(this);
+    }
 }

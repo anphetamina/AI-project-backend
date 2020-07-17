@@ -27,7 +27,10 @@ public class Teacher {
     private String firstName;
     @Email
     private String email;
-    //todo foto
+    //Storing the image (bytes) in the database
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    private byte[] profilePicture;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "teacher_course",

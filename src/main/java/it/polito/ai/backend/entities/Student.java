@@ -18,6 +18,7 @@ public class Student {
     String id;
     String name;
     String firstName;
+    //byte[] profilePicture;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "student_course",

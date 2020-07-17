@@ -2,10 +2,8 @@ package it.polito.ai.backend.controllers;
 
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
-import it.polito.ai.backend.dtos.CourseDTO;
-import it.polito.ai.backend.dtos.StudentDTO;
-import it.polito.ai.backend.dtos.TeacherDTO;
-import it.polito.ai.backend.dtos.TeamDTO;
+import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.services.exercise.ExerciseService;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.*;
 import org.apache.tika.config.TikaConfig;
@@ -27,23 +25,26 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/API/courses")
+
 public class CourseController {
 
     @Autowired
     TeamService teamService;
     @Autowired
     NotificationService notificationService;
+    @Autowired
+    ExerciseService exerciseService;
     @Autowired
     ModelMapper modelMapper;
 
@@ -428,6 +429,59 @@ public class CourseController {
         } else {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+    }
+
+
+    @PostMapping("/{courseId}/createExercise")
+    void createExercise(@RequestParam("image") MultipartFile file,@RequestParam Map<String, String> map, @PathVariable String courseId){
+        if (map.containsKey("published") && map.containsKey("expired")) {
+            try {
+
+                TikaConfig tika = new TikaConfig();
+                Metadata metadata = new Metadata();
+                metadata.set(Metadata.RESOURCE_NAME_KEY, file.getOriginalFilename());
+                MediaType mimeType = tika.getDetector().detect(TikaInputStream.get(file.getBytes()), metadata);
+                String type = mimeType.toString();
+                System.out.println(type);
+                if (!type.equalsIgnoreCase("image/png") && !type.equalsIgnoreCase("image/jpg") && !type.equalsIgnoreCase("image/jpeg")) {
+                    throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, type);
+                }
+
+
+                System.out.println("Original Image Byte Size - " + file.getBytes().length);
+                SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                Timestamp expired = new Timestamp(format.parse(map.get("expired")).getTime());
+                Timestamp published =new Timestamp( format.parse(map.get("published")).getTime());
+                exerciseService.addExerciseForCourse(courseId,published,expired,file);
+
+
+
+            } catch (ResponseStatusException exception) {
+                throw exception;
+            } catch (Exception exception) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+    }
+
+    @GetMapping("/{courseId}/exercises")
+    List<ExerciseDTO> getExercises(@PathVariable String courseId){
+        try {
+           List<ExerciseDTO> list = exerciseService.getExercisesForCourse(courseId);
+            List<ExerciseDTO> exerciseDTOS = new ArrayList<>();
+            for (ExerciseDTO exerciseDTO:list) {
+                exerciseDTOS.add(ModelHelper.enrich(exerciseDTO,courseId));
+            }
+            return exerciseDTOS;
+        } catch (TeamServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+
     }
 
 }
