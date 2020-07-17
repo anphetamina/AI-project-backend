@@ -2,6 +2,7 @@ package it.polito.ai.backend;
 
 import it.polito.ai.backend.entities.*;
 import it.polito.ai.backend.repositories.*;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,7 @@ import java.util.stream.IntStream;
 
 @SpringBootTest
 @Transactional
-@AutoConfigureMockMvc/*(addFilters = false)*/
+@AutoConfigureMockMvc(addFilters = false)
 class VirtualMachineServiceUnitTests {
 
     static List<Team> teams;
@@ -24,106 +25,81 @@ class VirtualMachineServiceUnitTests {
     static List<VirtualMachineConfiguration> configurations;
     static List<VirtualMachineModel> models;
     static List<Student> students;
+    static List<Course> courses;
 
     @BeforeAll
     static void beforeAll(@Autowired TeamRepository teamRepository,
                           @Autowired VirtualMachineRepository virtualMachineRepository,
                           @Autowired VirtualMachineConfigurationRepository virtualMachineConfigurationRepository,
                           @Autowired VirtualMachineModelRepository virtualMachineModelRepository,
-                          @Autowired StudentRepository studentRepository) {
+                          @Autowired StudentRepository studentRepository,
+                          @Autowired CourseRepository courseRepository) {
 
         teams = new ArrayList<>();
         virtualMachines = new ArrayList<>();
         configurations = new ArrayList<>();
         models = new ArrayList<>();
         students = new ArrayList<>();
+        courses = new ArrayList<>();
 
+        final int nCourses = 6;
+        final int nStudents = 50;
         final int nTeams = 20;
+        final int nVirtualMachines = nStudents*2;
+        final int nConfigurations = nTeams;
+        final int nModels = nCourses;
 
-        /*try {
-            if (teamRepository.count() == 0) {
+        virtualMachineModelRepository.deleteAll();
+        virtualMachineConfigurationRepository.deleteAll();
+        virtualMachineRepository.deleteAll();
+        teamRepository.deleteAll();
+        studentRepository.deleteAll();
+        courseRepository.deleteAll();
 
-                IntStream.range(0, nTeams)
-                        .forEach(i -> {
-                            VirtualMachineConfiguration configuration = VirtualMachineConfiguration.builder()
-                                    .tot(5 + (i/50)%5)
-                                    .max_on(3 + (i/25)%5)
-                                    .min_vcpu(2)
-                                    .max_vcpu(6)
-                                    .min_disk_space(300)
-                                    .max_disk_space(500 + (i/50)*500)
-                                    .min_ram(4)
-                                    .max_ram(4 + ((i/50)%2)*4)
-                                    .build();
-                            configurations.add(configuration);
+        IntStream.range(0, nCourses)
+                .forEach(i -> {
+                    Course course = Course.builder()
+                            .name("course-" + i)
+                            .min(2)
+                            .max(4)
+                            .enabled(true)
+                            .students(new ArrayList<>())
+                            .teachers(new ArrayList<>())
+                            .teams(new ArrayList<>())
+                            .build();
+                    courses.add(course);
 
-                            Team team = Team.builder()
-                                    .name("team-"+i)
-                                    .status(TeamStatus.ACTIVE)
-                                    .members(new ArrayList<>())
-                                    .build();
-                            team.setVirtualMachineConfiguration(configuration);
-                            teams.add(team);
+                    VirtualMachineModel model = VirtualMachineModel.builder()
+                            .system_image(SystemImage.values()[i%SystemImage.values().length])
+                            .virtualMachines(new ArrayList<>())
+                            .build();
+                    models.add(model);
 
-                            IntStream.range(0, 3)
-                                    .forEach(j -> {
-                                        VirtualMachineModel model = VirtualMachineModel.builder()
-                                                .system_image(SystemImage.values()[j%SystemImage.values().length])
-                                                .virtual_machines(new ArrayList<>())
-                                                .build();
-                                        model.setTeam(team);
-                                        models.add(model);
+                    course.setVirtualMachineModel(model);
 
-                                        virtualMachineModelRepository.save(model);
+                    courseRepository.save(course);
+                });
 
-                                    });
+        IntStream.range(0, nStudents)
+                .forEach(i -> {
+                    String id = "s-"+i;
+                    Student student = Student.builder()
+                            .id(id)
+                            .name("name-" + id)
+                            .firstName("first_name-" + id)
+                            .courses(new ArrayList<>())
+                            .teams(new ArrayList<>())
+                            .virtual_machines(new ArrayList<>())
+                            .build();
+                    students.add(student);
 
-                            IntStream.range(0, configuration.getTot()-2)
-                                    .forEach(k -> {
-                                        VirtualMachine virtualMachine = VirtualMachine.builder()
-                                                .num_vcpu(configuration.getMin_vcpu())
-                                                .disk_space(configuration.getMin_disk_space())
-                                                .ram(configuration.getMin_ram())
-                                                .status(VirtualMachineStatus.OFF)
-                                                .owners(new ArrayList<>())
-                                                .build();
+                    /**
+                     * adding each student to all courses
+                     */
+                    courses.forEach(student::addCourse);
 
-                                        virtualMachine.setVirtualMachineModel(team.getVm_models().get(k%team.getVm_models().size()));
-                                        virtualMachines.add(virtualMachine);
-
-                                        virtualMachineRepository.save(virtualMachine);
-
-                                        String id = "s-"+i+"-"+k;
-                                        Student student = Student.builder()
-                                                .id(id)
-                                                .name("name-" + id)
-                                                .firstName("first_name-" + id)
-                                                .teams(new ArrayList<>())
-                                                .virtual_machines(new ArrayList<>())
-                                                .build();
-                                        student.addTeam(team);
-                                        student.addVirtualMachine(virtualMachine);
-                                        students.add(student);
-                                    });
-                            teamRepository.save(team);
-                        });
-
-            } else {
-                teams = teamRepository.findAll();
-                configurations = virtualMachineConfigurationRepository.findAll();
-                models = virtualMachineModelRepository.findAll();
-                virtualMachines = virtualMachineRepository.findAll();
-                students = studentRepository.findAll();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            teamRepository.deleteAll();
-            virtualMachineConfigurationRepository.deleteAll();
-            virtualMachineModelRepository.deleteAll();
-            virtualMachineRepository.deleteAll();
-            studentRepository.deleteAll();
-        }*/
+                    studentRepository.save(student);
+                });
 
         IntStream.range(0, nTeams)
                 .forEach(i -> {
@@ -131,26 +107,41 @@ class VirtualMachineServiceUnitTests {
                             .name("team-"+i)
                             .status(TeamStatus.ACTIVE)
                             .members(new ArrayList<>())
+                            .virtualMachines(new ArrayList<>())
                             .build();
                     teams.add(team);
 
+                    VirtualMachineConfiguration configuration = VirtualMachineConfiguration.builder()
+                            .tot(5 + i%4)
+                            .max_on(6 + i%3)
+                            .min_vcpu(2)
+                            .max_vcpu(6 + i%4)
+                            .min_disk_space(300)
+                            .max_disk_space(1000 + (i%3)*500)
+                            .min_ram(4)
+                            .max_ram(8)
+                            .build();
+                    configurations.add(configuration);
+
+                    team.setVirtualMachineConfiguration(configuration);
+
+
+                    IntStream.range(0, configuration.getTot()-2)
+                            .forEach(j -> {
+                                VirtualMachine virtualMachine = VirtualMachine.builder()
+                                        .num_vcpu(configuration.getMin_vcpu())
+                                        .disk_space(configuration.getMin_disk_space())
+                                        .ram(configuration.getMin_ram())
+                                        .status(VirtualMachineStatus.OFF)
+                                        .owners(new ArrayList<>())
+                                        .build();
+
+                                virtualMachine.setTeam(team);
+                                virtualMachines.add(virtualMachine);
+                            });
+
                     teamRepository.save(team);
 
-                    IntStream.range(0, 3)
-                            .forEach(k -> {
-                                String id = "s-"+i+"-"+k;
-                                Student student = Student.builder()
-                                        .id(id)
-                                        .name("name-" + id)
-                                        .firstName("first_name-" + id)
-                                        .teams(new ArrayList<>())
-                                        .virtual_machines(new ArrayList<>())
-                                        .build();
-                                student.addTeam(team);
-                                // team.addStudent(student);
-                                students.add(student);
-                                studentRepository.save(student);
-                            });
                 });
 
     }
