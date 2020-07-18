@@ -11,10 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -93,7 +90,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         int currentDiskSpace = virtualMachines
                 .stream()
                 .reduce(0, (partial, current) -> partial + current.getDisk_space(), Integer::sum);
-        if (currentDiskSpace < configuration.getMin_disk_space()) {
+        if (diskSpace < configuration.getMin_disk_space()) {
             throw new InvalidDiskSpaceException(String.valueOf(diskSpace));
         } else if (diskSpace > configuration.getMax_disk_space() - currentDiskSpace) {
             throw new DiskSpaceNotAvailableException(String.valueOf(diskSpace));
@@ -113,6 +110,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
                 .disk_space(diskSpace)
                 .ram(ram)
                 .status(VirtualMachineStatus.OFF)
+                .owners(new ArrayList<>())
                 .build();
         vm.addOwner(student);
         vm.setTeam(team);
