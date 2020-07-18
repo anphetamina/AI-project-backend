@@ -11,13 +11,13 @@ import java.util.List;
 
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
-    @Query("select sum(v.num_vcpu) from Team t inner join t.virtualMachines v where t.id=:teamId and v.status=it.polito.ai.backend.entities.VirtualMachineStatus.ON")
+    @Query("select coalesce(sum(v.num_vcpu), 0) from Team t inner join t.virtualMachines v where t.id=:teamId and v.status=it.polito.ai.backend.entities.VirtualMachineStatus.ON")
     int getActiveNumVcpuByTeam(Long teamId);
 
-    @Query("select sum(v.disk_space) from Team t inner join t.virtualMachines v where t.id=:teamId and v.status=it.polito.ai.backend.entities.VirtualMachineStatus.ON")
+    @Query("select coalesce(sum(v.disk_space), 0) from Team t inner join t.virtualMachines v where t.id=:teamId and v.status=it.polito.ai.backend.entities.VirtualMachineStatus.ON")
     int getActiveDiskSpaceByTeam(Long teamId);
 
-    @Query("select sum(v.ram) from Team t inner join t.virtualMachines v where t.id=:teamId and v.status=it.polito.ai.backend.entities.VirtualMachineStatus.ON")
+    @Query("select coalesce(sum(v.ram), 0) from Team t inner join t.virtualMachines v where t.id=:teamId and v.status=it.polito.ai.backend.entities.VirtualMachineStatus.ON")
     int getActiveRamByTeam(Long teamId);
 
     @Query("select count(v) from Team t inner join t.virtualMachines v where v.status=:status and t.id=:teamId")

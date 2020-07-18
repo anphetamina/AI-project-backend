@@ -134,11 +134,11 @@ class VirtualMachineServiceUnitTests {
                             .tot(5 + i%4)
                             .max_on(6 + i%3)
                             .min_vcpu(2)
-                            .max_vcpu(6 + i%4)
+                            .max_vcpu(12 + i%4)
                             .min_disk_space(300)
-                            .max_disk_space(1000 + (i%3)*500)
+                            .max_disk_space(3000 + (i%3)*500)
                             .min_ram(4)
-                            .max_ram(8)
+                            .max_ram(24)
                             .build();
                     configurations.add(configuration);
 
@@ -158,18 +158,27 @@ class VirtualMachineServiceUnitTests {
                             VirtualMachineConfiguration configuration = team.getVirtualMachineConfiguration();
 
                             if (team.getVirtualMachines().size() == 0) {
-                                VirtualMachine virtualMachine = VirtualMachine.builder()
-                                        .num_vcpu(configuration.getMin_vcpu())
-                                        .disk_space(configuration.getMin_disk_space())
-                                        .ram(configuration.getMin_ram())
-                                        .status(VirtualMachineStatus.OFF)
-                                        .owners(new ArrayList<>())
-                                        .build();
 
-                                virtualMachine.addOwner(student);
-                                virtualMachine.setTeam(team);
-                                virtualMachine.setVirtualMachineModel(c.getVirtualMachineModel());
-                                virtualMachines.add(virtualMachine);
+                                IntStream.range(0, configuration.getTot()-3)
+                                        .forEach(j -> {
+                                            VirtualMachine virtualMachine = VirtualMachine.builder()
+                                                    .num_vcpu(configuration.getMin_vcpu())
+                                                    .disk_space(configuration.getMin_disk_space())
+                                                    .ram(configuration.getMin_ram())
+                                                    .status(VirtualMachineStatus.OFF)
+                                                    .owners(new ArrayList<>())
+                                                    .build();
+
+                                            virtualMachine.addOwner(student);
+                                            virtualMachine.setTeam(team);
+                                            virtualMachine.setVirtualMachineModel(c.getVirtualMachineModel());
+                                            virtualMachines.add(virtualMachine);
+                                        });
+
+                                /*IntStream.range(0, configuration.getMax_on()-1)
+                                        .forEach(k -> {
+                                            team.getVirtualMachines().get(k%team.getVirtualMachines().size()).setStatus(VirtualMachineStatus.ON);
+                                        });*/
                             }
 
                         }
@@ -215,54 +224,52 @@ class VirtualMachineServiceUnitTests {
     @Test
     void updateVirtualMachine() {
 
-        Team team = Team.builder()
-                .name("team")
-                .status(TeamStatus.ACTIVE)
-                .members(new ArrayList<>())
-                .virtualMachines(new ArrayList<>())
-                .build();
-
-        VirtualMachineConfiguration configuration = VirtualMachineConfiguration.builder()
-                .tot(5)
-                .max_on(6)
-                .min_vcpu(2)
-                .max_vcpu(6)
-                .min_disk_space(300)
-                .max_disk_space(1000)
-                .min_ram(4)
-                .max_ram(8)
-                .build();
-        team.setVirtualMachineConfiguration(configuration);
-
-        Long vmId = 2L;
-        VirtualMachine virtualMachine = VirtualMachine.builder()
-                .id(vmId)
-                .num_vcpu(configuration.getMin_vcpu())
-                .disk_space(configuration.getMin_disk_space())
-                .ram(configuration.getMin_ram())
-                .status(VirtualMachineStatus.OFF)
-                .owners(new ArrayList<>())
-                .build();
-        team.addVirtualMachine(virtualMachine);
+        VirtualMachine virtualMachine = virtualMachines.get(0);
 
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
-                .id(vmId)
-                .num_vcpu(configuration.getMin_vcpu()+1)
-                .disk_space(configuration.getMin_disk_space()+100)
-                .ram(configuration.getMin_ram()+1)
+                .id(virtualMachine.getId())
+                .num_vcpu(virtualMachine.getNum_vcpu()+1)
+                .disk_space(virtualMachine.getDisk_space()+1)
+                .ram(virtualMachine.getRam()+1)
                 .build();
 
-        VirtualMachine updated = VirtualMachine.builder()
-                .id(vmId)
-                .num_vcpu(virtualMachineDTO.getNum_vcpu())
-                .disk_space(virtualMachineDTO.getDisk_space())
-                .ram(virtualMachineDTO.getRam())
-                .status(virtualMachineDTO.getStatus())
-                .build();
+        VirtualMachineDTO updated = virtualMachineService.updateVirtualMachine(virtualMachine.getId(), virtualMachineDTO);
 
-        VirtualMachineDTO newOne = virtualMachineService.updateVirtualMachine(vmId, virtualMachineDTO);
+        Assertions.assertEquals(virtualMachineDTO.getNum_vcpu(), updated.getNum_vcpu());
+        Assertions.assertEquals(virtualMachineDTO.getDisk_space(), updated.getDisk_space());
+        Assertions.assertEquals(virtualMachineDTO.getRam(), updated.getRam());
+        Assertions.assertEquals(virtualMachineDTO.getId(), updated.getId());
+    }
 
-        Assertions.assertEquals(virtualMachineDTO, newOne);
+    @Test
+    void getActiveVcpuForTeam() {
+        Team team = teams.get(0);
+        long activeVcpu = team.getVirtualMachines()
+                .stream()
+                .filter(vm -> vm.getStatus() == VirtualMachineStatus.ON)
+                .reduce(0, (partial, current) -> partial + current.getNum_vcpu(), Integer::sum);
+
+        Assertions.assertEquals(activeVcpu, virtualMachineService.getActiveVcpuForTeam(team.getId()));
+
+    }
+
+    @Test
+    void getCountActiveVMsForTeam() {
+        Team team = teams.get(0);
+        long activeVMs = team.getVirtualMachines()
+                .stream()
+                .filter(vm -> vm.getStatus() == VirtualMachineStatus.ON)
+                .count();
+
+        Assertions.assertEquals(activeVMs, virtualMachineService.getCountActiveVirtualMachinesForTeam(team.getId()));
+    }
+
+    @Test
+    void getCountVMsForTeam() {
+        Team team = teams.get(0);
+        long count = team.getVirtualMachines().size();
+
+        Assertions.assertEquals(count, virtualMachineService.getCountVirtualMachinesForTeam(team.getId()));
     }
 
     /*@Test
