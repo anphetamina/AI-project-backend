@@ -436,14 +436,14 @@ public class CourseController {
 
     @PostMapping("/{courseId}/createExercise")
     void createExercise(@RequestParam("image") MultipartFile file,@RequestParam Map<String, String> map, @PathVariable String courseId){
-        if (map.containsKey("published") && map.containsKey("expired")) {
+        if (map.containsKey("expired")) {
             try {
 
                 Utils.checkTypeImage(file);
                 System.out.println("Original Image Byte Size - " + file.getBytes().length);
                 SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
                 Timestamp expired = new Timestamp(format.parse(map.get("expired")).getTime());
-                Timestamp published =new Timestamp( format.parse(map.get("published")).getTime());
+                Timestamp published = Utils.getNow();
                 exerciseService.addExerciseForCourse(courseId,published,expired,file);
 
             } catch (ResponseStatusException exception) {

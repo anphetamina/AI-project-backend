@@ -189,7 +189,7 @@ public class ExerciseController {
                     throw  new AssignmentNotFoundException(map.get("studentId"));
 
                 if(exercise.get().getExpired().after(Utils.getNow()) && assignment.isFlag() && assignment.getStatus()==AssignmentStatus.LETTO)
-                    exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.CONSEGNATO,true,null,Utils.getBytes(file),map.get("studentId"),exerciseId);
+                    exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.CONSEGNATO,false,null,Utils.getBytes(file),map.get("studentId"),exerciseId);
                 else
                     throw new Exception(exerciseId.toString());
 
