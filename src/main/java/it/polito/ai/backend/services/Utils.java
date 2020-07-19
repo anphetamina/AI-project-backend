@@ -1,5 +1,10 @@
 package it.polito.ai.backend.services;
 
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,5 +33,17 @@ public class Utils {
             byteObjects[i++] = b;
         }
         return byteObjects;
+    }
+
+    public static void checkTypeImage(MultipartFile file) throws TikaException, IOException {
+        TikaConfig tika = new TikaConfig();
+        Metadata metadata = new Metadata();
+        metadata.set(Metadata.RESOURCE_NAME_KEY, file.getOriginalFilename());
+        MediaType mimeType = tika.getDetector().detect(TikaInputStream.get(file.getBytes()), metadata);
+        String type = mimeType.toString();
+        System.out.println(type);
+        if (!type.equalsIgnoreCase("image/png") && !type.equalsIgnoreCase("image/jpg") && !type.equalsIgnoreCase("image/jpeg")) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, type);
+        }
     }
 }

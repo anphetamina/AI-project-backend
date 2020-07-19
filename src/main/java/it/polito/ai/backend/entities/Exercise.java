@@ -4,6 +4,8 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -27,5 +29,14 @@ public class Exercise {
         if (course != null) {
             course.getExercises().add(this);
         }
+    }
+
+    @OneToMany(mappedBy = "exercise")
+    private List<Assignment> assignments =new ArrayList<Assignment>();
+    public void addAssignment(Assignment assignment) {
+        assignment.exercise=this;
+        assignments.add(assignment);
+        assignment.setExercise(this);
+
     }
 }

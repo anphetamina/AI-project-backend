@@ -1,8 +1,8 @@
 package it.polito.ai.backend.controllers;
 
-import it.polito.ai.backend.dtos.CourseDTO;
-import it.polito.ai.backend.dtos.StudentDTO;
-import it.polito.ai.backend.dtos.TeamDTO;
+import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
+import it.polito.ai.backend.services.exercise.ExerciseService;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.CourseNotFoundException;
 import it.polito.ai.backend.services.team.StudentNotFoundException;
@@ -26,6 +26,8 @@ public class StudentController {
 
     @Autowired
     TeamService teamService;
+    @Autowired
+    ExerciseService exerciseService;
     @Autowired
     NotificationService notificationService;
 
@@ -106,4 +108,25 @@ public class StudentController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }
     }
+
+    @GetMapping("/{studentId}/assignments")
+    CollectionModel<AssignmentDTO> getAssignments(@PathVariable String studentId){
+        try {
+            List<AssignmentDTO> assignmentDTOS = exerciseService.getAssignmentsForStudent(studentId).stream()
+                    .map(a -> {
+                        Long exerciseId = exerciseService.getExerciseForAssignment(a.getId()).map(ExerciseDTO::getId).orElseThrow( () -> new ExerciseNotFoundException(a.getId().toString()));
+                        return ModelHelper.enrich(a,studentId,exerciseId);
+                    })
+                    .collect(Collectors.toList());
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentId)).withSelfRel();
+            return CollectionModel.of(assignmentDTOS, selfLink);
+        }catch (TeamServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+
+    }
+
+
 }

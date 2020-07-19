@@ -51,4 +51,13 @@ public class Student {
             inverseJoinColumns = @JoinColumn(name = "vm_id")
     )
     List<VirtualMachine> virtual_machines = new ArrayList<>();
+
+    @OneToMany(mappedBy = "student"/*, cascade = CascadeType.ALL, orphanRemoval = true*/)
+    List<Assignment> assignments = new ArrayList<Assignment>();
+    public void addAssignment(Assignment assignment) {
+        assignment.student = this;
+        assignments.add(assignment);
+        assignment.setStudent(this);
+    }
+
 }

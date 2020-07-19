@@ -3,6 +3,8 @@ package it.polito.ai.backend.controllers;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.services.Utils;
+import it.polito.ai.backend.services.exercise.AssignmentStatus;
 import it.polito.ai.backend.services.exercise.ExerciseService;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.*;
@@ -437,24 +439,12 @@ public class CourseController {
         if (map.containsKey("published") && map.containsKey("expired")) {
             try {
 
-                TikaConfig tika = new TikaConfig();
-                Metadata metadata = new Metadata();
-                metadata.set(Metadata.RESOURCE_NAME_KEY, file.getOriginalFilename());
-                MediaType mimeType = tika.getDetector().detect(TikaInputStream.get(file.getBytes()), metadata);
-                String type = mimeType.toString();
-                System.out.println(type);
-                if (!type.equalsIgnoreCase("image/png") && !type.equalsIgnoreCase("image/jpg") && !type.equalsIgnoreCase("image/jpeg")) {
-                    throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, type);
-                }
-
-
+                Utils.checkTypeImage(file);
                 System.out.println("Original Image Byte Size - " + file.getBytes().length);
                 SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
                 Timestamp expired = new Timestamp(format.parse(map.get("expired")).getTime());
                 Timestamp published =new Timestamp( format.parse(map.get("published")).getTime());
                 exerciseService.addExerciseForCourse(courseId,published,expired,file);
-
-
 
             } catch (ResponseStatusException exception) {
                 throw exception;

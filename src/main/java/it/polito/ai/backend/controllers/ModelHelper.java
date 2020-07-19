@@ -12,14 +12,16 @@ public class ModelHelper {
         Link studentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(courseDTO.getId())).withRel("enrolled");
         Link teachersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeachers(courseDTO.getId())).withRel("taughtBy");
         Link teamsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeams(courseDTO.getId())).withRel("registers");
-        return courseDTO.add(selfLink).add(studentsLink).add(teachersLink).add(teamsLink);
+        Link exerciseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getExercises(courseDTO.getId())).withRel("exercises");
+        return courseDTO.add(selfLink).add(studentsLink).add(teachersLink).add(teamsLink).add(exerciseLink);
     }
 
     public static StudentDTO enrich(StudentDTO studentDTO) {
         Link selfLink = WebMvcLinkBuilder.linkTo(StudentController.class).slash(studentDTO.getId()).withSelfRel();
         Link coursesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getCourses(studentDTO.getId())).withRel("enrolledTo");
         Link teamsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentDTO.getId())).withRel("partOf");
-        return studentDTO.add(selfLink).add(coursesLink).add(teamsLink);
+        Link assignmentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getAssignments(studentDTO.getId())).withRel("assignments");
+        return studentDTO.add(selfLink).add(coursesLink).add(teamsLink).add(assignmentsLink);
     }
 
     public static TeamDTO enrich(TeamDTO teamDTO, String courseName) {
@@ -40,9 +42,16 @@ public class ModelHelper {
         return teacherDTO.add(selfLink).add(coursesLink);
     }
     public static ExerciseDTO enrich(ExerciseDTO exerciseDTO, String courseId){
-        Link selfLink = WebMvcLinkBuilder.linkTo(CourseController.class).slash(exerciseDTO.getId()).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(ExerciseController.class).slash(exerciseDTO.getId()).withSelfRel();
         Link courseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseId)).withRel("course");
+        Link assignmentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getLastAssignments(exerciseDTO.getId())).withRel("assignments");
+        return exerciseDTO.add(selfLink).add(courseLink,assignmentsLink);
+    }
 
-        return exerciseDTO.add(selfLink).add(courseLink);
+    public static AssignmentDTO enrich(AssignmentDTO assignmentDTO, String studentId, Long exerciseId){
+        Link selfLink = WebMvcLinkBuilder.linkTo(ExerciseController.class).slash(assignmentDTO.getId()).withSelfRel();
+        Link exerciseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getOne(exerciseId)).withRel("exercise");
+        Link studentLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getOne(studentId)).withRel("student");
+        return  assignmentDTO.add(selfLink).add(exerciseLink).add(studentLink);
     }
 }

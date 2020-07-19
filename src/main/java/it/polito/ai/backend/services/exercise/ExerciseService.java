@@ -14,25 +14,25 @@ public interface ExerciseService {
     /**
      * teacher
      */
-    ExerciseDTO addExerciseForCourse(String courseId, Timestamp published, Timestamp expired, MultipartFile file) throws IOException;
-
+    void addExerciseForCourse(String courseId, Timestamp published, Timestamp expired, MultipartFile file) throws IOException;
 
     /**
      * teacher/student
      */
+    List<AssignmentDTO> getAssignmentByStudentAndExercise(String studentId, Long exerciseId);
     Optional<ExerciseDTO> getExercise(Long id);
-    List<ExerciseDTO> getAllExercises();
+    Optional<AssignmentDTO> getAssignment(Long assignmentId);
+    Optional<ExerciseDTO> getExerciseForAssignment(Long assignmentId);
     List<ExerciseDTO> getExercisesForCourse(String courseId);
-    public Optional<CourseDTO> getCourse(Long exerciseId);
-
-
-    /*boolean addAssignment(AssignmentDTO assignmentDTO);
-
-    Optional<AssignmentDTO> getAssignment(String id);
-
-    List<AssignmentDTO> getAllAssignments();
-    Metodo per lo stato del Assignment
-    List<AssignmentDTO> getAssignmentDTOs(Long exerciseId);*/
+    Optional<CourseDTO> getCourse(Long exerciseId);
+    List<AssignmentDTO> getAssignmentsForExercise(Long exerciseId);
+    Optional<StudentDTO> getStudentForAssignment(Long assignmentId);
+    List<AssignmentDTO> getAssignmentsForStudent(String studentId);
+    AssignmentDTO addAssignmentByte(Timestamp published,
+                       AssignmentStatus state,
+                       boolean flag, Integer score,
+                       Byte[] image,
+                       String studentId, Long exerciseId);
 
 
 
