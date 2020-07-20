@@ -1,7 +1,9 @@
 package it.polito.ai.backend.dtos;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.hateoas.RepresentationModel;
 
 import javax.validation.constraints.NotNull;
@@ -9,6 +11,8 @@ import javax.validation.constraints.Positive;
 
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class VirtualMachineConfigurationDTO extends RepresentationModel<VirtualMachineConfigurationDTO> {
 
     @NotNull Long id;

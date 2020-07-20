@@ -1,12 +1,16 @@
 package it.polito.ai.backend;
 
+import it.polito.ai.backend.dtos.VirtualMachineConfigurationDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
 import it.polito.ai.backend.entities.*;
 import it.polito.ai.backend.repositories.*;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.modelmapper.ModelMapper;
+import org.opentest4j.TestAbortedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,6 +18,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @SpringBootTest
@@ -34,6 +40,7 @@ class VirtualMachineServiceUnitTests {
     @Autowired VirtualMachineModelRepository virtualMachineModelRepository;
     @Autowired StudentRepository studentRepository;
     @Autowired CourseRepository courseRepository;
+    @Autowired ModelMapper modelMapper;
 
     @BeforeAll
     static void beforeAll(@Autowired TeamRepository teamRepository,
@@ -239,6 +246,98 @@ class VirtualMachineServiceUnitTests {
         Assertions.assertEquals(virtualMachineDTO.getDisk_space(), updated.getDisk_space());
         Assertions.assertEquals(virtualMachineDTO.getRam(), updated.getRam());
         Assertions.assertEquals(virtualMachineDTO.getId(), updated.getId());
+    }
+
+    @Test
+    void deleteVirtualMachine() {
+        Team team = teams.get(0);
+        VirtualMachine virtualMachine = team.getVirtualMachines().get(0);
+
+        virtualMachineService.deleteVirtualMachine(virtualMachine.getId());
+        Team team1 = teamRepository.getOne(team.getId());
+
+        Assertions.assertFalse(team1.getVirtualMachines().contains(virtualMachine));
+        List<Student> owners = virtualMachine.getOwners().stream().map(s -> studentRepository.getOne(s.getId())).collect(Collectors.toList());
+        Assertions.assertTrue(owners.stream().noneMatch(o -> o.getVirtual_machines().contains(virtualMachine)));
+        Assertions.assertEquals(team.getCourse().getVirtualMachineModel().getVirtualMachines().size()-1, team1.getCourse().getVirtualMachineModel().getVirtualMachines().size());
+    }
+
+    @Test
+    void turnOnVirtualMachine() {
+        Long vmId = virtualMachines.get(0).getId();
+
+        virtualMachineService.turnOnVirtualMachine(vmId);
+        VirtualMachineStatus actual = virtualMachineRepository.getOne(vmId).getStatus();
+
+        Assertions.assertEquals(VirtualMachineStatus.ON, actual);
+    }
+
+    @Test
+    void turnOffVirtualMachine() {
+        Long vmId = virtualMachines.get(0).getId();
+
+        virtualMachineService.turnOffVirtualMachine(vmId);
+        VirtualMachineStatus actual = virtualMachineRepository.getOne(vmId).getStatus();
+
+        Assertions.assertEquals(VirtualMachineStatus.OFF, actual);
+    }
+
+    @Test
+    void addOwnerToVirtualMachine() {
+        Team team = teams.get(0);
+        VirtualMachine virtualMachine = team.getVirtualMachines().get(0);
+        Student student = team.getMembers().stream().filter(m -> !virtualMachine.getOwners().contains(m)).findFirst().orElseThrow(() -> new TestAbortedException("all students own the first vm"));
+        Long vmId = virtualMachine.getId();
+
+        virtualMachineService.addOwnerToVirtualMachine(student.getId(), vmId);
+
+        Assertions.assertTrue(virtualMachineRepository.getOne(vmId).getOwners().contains(student));
+    }
+
+    @Test
+    void updateVirtualMachineConfiguration() {
+        Team team = teams.get(0);
+        Long teamId = team.getId();
+
+        VirtualMachineConfigurationDTO configuration = modelMapper.map(team.getVirtualMachineConfiguration(), VirtualMachineConfigurationDTO.class);
+
+        int minVcpu = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).min().orElseThrow(NoSuchElementException::new);
+        int minDiskSpace = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).min().orElseThrow(NoSuchElementException::new);
+        int minRam = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getRam).min().orElseThrow(NoSuchElementException::new);
+
+        configuration.setMin_vcpu(minVcpu-1);
+        configuration.setMin_disk(minDiskSpace-1);
+        configuration.setMin_ram(minRam-1);
+        configuration.setMax_vcpu(configuration.getMax_vcpu()+1);
+        configuration.setMax_disk(configuration.getMax_disk()+1);
+        configuration.setMax_ram(configuration.getMax_ram()+1);
+        configuration.setMax_on(configuration.getMax_on()+1);
+        configuration.setTot(configuration.getTot()+1);
+
+        VirtualMachineConfigurationDTO virtualMachineConfigurationDTO = virtualMachineService.updateVirtualMachineConfiguration(teamId, configuration);
+
+        Assertions.assertEquals(virtualMachineConfigurationDTO.getMin_vcpu(), configuration.getMin_vcpu());
+        Assertions.assertEquals(virtualMachineConfigurationDTO.getMin_disk(), configuration.getMin_disk());
+        Assertions.assertEquals(virtualMachineConfigurationDTO.getMin_ram(), configuration.getMin_ram());
+        Assertions.assertEquals(virtualMachineConfigurationDTO.getMax_vcpu(), configuration.getMax_vcpu());
+        Assertions.assertEquals(virtualMachineConfigurationDTO.getMax_disk(), configuration.getMax_disk());
+        Assertions.assertEquals(virtualMachineConfigurationDTO.getMax_ram(), configuration.getMax_ram());
+        Assertions.assertEquals(virtualMachineConfigurationDTO.getMax_on(), configuration.getMax_on());
+        Assertions.assertEquals(virtualMachineConfigurationDTO.getTot(), configuration.getTot());
+        Assertions.assertEquals(virtualMachineConfigurationDTO.getId(), configuration.getId());
+
+    }
+
+    @Test
+    void deleteVirtualMachineModel() {
+        Course course = courses.get(0);
+        virtualMachineService.deleteVirtualMachineModel(course.getName());
+
+        Course course1 = courseRepository.getOne(course.getName());
+
+        Assertions.assertNull(course1.getVirtualMachineModel());
+        Assertions.assertEquals(0, course1.getTeams().stream().mapToInt(t -> t.getVirtualMachines().size()).sum());
+
     }
 
     @Test

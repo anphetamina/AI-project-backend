@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @Transactional
@@ -209,7 +210,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
         virtualMachine.setVirtualMachineModel(null);
         virtualMachine.setTeam(null);
-        virtualMachine.getOwners().forEach(owner -> owner.removeVirtualMachine(virtualMachine));
+        for (Student s : new ArrayList<>(virtualMachine.getOwners())) {
+            s.removeVirtualMachine(virtualMachine);
+        }
+        // virtualMachine.getOwners().forEach(owner -> owner.removeVirtualMachine(virtualMachine)); throws java.util.ConcurrentModificationException
         virtualMachineRepository.delete(virtualMachine);
         return true;
     }
@@ -329,16 +333,12 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
         int vm_tot = this.getCountVirtualMachinesForTeam(teamId);
 
-        if (configuration.getTot() > vm_tot) {
+        if (configuration.getTot() < vm_tot) {
             throw new InvalidTotNumException(String.valueOf(configuration.getTot()), String.valueOf(vm_tot));
         }
 
         List<VirtualMachine> virtualMachines = team.getVirtualMachines();
         int activeVMs = this.getCountActiveVirtualMachinesForTeam(teamId);
-        /*long activeVMs = virtualMachines
-                .stream()
-                .filter(vm -> vm.getStatus() == VirtualMachineStatus.ON)
-                .count();*/
 
         if (activeVMs > configuration.getMax_on()) {
             throw new InvalidMaxActiveException(String.valueOf(configuration.getMax_on()), String.valueOf(activeVMs));
@@ -355,7 +355,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         if (currentNumVcpu > configuration.getMax_vcpu()) {
             throw new InvalidConfigurationException(String.format("%s max vcpu not allowed, current value %s", configuration.getMax_vcpu(), currentNumVcpu));
         } else if (virtualMachines.stream().anyMatch(vm -> vm.getNum_vcpu() < configuration.getMin_vcpu())) {
-            throw new InvalidConfigurationException(String.format("a virtual machine is using more than %s vcpu", configuration.getMin_vcpu()));
+            throw new InvalidConfigurationException(String.format("a virtual machine is using less than %s vcpu", configuration.getMin_vcpu()));
         }
 
         int currentDiskSpace = virtualMachines
@@ -364,7 +364,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         if (currentDiskSpace > configuration.getMax_disk()) {
             throw new InvalidConfigurationException(String.format("%s disk space not allowed, current value %s", configuration.getMax_disk(), currentDiskSpace));
         } else if (virtualMachines.stream().anyMatch(vm -> vm.getDisk_space() < configuration.getMin_disk())) {
-            throw new InvalidConfigurationException(String.format("a virtual machine is using more than %s vcpu", configuration.getMin_vcpu()));
+            throw new InvalidConfigurationException(String.format("a virtual machine is using less than %s vcpu", configuration.getMin_vcpu()));
         }
 
         int currentRam = virtualMachines
@@ -373,7 +373,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         if (currentRam > configuration.getMax_ram()) {
             throw new InvalidConfigurationException(String.format("%s ram not allowed, current value %s", configuration.getMax_ram(), currentRam));
         } else if (virtualMachines.stream().anyMatch(vm -> vm.getRam() < configuration.getMin_ram())) {
-            throw new InvalidConfigurationException(String.format("a virtual machine is using more than %s ram", configuration.getMin_ram()));
+            throw new InvalidConfigurationException(String.format("a virtual machine is using less than %s ram", configuration.getMin_ram()));
         }
 
         vmc.setTot(configuration.getTot());
@@ -425,7 +425,11 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         }
 
         model.setCourse(null);
-        model.getVirtualMachines().forEach(vm -> vm.setVirtualMachineModel(null));
+        // todo remove vms and their relationships manually
+        for (VirtualMachine vm : new ArrayList<>(model.getVirtualMachines())) {
+            model.removeVirtualMachine(vm);
+        }
+        // model.getVirtualMachines().forEach(vm -> vm.setVirtualMachineModel(null)); throws java.util.ConcurrentModificationException
 
         virtualMachineModelRepository.delete(model);
         return true;
