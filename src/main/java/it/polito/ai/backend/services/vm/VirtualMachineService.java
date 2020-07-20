@@ -1,10 +1,10 @@
 package it.polito.ai.backend.services.vm;
 
-import it.polito.ai.backend.dtos.VirtualMachineConfigurationDTO;
-import it.polito.ai.backend.dtos.VirtualMachineDTO;
-import it.polito.ai.backend.dtos.VirtualMachineModelDTO;
+import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.entities.SystemImage;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface VirtualMachineService {
@@ -12,43 +12,51 @@ public interface VirtualMachineService {
     /**
      * student
      */
-    VirtualMachineDTO createVM(String studentId, Long teamId, int numVcpu, int diskSpace, int ram);
-    boolean deleteVM(Long id);
-    VirtualMachineDTO updateVM(VirtualMachineDTO vm);
-    void turnOnVM(Long id);
-    void turnOffVM(Long id);
-    boolean addOwnerToVM(String studentId, Long vmId);
-    boolean removeOwnerFromVM(String studentId, Long vmId);
+    VirtualMachineDTO createVirtualMachine(String studentId, // owner of the vm
+                                           Long teamId, // to fetch the configuration
+                                           int numVcpu,
+                                           int diskSpace,
+                                           int ram);
+    VirtualMachineDTO updateVirtualMachine(Long vmId, VirtualMachineDTO virtualMachine);
+    boolean deleteVirtualMachine(Long id);
+    void turnOnVirtualMachine(Long id);
+    void turnOffVirtualMachine(Long id);
+    boolean addOwnerToVirtualMachine(String studentId, Long vmId);
 
     /**
      * teacher
      */
-    VirtualMachineConfigurationDTO createVMConfiguration(String teacherId, Long teamId, int numVcpu, int diskSpace, int ram);
-    boolean addVMConfigurationToTeam(VirtualMachineConfigurationDTO configuration, Long teamId);
-    VirtualMachineConfigurationDTO updateVMConfiguration(VirtualMachineConfigurationDTO configuration);
-    VirtualMachineModelDTO createVMModel(
-                            int min_vcpu,
-                            int max_vcpu,
-                            int min_disk,
-                            int max_disk,
-                            int min_ram,
-                            int max_ram,
-                            int tot_vcpu,
-                            int tot_disk,
-                            int tot_ram,
-                            int tot,
-                            int max_on);
-    VirtualMachineModelDTO updateVMModel(VirtualMachineModelDTO model);
-    boolean addVMConfigurationToCourse(VirtualMachineConfigurationDTO configuration, String courseName);
-    Optional<VirtualMachineModelDTO> getVMModelForCourse(String courseName);
+    VirtualMachineConfigurationDTO createVirtualMachineConfiguration(
+                                                Long teamId,
+                                                int min_vcpu,
+                                                int max_vcpu,
+                                                int min_disk_space,
+                                                int max_disk_space,
+                                                int min_ram,
+                                                int max_ram,
+                                                int max_on,
+                                                int tot
+                                                );
+    VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(Long teamId, VirtualMachineConfigurationDTO configuration);
+    VirtualMachineModelDTO createVirtualMachineModel(String courseName, SystemImage os);
+    boolean deleteVirtualMachineModel(String courseName);
 
     /**
      * teacher/student
      */
     Optional<VirtualMachineDTO> getVirtualMachine(Long id);
-    List<VirtualMachineDTO> getVMsForTeam(Long teamId);
-    Optional<VirtualMachineConfigurationDTO> getVMConfigurationForTeam(Long teamId);
-    Integer getVcpuForTeam(Long teamId);
-    Integer getDiskSpaceForTeam(Long teamId);
-    Integer getRAMForTeam(Long teamId);
+    List<StudentDTO> getOwnersForVirtualMachine(Long id);
+    Optional<VirtualMachineModelDTO> getVirtualMachineModelForVirtualMachine(Long id);
+    Optional<CourseDTO> getCourseForVirtualMachineModel(Long modelId);
+    Optional<TeamDTO> getTeamForVirtualMachine(Long id);
+    List<VirtualMachineDTO> getVirtualMachinesForTeam(Long teamId);
+    List<VirtualMachineDTO> getVirtualMachinesForStudent(String studentId);
+    Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseName);
+    Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfigurationForTeam(Long teamId);
+    int getActiveVcpuForTeam(Long teamId);
+    int getActiveDiskSpaceForTeam(Long teamId);
+    int getActiveRAMForTeam(Long teamId);
+    int getCountActiveVirtualMachinesForTeam(Long teamId);
+    int getCountVirtualMachinesForTeam(Long teamId);
+    Map<String, Integer> getResourcesByTeam(Long teamId);
 }

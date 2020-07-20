@@ -2,6 +2,7 @@ package it.polito.ai.backend.repositories;
 
 import it.polito.ai.backend.entities.Course;
 import it.polito.ai.backend.entities.Student;
+import it.polito.ai.backend.entities.VirtualMachineStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -36,4 +37,7 @@ public interface CourseRepository extends JpaRepository<Course, String> {
             and c.name = 'applicazioni internet'
       )
      */
+
+    @Query("select count(v) from Course c inner join c.teams t inner join t.virtualMachines v where c.name=:courseName and v.status=:status")
+    int countVirtualMachinesByCourseAndStatus(String courseName, VirtualMachineStatus status);
 }

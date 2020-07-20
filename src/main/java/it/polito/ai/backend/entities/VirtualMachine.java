@@ -1,8 +1,6 @@
 package it.polito.ai.backend.entities;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -10,8 +8,10 @@ import java.util.List;
 
 @Entity
 @Data
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@AllArgsConstructor
+@NoArgsConstructor
 public class VirtualMachine {
 
     @Id
@@ -23,7 +23,7 @@ public class VirtualMachine {
     int ram;
     VirtualMachineStatus status;
 
-    @ManyToMany(mappedBy = "virtual_machines")
+    @ManyToMany(mappedBy = "virtual_machines", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     List<Student> owners = new ArrayList<>();
 
     public void addOwner(Student s) {
@@ -36,21 +36,36 @@ public class VirtualMachine {
         s.virtual_machines.remove(this);
     }
 
-    /*@ManyToOne
-    @JoinColumn(name = "course_name")
-    Course course;*/
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "vm_model")
+    VirtualMachineModel virtualMachineModel;
 
-    @ManyToOne
+    public void setVirtualMachineModel(VirtualMachineModel virtualMachineModel) {
+        if (this.virtualMachineModel != null) {
+            this.virtualMachineModel.virtualMachines.remove(this);
+        }
+        this.virtualMachineModel = virtualMachineModel;
+        if (virtualMachineModel != null) {
+            virtualMachineModel.virtualMachines.add(this);
+        }
+    }
+
+    /**
+     * a student can be part of multiple teams
+     * so a link is needed to get the team configuration
+     */
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "team_id")
     Team team;
 
     public void setTeam(Team team) {
         if (this.team != null) {
-            this.team.virtual_machines.remove(this);
+            this.team.getVirtualMachines().remove(this);
         }
         this.team = team;
         if (team != null) {
-            team.virtual_machines.add(this);
+            team.getVirtualMachines().add(this);
         }
     }
 }
+

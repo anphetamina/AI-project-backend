@@ -1,7 +1,6 @@
 package it.polito.ai.backend.entities;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -10,6 +9,9 @@ import java.util.List;
 @Data
 @Entity
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Team {
     @Id
     @GeneratedValue
@@ -18,17 +20,17 @@ public class Team {
     String name;
     TeamStatus status;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "course_id")
     Course course;
 
     public void setCourse(Course course) {
         if (this.course != null) {
-            this.course.getTeams().remove(this);
+            this.course.teams.remove(this);
         }
         this.course = course;
         if (course != null) {
-            course.getTeams().add(this);
+            course.teams.add(this);
         }
     }
 
@@ -37,16 +39,16 @@ public class Team {
             joinColumns = @JoinColumn(name = "team_id"),
             inverseJoinColumns = @JoinColumn(name = "student_id")
     )
-    List<Student> members = new ArrayList<Student>();
+    List<Student> members = new ArrayList<>();
 
     public void addStudent(Student student) {
         members.add(student);
-        student.getTeams().add(this);
+        student.teams.add(this);
     }
 
     public void removeStudent(Student student) {
         members.remove(student);
-        student.getTeams().remove(this);
+        student.teams.remove(this);
     }
 
     public void setStatus(TeamStatus status) {
@@ -61,30 +63,30 @@ public class Team {
         }*/
     }
 
-    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<VirtualMachine> virtual_machines = new ArrayList<>();
-
-    public void addVM(VirtualMachine v) {
-        virtual_machines.add(v);
-        v.team = this;
-    }
-
-    public void removeVM(VirtualMachine v) {
-        virtual_machines.remove(v);
-        v.team = null;
-    }
-
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @JoinColumn(name = "vm_conf")
-    VirtualMachineConfiguration vm_configuration;
+    VirtualMachineConfiguration virtualMachineConfiguration;
 
-    public void setVMConfiguration(VirtualMachineConfiguration vmConfiguration) {
-        if (this.vm_configuration != null) {
-            vm_configuration.team = null;
+    public void setVirtualMachineConfiguration(VirtualMachineConfiguration virtualMachineConfiguration) {
+        if (this.virtualMachineConfiguration != null) {
+            virtualMachineConfiguration.team = null;
         }
-        this.vm_configuration = vmConfiguration;
-        if (vmConfiguration != null) {
-            vmConfiguration.team = this;
+        this.virtualMachineConfiguration = virtualMachineConfiguration;
+        if (virtualMachineConfiguration != null) {
+            virtualMachineConfiguration.team = this;
         }
+    }
+
+    @OneToMany(mappedBy = "team", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    List<VirtualMachine> virtualMachines = new ArrayList<>();
+
+    public void addVirtualMachine(VirtualMachine virtualMachine) {
+        virtualMachines.add(virtualMachine);
+        virtualMachine.team = this;
+    }
+
+    public void removeVirtualMachine(VirtualMachine virtualMachine) {
+        virtualMachines.remove(virtualMachine);
+        virtualMachine.team = null;
     }
 }

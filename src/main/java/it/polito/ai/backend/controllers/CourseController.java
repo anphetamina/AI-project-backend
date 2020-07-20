@@ -6,8 +6,11 @@ import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.exercise.AssignmentStatus;
 import it.polito.ai.backend.services.exercise.ExerciseService;
+import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.entities.SystemImage;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.*;
+import it.polito.ai.backend.services.vm.*;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -26,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -47,6 +52,8 @@ public class CourseController {
     NotificationService notificationService;
     @Autowired
     ExerciseService exerciseService;
+    @Autowired
+    VirtualMachineService virtualMachineService;
     @Autowired
     ModelMapper modelMapper;
 
@@ -412,16 +419,16 @@ public class CourseController {
                         notificationService.notifyTeam(team, memberIds);
                         return ModelHelper.enrich(team, courseId);
                     } else {
-                        throw new NotValidRequestException(memberIds.toString());
+                        throw new InvalidRequestException(memberIds.toString());
                     }
                 } else {
-                    throw new NotValidRequestException(teamName);
+                    throw new InvalidRequestException(teamName);
                 }
             }/* catch (AccessDeniedException exception) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
             }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-            } catch (NotValidRequestException | IllegalArgumentException | MappingException | ConfigurationException exception) {
+            } catch (InvalidRequestException | IllegalArgumentException | MappingException | ConfigurationException exception) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
             } catch (TeamServiceException exception) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
@@ -472,6 +479,58 @@ public class CourseController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }
 
+    }
+
+    @PostMapping("/{courseName}/model")
+    @ResponseStatus(HttpStatus.CREATED)
+    VirtualMachineModelDTO addVirtualMachineModel(@PathVariable @NotBlank String courseName, @NotNull Map<String, Object> map) {
+
+        if (!map.containsKey("systemImage")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        } else {
+            try {
+                SystemImage os = modelMapper.map(map.get("systemImage"), SystemImage.class);
+                VirtualMachineModelDTO virtualMachineModel = virtualMachineService.createVirtualMachineModel(courseName, os);
+                return ModelHelper.enrich(virtualMachineModel, courseName);
+            } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+            } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+
+    }
+
+    @DeleteMapping("/{courseName}/deleteModel")
+    void deleteVirtualMachineModel(@PathVariable @NotBlank String courseName) {
+        try {
+            if (!virtualMachineService.deleteVirtualMachineModel(courseName)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Please turn off all the virtual machines using this model");
+            }
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("{courseName}/model")
+    VirtualMachineModelDTO getVirtualMachineModel(@PathVariable @NotBlank String courseName) {
+        try {
+            return ModelHelper.enrich(virtualMachineService.getVirtualMachineModelForCourse(courseName).orElseThrow(() -> new VirtualMachineModelNotDefinedException(courseName)), courseName);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

@@ -1,49 +1,50 @@
 package it.polito.ai.backend.entities;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 
-@Entity
 @Data
+@Entity
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class VirtualMachineModel {
-
     @Id
     @GeneratedValue
     @EqualsAndHashCode.Include
     Long id;
-    /**
-     * min-max resources per vm
-     */
-    int min_vcpu;
-    int max_vcpu;
-    int min_disk;
-    int max_disk;
-    int min_ram;
-    int max_ram;
+    @NotNull SystemImage system_image;
 
-    /**
-     * tot max resources per vms
-     */
-    int tot_vcpu;
-    int tot_disk;
-    int tot_ram;
 
-    /**
-     * total number of vms both active and inactive
-     */
-    int tot;
+    @OneToMany(mappedBy = "virtualMachineModel", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    List<VirtualMachine> virtualMachines = new ArrayList<>();
 
-    /**
-     * total number of active vms
-     */
-    int max_on;
+    public void addVirtualMachine(VirtualMachine virtualMachine) {
+        virtualMachines.add(virtualMachine);
+        virtualMachine.virtualMachineModel = this;
+    }
 
-    @OneToOne(mappedBy = "vm_model")
+    public void removeVirtualMachine(VirtualMachine virtualMachine) {
+        virtualMachines.remove(virtualMachine);
+        virtualMachine.virtualMachineModel = null;
+    }
+
+    @OneToOne(mappedBy = "virtualMachineModel", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     Course course;
+
+    public void setCourse(Course course) {
+        if (this.course != null) {
+            this.course.virtualMachineModel = null;
+        }
+        this.course = course;
+        if (course != null) {
+            course.virtualMachineModel = this;
+        }
+    }
+
 }

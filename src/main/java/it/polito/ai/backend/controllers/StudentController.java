@@ -3,11 +3,15 @@ package it.polito.ai.backend.controllers;
 import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
 import it.polito.ai.backend.services.exercise.ExerciseService;
+import it.polito.ai.backend.dtos.CourseDTO;
+import it.polito.ai.backend.dtos.StudentDTO;
+import it.polito.ai.backend.dtos.TeamDTO;
+import it.polito.ai.backend.dtos.VirtualMachineDTO;
 import it.polito.ai.backend.services.notification.NotificationService;
-import it.polito.ai.backend.services.team.CourseNotFoundException;
-import it.polito.ai.backend.services.team.StudentNotFoundException;
-import it.polito.ai.backend.services.team.TeamService;
-import it.polito.ai.backend.services.team.TeamServiceException;
+import it.polito.ai.backend.services.team.*;
+import it.polito.ai.backend.services.vm.VirtualMachineNotFoundException;
+import it.polito.ai.backend.services.vm.VirtualMachineService;
+import it.polito.ai.backend.services.vm.VirtualMachineServiceConflictException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +35,8 @@ public class StudentController {
     ExerciseService exerciseService;
     @Autowired
     NotificationService notificationService;
+    @Autowired
+    VirtualMachineService virtualMachineService;
 
     @GetMapping({"", "/"})
     CollectionModel<StudentDTO> all() {
@@ -77,7 +84,7 @@ public class StudentController {
         try {
             List<TeamDTO> teams = teamService.getTeamsForStudent(studentId).stream()
                     .map(t -> {
-                        String courseName = teamService.getCourse(t.getId()).map(CourseDTO::getName).orElseThrow(() -> new CourseNotFoundException(t.getId().toString()));
+                        String courseName = teamService.getCourse(t.getId()).map(CourseDTO::getId).orElse(null);
                         return ModelHelper.enrich(t, courseName);
                     })
                     .collect(Collectors.toList());
@@ -129,4 +136,19 @@ public class StudentController {
     }
 
 
+
+    @GetMapping("/{studentId}/virtual-machines")
+    CollectionModel<VirtualMachineDTO> getVirtualMachines(@PathVariable @NotBlank String studentId) {
+        try {
+            List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForStudent(studentId);
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentId)).withSelfRel();
+            return CollectionModel.of(virtualMachineDTOList, selfLink);
+        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

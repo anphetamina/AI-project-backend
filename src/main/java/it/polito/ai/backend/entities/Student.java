@@ -1,7 +1,6 @@
 package it.polito.ai.backend.entities;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -10,15 +9,17 @@ import java.util.List;
 @Entity
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Student {
-    // todo add photo
 
     @Id
     @EqualsAndHashCode.Include
     String id;
     String name;
     String firstName;
-    //byte[] profilePicture;
+    byte[] profilePicture;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "student_course",
@@ -32,17 +33,17 @@ public class Student {
         course.students.add(this);
     }
 
-    @ManyToMany(mappedBy = "members")
+    @ManyToMany(mappedBy = "members", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     List<Team> teams = new ArrayList<>();
 
     public void addTeam(Team team) {
         teams.add(team);
-        team.getMembers().add(this);
+        team.members.add(this);
     }
 
     public void removeTeam(Team team) {
         teams.remove(team);
-        team.getMembers().remove(this);
+        team.members.remove(this);
     }
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -60,4 +61,14 @@ public class Student {
         assignment.setStudent(this);
     }
 
+
+    public void addVirtualMachine(VirtualMachine vm) {
+        virtual_machines.add(vm);
+        vm.owners.add(this);
+    }
+
+    public void removeVirtualMachine(VirtualMachine vm) {
+        virtual_machines.remove(vm);
+        vm.owners.remove(this);
+    }
 }

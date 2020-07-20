@@ -1,7 +1,6 @@
 package it.polito.ai.backend.entities;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -10,6 +9,9 @@ import java.util.List;
 @Entity
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Course {
     @Id
     @EqualsAndHashCode.Include
@@ -19,8 +21,8 @@ public class Course {
     int max;
     boolean enabled;
 
-    @ManyToMany(mappedBy = "courses")
-    List<Student> students = new ArrayList<Student>();
+    @ManyToMany(mappedBy = "courses", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    List<Student> students = new ArrayList<>();
 
     public void addStudent(Student student) {
         students.add(student);
@@ -28,20 +30,19 @@ public class Course {
     }
 
     @ManyToMany(mappedBy = "courses", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    List<Teacher> teachers = new ArrayList<Teacher>();
+    List<Teacher> teachers = new ArrayList<>();
 
     public void addTeacher(Teacher teacher) {
         teachers.add(teacher);
         teacher.courses.add(this);
     }
 
-    @OneToMany(mappedBy = "course"/*, cascade = CascadeType.ALL, orphanRemoval = true*/)
-    List<Team> teams = new ArrayList<Team>();
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    List<Team> teams = new ArrayList<>();
 
     public void addTeam(Team team) {
         team.course = this;
         teams.add(team);
-        team.setCourse(this);
     }
 
     public void removeTeam(Team team) {
@@ -52,12 +53,20 @@ public class Course {
         // team.setCourse(null)
     }
 
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @JoinColumn(name = "vm_model")
-    VirtualMachineModel vm_model;
+    VirtualMachineModel virtualMachineModel;
 
-    /*@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<VirtualMachine> virtual_machines = new ArrayList<>();*/
+    public void setVirtualMachineModel(VirtualMachineModel virtualMachineModel) {
+        if (this.virtualMachineModel != null) {
+            this.virtualMachineModel.course = null;
+        }
+        this.virtualMachineModel = virtualMachineModel;
+        if (virtualMachineModel != null) {
+            virtualMachineModel.course = this;
+        }
+    }
+
 
     @OneToMany(mappedBy = "course")
     private List<Exercise> exercises =new ArrayList<Exercise>();
