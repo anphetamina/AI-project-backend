@@ -53,7 +53,7 @@ public class ExerciseController {
     }
 
     @GetMapping("/{exerciseId}/assignments")
-    CollectionModel<AssignmentDTO> getLastAssignments(@PathVariable Long exerciseId ){
+    List<AssignmentDTO> getLastAssignments(@PathVariable Long exerciseId ){
         try {
             Optional<CourseDTO> courseDTO = exerciseService.getCourse(exerciseId);
             if(!courseDTO.isPresent())
@@ -68,13 +68,14 @@ public class ExerciseController {
                lastAssignments.add(lastAssignment);
 
             }
-            lastAssignments.stream().map(a -> {
+            List<AssignmentDTO> assignmentDTOS= new ArrayList<>();
+            for (AssignmentDTO a:lastAssignments) {
                 String studentId = exerciseService.getStudentForAssignment(a.getId()).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(a.getId().toString()));
-                return  ModelHelper.enrich(a,studentId,exerciseId);
-            }).collect(Collectors.toList());
-            System.out.println(lastAssignments.size());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getLastAssignments(exerciseId)).withSelfRel();
-            return  CollectionModel.of(lastAssignments, selfLink);
+                assignmentDTOS.add(ModelHelper.enrich(a,studentId,exerciseId));
+
+            }
+
+            return  assignmentDTOS;
 
 
         }catch (TeamServiceException | ExerciseServiceException exception) {
@@ -90,15 +91,15 @@ public class ExerciseController {
             try{
 
                 List<AssignmentDTO> assignmentDTOS =
-                        exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId)
-                                .stream()
-                                .map(a -> {
-                                    String studentId = exerciseService.getStudentForAssignment(a.getId()).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(a.getId().toString()));
-                                    return  ModelHelper.enrich(a,studentId,exerciseId);
-                                }).collect(Collectors.toList());;
+                        exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
                 System.out.println(assignmentDTOS.size());
+                List<AssignmentDTO> assignmentDTOList = new ArrayList<>();
+                for (AssignmentDTO a:assignmentDTOS) {
+                    String studentId = exerciseService.getStudentForAssignment(a.getId()).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(a.getId().toString()));
+                    assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId));
 
-                return  assignmentDTOS;
+                }
+                return  assignmentDTOList;
 
             }catch (TeamServiceException | ExerciseServiceException exception) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
@@ -148,7 +149,7 @@ public class ExerciseController {
     void setReadAssignment(@PathVariable Long exerciseId, @RequestBody Map<String,String> map){
         if (map.containsKey("studentId")) {
             try {
-                List<AssignmentDTO> assignments = exerciseService.getAssignmentsForStudent(map.get("studentId"));
+                List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
                 AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
 
                 if(assignment==null)
@@ -160,7 +161,7 @@ public class ExerciseController {
                      exerciseService.addAssignmentByte(Utils.getNow(),
                             AssignmentStatus.LETTO,true,null,image,map.get("studentId"),exerciseId);
                 else
-                    throw new Exception("Duplicate assignment "+exerciseId.toString());
+                    throw new Exception(HttpStatus.CONFLICT+" "+exerciseId.toString());
 
 
             }catch (ExerciseServiceException exception) {
@@ -175,6 +176,7 @@ public class ExerciseController {
 
     @PostMapping("/{exerciseId}/assignmentSubmit")
     void submitAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable Long exerciseId){
+        /*Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo*/
         if (map.containsKey("studentId")){
             try {
 
@@ -183,7 +185,7 @@ public class ExerciseController {
                 if(!exercise.isPresent())
                     throw  new ExerciseNotFoundException(exerciseId.toString());
 
-                List<AssignmentDTO> assignments = exerciseService.getAssignmentsForStudent(map.get("studentId"));
+                List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
                 AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
                 if(assignment==null)
                     throw  new AssignmentNotFoundException(map.get("studentId"));
@@ -214,7 +216,7 @@ public class ExerciseController {
             try {
 
                 Utils.checkTypeImage(file);
-                List<AssignmentDTO> assignments = exerciseService.getAssignmentsForStudent(map.get("studentId"));
+                List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
                 AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
                 if(assignment==null)
                     throw  new AssignmentNotFoundException(map.get("studentId"));
