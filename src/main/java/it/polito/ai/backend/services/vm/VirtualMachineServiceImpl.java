@@ -68,7 +68,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         int vm_tot = this.getCountVirtualMachinesForTeam(teamId);
 
         if (vm_tot + 1 > configuration.getTot()) {
-            throw new VirtualMachineNumberException(String.valueOf(vm_tot));
+            throw new VirtualMachineNumberException(String.valueOf(vm_tot+1));
         }
 
         /**
@@ -228,6 +228,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         Team team = virtualMachine.getTeam();
         VirtualMachineConfiguration configuration = team.getVirtualMachineConfiguration();
 
+        if (configuration == null) {
+            throw new ConfigurationNotDefinedException(team.getId().toString());
+        }
+
         List<VirtualMachine> virtualMachines = team.getVirtualMachines();
         long activeVMs = virtualMachines
                 .stream()
@@ -238,7 +242,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
             throw new ActiveVirtualMachineNumberException(String.valueOf(activeVMs+1), String.valueOf(configuration.getMax_on()));
         }
 
-        int currentNumVcpu = virtualMachines
+        /*int currentNumVcpu = virtualMachines
                 .stream()
                 .reduce(0, (partial, current) -> partial + current.getNum_vcpu(), Integer::sum);
         if (currentNumVcpu + virtualMachine.getNum_vcpu() > configuration.getMax_vcpu()) {
@@ -263,7 +267,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
             throw new RamNotAvailableException(String.valueOf(virtualMachine.getRam()), String.valueOf(currentRam + virtualMachine.getRam()), String.valueOf(configuration.getMax_ram()));
         } else if (virtualMachine.getRam() < configuration.getMin_ram()) {
             throw new InvalidRamException(String.valueOf(virtualMachine.getRam()), String.valueOf(configuration.getMin_ram()));
-        }
+        }*/
 
         virtualMachine.setStatus(VirtualMachineStatus.ON);
     }
@@ -303,6 +307,8 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
             throw new ConfigurationAlreadyDefinedException(teamId.toString());
         }
 
+        validateConfiguration(max_on, tot, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram);
+
         VirtualMachineConfiguration configuration = VirtualMachineConfiguration.builder()
                 .min_vcpu(min_vcpu)
                 .max_vcpu(max_vcpu)
@@ -328,6 +334,17 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         if (vmc == null) {
             throw new ConfigurationNotDefinedException(teamId.toString());
         }
+
+        int max_on = configuration.getMax_on();
+        int tot = configuration.getTot();
+        int min_vcpu = configuration.getMin_vcpu();
+        int max_vcpu = configuration.getMax_vcpu();
+        int min_disk_space = configuration.getMin_disk();
+        int max_disk_space = configuration.getMax_disk();
+        int min_ram = configuration.getMin_ram();
+        int max_ram = configuration.getMax_ram();
+
+        validateConfiguration(max_on, tot, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram);
 
         int vm_tot = this.getCountVirtualMachinesForTeam(teamId);
 
@@ -384,6 +401,18 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         vmc.setMin_ram(configuration.getMin_ram());
 
         return modelMapper.map(virtualMachineConfigurationRepository.save(vmc), VirtualMachineConfigurationDTO.class);
+    }
+
+    private void validateConfiguration(int max_on, int tot, int min_vcpu, int max_vcpu, int min_disk_space, int max_disk_space, int min_ram, int max_ram) {
+        if (max_on > tot) {
+            throw new InvalidConfigurationException(String.format("the total number of virtual machines %s cannot be less than the maximum active ones %s", tot, max_on));
+        } else if (min_vcpu > max_vcpu) {
+            throw new InvalidConfigurationException(String.format("the minimum num vcpu value %s cannot be greater than the maximum number of vcpu %s", min_vcpu, max_vcpu));
+        } else if (min_disk_space > max_disk_space) {
+            throw new InvalidConfigurationException(String.format("the minimum disk space value %s cannot be greater than the maximum disk space %s", min_disk_space, max_disk_space));
+        } else if (min_ram > max_ram) {
+            throw new InvalidConfigurationException(String.format("the minimum ram value %s cannot be greater than the maximum ram %s", min_ram, max_ram));
+        }
     }
 
     @Override

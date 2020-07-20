@@ -69,7 +69,7 @@ public class Team {
 
     public void setVirtualMachineConfiguration(VirtualMachineConfiguration virtualMachineConfiguration) {
         if (this.virtualMachineConfiguration != null) {
-            virtualMachineConfiguration.team = null;
+            this.virtualMachineConfiguration.team = null;
         }
         this.virtualMachineConfiguration = virtualMachineConfiguration;
         if (virtualMachineConfiguration != null) {
