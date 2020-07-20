@@ -43,6 +43,7 @@ Tutte le immagini sono state salvate come array di byte nel db.(Se seguendo ques
 |Get exercise for course|GET|/API/courses/{courseId}/exercises|Teacher/Student||||
 |Get assignment for id|GET|/API/assignments/{courseId}/{assignmentId}|Teacher/Student|||
 |Get all assignmets for student|GET|/API/students/{studentId}/assignments|Teacher/Student|||
+
 Nella classe ScheduledTasks c'è un metodo che parte in maniera automatica alle 4.30 per aggiungere lo stato consegnato agli elaborati non consegnati prima della scadenza della consega
 
 # Course Service
