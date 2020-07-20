@@ -50,7 +50,6 @@ public class Course {
             team.course = null;
         }
         teams.remove(team);
-        // team.setCourse(null)
     }
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
@@ -73,6 +72,6 @@ public class Course {
     public void addExercise(Exercise exercise) {
         exercise.course = this;
         exercises.add(exercise);
-        exercise.setCourse(this);
+        exercise.setCourse(this); // todo check
     }
 }

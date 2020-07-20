@@ -34,6 +34,17 @@ public class VirtualMachineModel {
         virtualMachine.virtualMachineModel = null;
     }
 
+    public void removeVirtualMachines() {
+        if (virtualMachines.size() > 0) {
+            for (VirtualMachine vm : virtualMachines) {
+                vm.virtualMachineModel = null;
+                vm.setTeam(null);
+                vm.removeOwners();
+            }
+            virtualMachines.clear();
+        }
+    }
+
     @OneToOne(mappedBy = "virtualMachineModel", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     Course course;
 

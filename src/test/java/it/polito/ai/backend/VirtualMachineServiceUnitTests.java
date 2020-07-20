@@ -89,6 +89,7 @@ class VirtualMachineServiceUnitTests {
         IntStream.range(0, nCourses)
                 .forEach(i -> {
                     Course course = Course.builder()
+                            .id("c-"+i)
                             .name("course-" + i)
                             .min(4)
                             .max(6)
@@ -260,6 +261,8 @@ class VirtualMachineServiceUnitTests {
         List<Student> owners = virtualMachine.getOwners().stream().map(s -> studentRepository.getOne(s.getId())).collect(Collectors.toList());
         Assertions.assertTrue(owners.stream().noneMatch(o -> o.getVirtual_machines().contains(virtualMachine)));
         Assertions.assertEquals(team.getCourse().getVirtualMachineModel().getVirtualMachines().size()-1, team1.getCourse().getVirtualMachineModel().getVirtualMachines().size());
+        Assertions.assertFalse(team1.getCourse().getVirtualMachineModel().getVirtualMachines().contains(virtualMachine));
+        Assertions.assertTrue(team1.getCourse().getVirtualMachineModel().getVirtualMachines().stream().noneMatch(vm -> vm.getId().equals(virtualMachine.getId())));
     }
 
     @Test
@@ -331,13 +334,19 @@ class VirtualMachineServiceUnitTests {
     @Test
     void deleteVirtualMachineModel() {
         Course course = courses.get(0);
-        virtualMachineService.deleteVirtualMachineModel(course.getName());
+        virtualMachineService.deleteVirtualMachineModel(course.getId());
 
-        Course course1 = courseRepository.getOne(course.getName());
+        Course course1 = courseRepository.getOne(course.getId());
 
         Assertions.assertNull(course1.getVirtualMachineModel());
+        /**
+         * all teams have no vm for the given virtual machine model of the course
+         */
         Assertions.assertEquals(0, course1.getTeams().stream().mapToInt(t -> t.getVirtualMachines().size()).sum());
-
+        /**
+         * there is no student owning any virtual machine of the given model
+         */
+        Assertions.assertTrue(course1.getStudents().stream().noneMatch(s -> s.getVirtual_machines().containsAll(course.getVirtualMachineModel().getVirtualMachines())));
     }
 
     @Test

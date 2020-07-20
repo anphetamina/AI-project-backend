@@ -19,8 +19,6 @@ import java.util.stream.IntStream;
 @Transactional
 public class VirtualMachineServiceImpl implements VirtualMachineService {
 
-    // todo change exception messages
-
     @Autowired
     VirtualMachineRepository virtualMachineRepository;
     @Autowired
@@ -47,7 +45,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
          */
         VirtualMachineModel virtualMachineModel = course.getVirtualMachineModel();
         if (virtualMachineModel == null) {
-            throw new VirtualMachineModelNotDefinedException(course.getName());
+            throw new VirtualMachineModelNotDefinedException(course.getId());
         }
 
 
@@ -290,10 +288,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseName) {
-        return Optional.ofNullable(courseRepository.findById(courseName)
+    public Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseId) {
+        return Optional.ofNullable(courseRepository.findById(courseId)
                 .map(c -> modelMapper.map(c.getVirtualMachineModel(), VirtualMachineModelDTO.class))
-                .orElseThrow(() -> new CourseNotFoundException(courseName)));
+                .orElseThrow(() -> new CourseNotFoundException(courseId)));
     }
 
     @Override
@@ -407,28 +405,25 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public boolean deleteVirtualMachineModel(String courseName) {
+    public boolean deleteVirtualMachineModel(String courseId) {
 
-        Course course = courseRepository.findById(courseName).orElseThrow(() -> new CourseNotFoundException(courseName));
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
         VirtualMachineModel model = course.getVirtualMachineModel();
 
         if (model == null) {
-            throw new VirtualMachineModelNotDefinedException(courseName);
+            throw new VirtualMachineModelNotDefinedException(courseId);
         }
 
         /**
          * if there is at least one active virtual machine for model course
          * do not cancel the model
          */
-        if (courseRepository.countVirtualMachinesByCourseAndStatus(courseName, VirtualMachineStatus.ON) > 0) {
+        if (courseRepository.countVirtualMachinesByCourseAndStatus(courseId, VirtualMachineStatus.ON) > 0) {
             return false;
         }
 
         model.setCourse(null);
-        // todo remove vms and their relationships manually
-        for (VirtualMachine vm : new ArrayList<>(model.getVirtualMachines())) {
-            model.removeVirtualMachine(vm);
-        }
+        model.removeVirtualMachines();
         // model.getVirtualMachines().forEach(vm -> vm.setVirtualMachineModel(null)); throws java.util.ConcurrentModificationException
 
         virtualMachineModelRepository.delete(model);

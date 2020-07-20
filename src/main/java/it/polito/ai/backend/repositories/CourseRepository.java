@@ -11,11 +11,11 @@ import java.util.List;
 
 @Repository
 public interface CourseRepository extends JpaRepository<Course, String> {
-    @Query("SELECT s FROM Student s INNER JOIN s.teams t INNER JOIN t.course c WHERE c.name=:courseName")
-    List<Student> getStudentsInTeams(String courseName);
-    @Query("SELECT s FROM Student s INNER JOIN s.courses c WHERE c.name=:courseName AND s NOT IN (SELECT s FROM Student s INNER JOIN s.teams t INNER JOIN t.course c WHERE c.name=:courseName)")
-    // @Query("SELECT s FROM Student s JOIN s.courses c LEFT OUTER JOIN s.teams t ON t.course.name=:courseName WHERE c.name=:courseName AND t.id IS NULL")
-    List<Student> getStudentsNotInTeams(String courseName);
+    @Query("SELECT s FROM Student s INNER JOIN s.teams t INNER JOIN t.course c WHERE c.id=:courseId")
+    List<Student> getStudentsInTeams(String courseId);
+    @Query("SELECT s FROM Student s INNER JOIN s.courses c WHERE c.id=:courseId AND s NOT IN (SELECT s FROM Student s INNER JOIN s.teams t INNER JOIN t.course c WHERE c.id=:courseId)")
+    // @Query("SELECT s FROM Student s JOIN s.courses c LEFT OUTER JOIN s.teams t ON t.course.id=:courseId WHERE c.id=:courseId AND t.id IS NULL")
+    List<Student> getStudentsNotInTeams(String courseId);
 
 
     /*
@@ -38,6 +38,6 @@ public interface CourseRepository extends JpaRepository<Course, String> {
       )
      */
 
-    @Query("select count(v) from Course c inner join c.teams t inner join t.virtualMachines v where c.name=:courseName and v.status=:status")
-    int countVirtualMachinesByCourseAndStatus(String courseName, VirtualMachineStatus status);
+    @Query("select count(v) from Course c inner join c.teams t inner join t.virtualMachines v where c.id=:courseId and v.status=:status")
+    int countVirtualMachinesByCourseAndStatus(String courseId, VirtualMachineStatus status);
 }

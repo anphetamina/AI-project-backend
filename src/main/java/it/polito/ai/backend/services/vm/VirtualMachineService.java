@@ -38,8 +38,8 @@ public interface VirtualMachineService {
                                                 int tot
                                                 );
     VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(Long teamId, VirtualMachineConfigurationDTO configuration);
-    VirtualMachineModelDTO createVirtualMachineModel(String courseName, SystemImage os);
-    boolean deleteVirtualMachineModel(String courseName);
+    VirtualMachineModelDTO createVirtualMachineModel(String courseId, SystemImage os);
+    boolean deleteVirtualMachineModel(String courseId);
 
     /**
      * teacher/student
@@ -51,7 +51,7 @@ public interface VirtualMachineService {
     Optional<TeamDTO> getTeamForVirtualMachine(Long id);
     List<VirtualMachineDTO> getVirtualMachinesForTeam(Long teamId);
     List<VirtualMachineDTO> getVirtualMachinesForStudent(String studentId);
-    Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseName);
+    Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseId);
     Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfigurationForTeam(Long teamId);
     int getActiveVcpuForTeam(Long teamId);
     int getActiveDiskSpaceForTeam(Long teamId);
