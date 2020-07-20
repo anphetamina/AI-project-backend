@@ -72,6 +72,5 @@ public class Course {
     public void addExercise(Exercise exercise) {
         exercise.course = this;
         exercises.add(exercise);
-        exercise.setCourse(this); // todo check
     }
 }

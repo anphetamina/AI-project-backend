@@ -48,7 +48,7 @@ public class ScheduledTasks {
     /*
      * every day at 4:30am
      * */
-    @Scheduled(cron = "0 33 12 * * ?")
+    @Scheduled(cron = "0 30 4 * * ?")
     public void expiredAssignment() {
         System.out.println("Conrtollo la scadenza condegne");
         /*Consegne scaduta*/

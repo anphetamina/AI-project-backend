@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -117,7 +118,7 @@ public class StudentController {
     }
 
     @GetMapping("/{studentId}/assignments")
-    CollectionModel<AssignmentDTO> getAssignments(@PathVariable String studentId){
+    List<AssignmentDTO> getAssignments(@PathVariable String studentId){
         try {
             List<AssignmentDTO> assignmentDTOS = exerciseService.getAssignmentsForStudent(studentId).stream()
                     .map(a -> {
@@ -125,8 +126,13 @@ public class StudentController {
                         return ModelHelper.enrich(a,studentId,exerciseId);
                     })
                     .collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentId)).withSelfRel();
-            return CollectionModel.of(assignmentDTOS, selfLink);
+            List<AssignmentDTO> assignmentDTOList = new ArrayList<>();
+            for (AssignmentDTO a:assignmentDTOS) {
+                Long exerciseId = exerciseService.getExerciseForAssignment(a.getId()).map(ExerciseDTO::getId).orElseThrow( () -> new ExerciseNotFoundException(a.getId().toString()));
+                assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId));
+
+            }
+            return assignmentDTOList;
         }catch (TeamServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
