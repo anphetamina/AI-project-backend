@@ -218,7 +218,7 @@ public class CourseController {
         }
     }
 
-    @GetMapping("/{courseId}/teams/availableStudents")
+    @GetMapping("/{courseId}/teams/available-students")
     CollectionModel<StudentDTO> getAvailableStudents(@PathVariable String courseId) {
         try {
             List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
