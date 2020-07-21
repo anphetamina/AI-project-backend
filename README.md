@@ -39,7 +39,7 @@ Tutte le immagini sono state salvate come array di byte nel db.(Se seguendo ques
 |Add assignment state equal to null|POST|/API/exercises/{exerciseId}/assignmentNull|da fare in maniera automatica dopo che viene caricato un exercise||||
 |Add assignment state equal to read|POST|/API/exercises/{exerciseId}/assignmentRead|Student|<ul><li>String studentId</ul>|||
 |Add assignment for exercise|POST|API/exercises/{exerciseId}/assignmentSubmit|Student|<ul><li>String studentId</ul>|image=MultipartFile file|Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo|
-|Add review for assignment|POST|API/exercises/{exerciseId}/assignmentReview"|Teacher|<ul><li>String studentId <li>String flag<li>String voto</ul>|image=MultipartFile file| Il voto viene richiesto solo se il flag=false e dunque l'elaborato e definitivo, se il falg=true l'elaborato dovrà essere letto e consegnato dallo studente|
+|Add review for assignment|POST|API/exercises/{exerciseId}/assignmentReview|Teacher|<ul><li>String studentId <li>String flag<li>String voto</ul>|image=MultipartFile file| Il voto viene richiesto solo se il flag=false e dunque l'elaborato e definitivo, se il falg=true l'elaborato dovrà essere letto e consegnato dallo studente|
 |Add exercise for course|POST|/API/courses/{courseId}/createExercise|Teacher|<ul><li>String expired</ul>|image=MultipartFile file||
 |Get exercise for course|GET|/API/courses/{courseId}/exercises|Teacher/Student||||
 |Get assignment for id|GET|/API/assignments/{courseId}/{assignmentId}|Teacher/Student|||
@@ -77,3 +77,4 @@ Nella classe ScheduledTasks c'è un metodo che parte in maniera automatica alle 
 |Confirm token|GET|/API/notifications/confirm/{token}|Student||||
 |Reject token|GET|/API/notifications/reject/{token}|Student||||
 |Get unexpired tokens by team|GET|/API/teams/{teamId}/tokens|Student||||
+|Get unexpired tokens by student and course|GET|/API/students/{studentId}/courses/{courseId}/tokens|Student||||
