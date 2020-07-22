@@ -3,9 +3,11 @@ package it.polito.ai.backend.controllers;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.entities.Course;
+import it.polito.ai.backend.entities.Exercise;
 import it.polito.ai.backend.entities.SystemImage;
 import it.polito.ai.backend.services.Utils;
-import it.polito.ai.backend.services.exercise.ExerciseService;
+import it.polito.ai.backend.services.exercise.*;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.*;
 import it.polito.ai.backend.services.vm.*;
@@ -897,6 +899,254 @@ public class CourseController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/{courseId}/{exerciseId}")
+    ExerciseDTO getOne(@PathVariable String courseId, @PathVariable Long exerciseId) {
+        try {
+            ExerciseDTO exerciseDTO = exerciseService.getExercise(exerciseId)
+                    .orElseThrow(() -> new TeamNotFoundException(exerciseId.toString()));
+            Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
+            if(!courseDTO.isPresent())
+                throw new CourseNotFoundException(courseId);
+            String courseName = courseDTO.get().getName();
+            return ModelHelper.enrich(exerciseDTO, courseName);
+        }catch (TeamServiceException | ExerciseServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
+    @GetMapping("/{courseId}/{exerciseId}/assignments")
+    List<AssignmentDTO> getLastAssignments(@PathVariable String courseId, @PathVariable Long exerciseId ){
+        try {
+            Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
+            if(!courseDTO.isPresent())
+                throw new CourseNotFoundException(exerciseId.toString());
+            List<StudentDTO> students = teamService.getEnrolledStudents(courseDTO.get().getId());
+            List<AssignmentDTO> lastAssignments = new ArrayList<AssignmentDTO>();
+            for (StudentDTO student:students) {
+                AssignmentDTO lastAssignment = exerciseService.getAssignmentsForStudent(student.getId())
+                        .stream().reduce((a1,a2)-> a2).orElse(null);
+                if(lastAssignment==null)
+                    throw  new AssignmentNotFoundException(student.getId());
+                lastAssignments.add(lastAssignment);
+
+            }
+            List<AssignmentDTO> assignmentDTOS= new ArrayList<>();
+            for (AssignmentDTO a:lastAssignments) {
+                String studentId = exerciseService.getStudentForAssignment(a.getId()).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(a.getId().toString()));
+                assignmentDTOS.add(ModelHelper.enrich(a,studentId,exerciseId));
+
+            }
+
+            return  assignmentDTOS;
+
+
+        }catch (TeamServiceException | ExerciseServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
+    @GetMapping("/{courseId}/{exerciseId}/history")
+    List<AssignmentDTO> getHistoryAssignments(@PathVariable String courseId,
+            @PathVariable Long exerciseId,@RequestBody Map<String,String> map ){
+        if(map.containsKey("studentId")){
+            try{
+                Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
+                if(!courseDTO.isPresent())
+                    throw new CourseNotFoundException(courseId);
+                List<AssignmentDTO> assignmentDTOS =
+                        exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
+                System.out.println(assignmentDTOS.size());
+                List<AssignmentDTO> assignmentDTOList = new ArrayList<>();
+                for (AssignmentDTO a:assignmentDTOS) {
+                    String studentId = exerciseService.getStudentForAssignment(a.getId()).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(a.getId().toString()));
+                    assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId));
+
+                }
+                return  assignmentDTOList;
+
+            }catch (TeamServiceException | ExerciseServiceException exception) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+            } catch (Exception exception) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+            }
+
+        }else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+    }
+
+
+
+
+    @PostMapping("/{courseId}/{exerciseId}/assignmentNull")
+    void setNullAssignment(@PathVariable String courseId,@PathVariable Long exerciseId){
+        try{
+            /*No duplicati*/
+            List<AssignmentDTO> assignments = exerciseService.getAssignmentsForExercise(exerciseId);
+            if(!assignments.isEmpty())
+                throw new Exception(exerciseId.toString());
+            /*Per ogni studente iscritto al corso aggiungere un'elaborato con stato null*/
+            Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
+            if(!courseDTO.isPresent())
+                throw new CourseNotFoundException(courseId);
+            Optional<ExerciseDTO> exercise = exerciseService.getExercise(exerciseId);
+            if(!exercise.isPresent())
+                throw  new ExerciseNotFoundException(exerciseId.toString());
+            List<StudentDTO> students = teamService.getEnrolledStudents(courseDTO.get().getId());
+            for (StudentDTO student:students) {
+                exerciseService.addAssignmentByte(
+                        Utils.getNow(),
+                        AssignmentStatus.NULL,
+                        true,null,exercise.get().getImage(),student.getId(),exerciseId);
+            }
+
+        }catch (TeamNotFoundException | ExerciseServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception ) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
+    @PostMapping("/{courseId}/{exerciseId}/assignmentRead")
+    void setReadAssignment(@PathVariable String courseId,
+            @PathVariable Long exerciseId, @RequestBody Map<String,String> map){
+        if (map.containsKey("studentId")) {
+            try {
+                Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
+                if(!courseDTO.isPresent())
+                    throw new CourseNotFoundException(exerciseId.toString());
+                List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
+                AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
+
+                if(assignment==null)
+                    throw  new AssignmentNotFoundException(map.get("studentId"));
+
+                Byte[] image = assignment.getImage();
+                if(assignment.getStatus()==AssignmentStatus.NULL ||
+                        (assignment.getStatus()==AssignmentStatus.RIVSTO && assignment.isFlag()))
+                    exerciseService.addAssignmentByte(Utils.getNow(),
+                            AssignmentStatus.LETTO,true,null,image,map.get("studentId"),exerciseId);
+                else
+                    throw new Exception(HttpStatus.CONFLICT+" "+exerciseId.toString());
+
+
+            }catch (TeamServiceException | ExerciseServiceException exception) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+            } catch (Exception exception) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    @PostMapping("/{courseId}/{exerciseId}/assignmentSubmit")
+    void submitAssignment(
+            @RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable String courseId, @PathVariable Long exerciseId){
+        /*Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo*/
+        if (map.containsKey("studentId")){
+            try {
+                Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
+                if(!courseDTO.isPresent())
+                    throw new CourseNotFoundException(exerciseId.toString());
+                Utils.checkTypeImage(file);
+                Optional<ExerciseDTO> exercise = exerciseService.getExercise(exerciseId);
+                if(!exercise.isPresent())
+                    throw  new ExerciseNotFoundException(exerciseId.toString());
+
+                List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
+                AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
+                if(assignment==null)
+                    throw  new AssignmentNotFoundException(map.get("studentId"));
+
+                if(exercise.get().getExpired().after(Utils.getNow()) && assignment.isFlag() && assignment.getStatus()==AssignmentStatus.LETTO)
+                    exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.CONSEGNATO,false,null,Utils.getBytes(file),map.get("studentId"),exerciseId);
+                else
+                    throw new Exception(exerciseId.toString());
+
+            }catch (TeamServiceException | ExerciseServiceException exception) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+            } catch (ResponseStatusException exception) {
+                throw exception;
+            } catch (Exception exception) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+    }
+
+    @PostMapping("/{courseId}/{exerciseId}/assignmentReview")
+    void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable String courseId, @PathVariable Long exerciseId){
+        /*Se il falg=false allora c'è anche il voto
+         * se è true allora non c'è il voto*/
+        if(map.containsKey("flag") && map.containsKey("studentId")){
+            try {
+                Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
+                if(!courseDTO.isPresent())
+                    throw new CourseNotFoundException(exerciseId.toString());
+                Utils.checkTypeImage(file);
+                List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
+                AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
+                if(assignment==null)
+                    throw  new AssignmentNotFoundException(map.get("studentId"));
+
+                boolean flag =  Boolean.parseBoolean(map.get("flag"));
+                if(assignment.getStatus()==AssignmentStatus.CONSEGNATO){
+                    if(flag)
+                        exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.RIVSTO,
+                                flag,null,Utils.getBytes(file),map.get("studentId"),exerciseId);
+                    else {
+                        if(map.containsKey("score")){
+
+                            Integer score = Integer.parseInt(map.get("score"));
+                            System.out.println(score);
+                            exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.RIVSTO,
+                                    flag,score,Utils.getBytes(file),map.get("studentId"),exerciseId);
+                        }else {
+                            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+                        }
+                    }
+                }
+
+            }catch (TeamServiceException | ExerciseServiceException exception) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+            } catch (ResponseStatusException exception) {
+                throw exception;
+            } catch (Exception exception) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+            }
+
+        }else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    @GetMapping("/{courseId}/{exerciseId}/{assignmentId}")
+    AssignmentDTO getOne(@PathVariable Long assignmentId, @PathVariable String courseId, @PathVariable Long exerciseId) {
+        try {
+            Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
+            if(!courseDTO.isPresent())
+                throw  new CourseNotFoundException(courseId);
+            Optional<ExerciseDTO> exerciseDTO = exerciseService.getExercise(exerciseId);
+           if(!exerciseDTO.isPresent())
+               throw  new ExerciseNotFoundException(exerciseId.toString());
+            AssignmentDTO assignmentDTO = exerciseService.getAssignment(assignmentId).orElseThrow(() -> new AssignmentNotFoundException(assignmentId.toString()));
+            String studentId = exerciseService.getStudentForAssignment(assignmentId).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(assignmentId.toString()));
+            return ModelHelper.enrich(assignmentDTO,studentId,exerciseId);
+        } catch (ExerciseServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }
     }
 

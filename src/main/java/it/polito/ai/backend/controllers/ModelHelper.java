@@ -1,8 +1,11 @@
 package it.polito.ai.backend.controllers;
 
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.services.team.TeamService;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+
+import java.util.List;
 
 
 public class ModelHelper {
@@ -45,16 +48,15 @@ public class ModelHelper {
         return teacherDTO.add(selfLink).add(coursesLink);
     }
     public static ExerciseDTO enrich(ExerciseDTO exerciseDTO, String courseId){
-        Link selfLink = WebMvcLinkBuilder.linkTo(ExerciseController.class).slash(exerciseDTO.getId()).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getExercises(courseId)).withSelfRel();
         Link courseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseId)).withRel("course");
-        Link assignmentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getLastAssignments(exerciseDTO.getId())).withRel("assignments");
-        exerciseDTO.add(selfLink).add(courseLink,assignmentsLink);
+        exerciseDTO.add(selfLink).add(courseLink);
         return exerciseDTO;
     }
 
-    public static AssignmentDTO enrich(AssignmentDTO assignmentDTO, String studentId, Long exerciseId){
-        Link selfLink = WebMvcLinkBuilder.linkTo(ExerciseController.class).slash(assignmentDTO.getId()).withSelfRel();
-        Link exerciseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getOne(exerciseId)).withRel("exercise");
+    public static AssignmentDTO enrich(AssignmentDTO assignmentDTO, String studentId, Long exerciseId, String courseId){
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(assignmentDTO.getId(),courseId,exerciseId)).withSelfRel();
+        Link exerciseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseId,exerciseId)).withRel("exercise");
         Link studentLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getOne(studentId)).withRel("student");
         assignmentDTO.add(selfLink).add(exerciseLink).add(studentLink);
         return  assignmentDTO;

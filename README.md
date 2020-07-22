@@ -33,16 +33,16 @@ Tutte le immagini sono state salvate come array di byte nel db.(Se seguendo ques
 
 | Use case | Operation | URL | Roles | Request body |Request params|Notes|
 |---|---|---|---|---|---|---|
-|Get exercise by id|GET| /API/exercises/{exerciseId}|Student/Teacher|-|-|-|
-|Get last assignments for all student enrolled to the course|GET|/API/exercises/{exerciseId}/assignments|Teacher|-|-|-|
-|Get the history of the assignment for a student|GET|/API/exercises/{exerciseId}/history|Teacher/Student ony for his id|-|-|-|
-|Add assignment state equal to null|POST|/API/exercises/{exerciseId}/assignmentNull|da fare in maniera automatica dopo che viene caricato un exercise|-|-|-|
-|Add assignment state equal to read|POST|/API/exercises/{exerciseId}/assignmentRead|Student|String studentId|-|-|
-|Add assignment for exercise|POST|/API/exercises/{exerciseId}/assignmentSubmit|Student|String studentId|image=MultipartFile file|Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo|
-|Add review for assignment|POST|/API/exercises/{exerciseId}/assignmentReview|Teacher|String studentId <br>String flag<br>String voto|image=MultipartFile file| Il voto viene richiesto solo se il flag=false e dunque l'elaborato e definitivo, se il falg=true l'elaborato dovrà essere letto e consegnato dallo studente|
+|Get exercise by id|GET|/API/courses/{courseId}/{exerciseId}|Student/Teacher|-|-|-|
+|Get last assignments for all student enrolled to the course|GET|/API/courses/{courseId}/{exerciseId}/assignments|Teacher|-|-|-|
+|Get the history of the assignment for a student|GET|/API/courses/{courseId}/{exerciseId}/history|Teacher/Student ony for his id|-|-|-|
+|Add assignment state equal to null|POST|/API/courses/{courseId}/{exerciseId}/assignmentNull|da fare in maniera automatica dopo che viene caricato un exercise|-|-|-|
+|Add assignment state equal to read|POST|/API/courses/{courseId}/{exerciseId}/assignmentRead|Student|String studentId|-|-|
+|Add assignment for exercise|POST|/API/courses/{courseId}/{exerciseId}/assignmentSubmit|Student|String studentId|image=MultipartFile file|Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo|
+|Add review for assignment|POST|/API/courses/{courseId}/{exerciseId}/assignmentReview|Teacher|String studentId <br>String flag<br>String voto|image=MultipartFile file| Il voto viene richiesto solo se il flag=false e dunque l'elaborato e definitivo, se il falg=true l'elaborato dovrà essere letto e consegnato dallo studente|
 |Add exercise for course|POST|/API/courses/{courseId}/createExercise|Teacher|String expired|image=MultipartFile file|-|
 |Get exercise for course|GET|/API/courses/{courseId}/exercises|Teacher/Student|-|-|-|
-|Get assignment for id|GET|/API/assignments/{courseId}/{assignmentId}|Teacher/Student|-|-|-|
+|Get assignment for id|GET|/API/courses/{courseId}/{assignmentId}|Teacher/Student|-|-|-|
 |Get all assignments for student|GET|/API/students/{studentId}/assignments|Teacher/Student|-|-|-|
 
 Nella classe ScheduledTasks c'è un metodo che parte in maniera automatica alle 4.30 per aggiungere lo stato consegnato agli elaborati non consegnati prima della scadenza della consega

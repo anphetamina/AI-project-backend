@@ -7,6 +7,7 @@ import it.polito.ai.backend.dtos.CourseDTO;
 import it.polito.ai.backend.dtos.StudentDTO;
 import it.polito.ai.backend.dtos.TeamDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
+import it.polito.ai.backend.services.exercise.ExerciseServiceException;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.*;
 import it.polito.ai.backend.services.vm.VirtualMachineNotFoundException;
@@ -24,6 +25,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -120,20 +122,19 @@ public class StudentController {
     @GetMapping("/{studentId}/assignments")
     List<AssignmentDTO> getAssignments(@PathVariable String studentId){
         try {
-            List<AssignmentDTO> assignmentDTOS = exerciseService.getAssignmentsForStudent(studentId).stream()
-                    .map(a -> {
-                        Long exerciseId = exerciseService.getExerciseForAssignment(a.getId()).map(ExerciseDTO::getId).orElseThrow( () -> new ExerciseNotFoundException(a.getId().toString()));
-                        return ModelHelper.enrich(a,studentId,exerciseId);
-                    })
-                    .collect(Collectors.toList());
+            Optional<StudentDTO> studentDTO = teamService.getStudent(studentId);
+            if(!studentDTO.isPresent())
+                throw new StudentNotFoundException(studentId);
+            List<AssignmentDTO> assignmentDTOS = exerciseService.getAssignmentsForStudent(studentId);
             List<AssignmentDTO> assignmentDTOList = new ArrayList<>();
             for (AssignmentDTO a:assignmentDTOS) {
                 Long exerciseId = exerciseService.getExerciseForAssignment(a.getId()).map(ExerciseDTO::getId).orElseThrow( () -> new ExerciseNotFoundException(a.getId().toString()));
-                assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId));
+                String courseId = exerciseService.getCourse(exerciseId).map(CourseDTO::getId).orElseThrow(() -> new CourseNotFoundException(exerciseId.toString()));
+                assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId,courseId));
 
             }
             return assignmentDTOList;
-        }catch (TeamServiceException exception) {
+        }catch (TeamServiceException | ExerciseServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
