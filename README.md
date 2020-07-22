@@ -4,30 +4,30 @@
 
 | Use case | Operation | URL | Roles | Request body | Request params | Notes |
 |---|---|---|---|---|---|---|
-|Get virtual machine|GET|/API/virtual-machines/{vmId}|Student/Teacher|-|-|-|
-|Get virtual machine owners|GET|/API/virtual-machines/{vmId}/owners|Student/Teacher|-|-|-|
-|Get virtual machine model|GET|/API/virtual-machines/{vmId}/model|Student/Teacher|-|-|-|
-|Get virtual machine team|GET|/API/virtual-machines/{vmId}/team|Student/Teacher|-|-|-|
-|Create virtual machine|POST|/API/virtual-machines|Student|String studentId<br>Long teamId<br>int numVcpu<br>int diskSpace<br>int ram|-|-|
-|Delete virtual machine|DELETE|/API/virtual-machines/{vmId}|Student|-|-|-|
-|Update virtual machine|PUT|/API/virtual-machines/{vmId}|Student|-|-|-|
-|Turn on virtual machine|POST|/API/virtual-machines/{vmId}/on|Student|-|-|-|
-|Turn off virtual machine|POST|/API/virtual-machines/{vmId}/off|Student|-|-|-|
-|Get virtual machines by team|GET|/API/teams/{teamId}/virtual-machines|Student|-|-|-|
-|Get virtual machines by owner|GET|/API/students/{studentId}/virtual-machines|Student|-|-|-|
-|Share virtual machine ownership|POST|/API/virtual-machines/{vmId}/owners|Student|String studentId|-|-|
-|Create virtual machine configuration|POST|/API/teams/{teamId}/configuration|Teacher|int min_vcpu<br>int max_vcpu<br>int min_disk_space<br>int max_disk_space<br>int min_ram<br>int max_ram<br>int max_on<br>int tot|-|-|
-|Update virtual machine configuration|PUT|/API/teams/{teamId}/configuration|Teacher|-|-|-|
+|Get virtual machine|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}|Student/Teacher|-|-|-|
+|Get virtual machine owners|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}/owners|Student/Teacher|-|-|-|
+|Get virtual machine model|GET|/API/courses/{courseId}/model|Student/Teacher|-|-|-|
+|~~Get virtual machine team~~|GET|/API/virtual-machines/{vmId}/team|Student/Teacher|-|-|-|
+|Create virtual machine|POST|/API/courses/{courseId}/teams/{teamId}/virtual-machines|Student|String studentId<br>Long teamId<br>int numVcpu<br>int diskSpace<br>int ram|-|-|
+|Delete virtual machine|DELETE|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}|Student|-|-|-|
+|Update virtual machine|PUT|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}|Student|-|-|-|
+|Turn on virtual machine|POST|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}/on|Student|-|-|-|
+|Turn off virtual machine|POST|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}/off|Student|-|-|-|
+|Get virtual machines|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines|Student|-|-|-|
+|~~Get virtual machines by owner~~|GET|/API/students/{studentId}/virtual-machines|Student|-|-|-|
+|Share virtual machine ownership|POST|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}/owners|Student|String studentId|-|-|
+|Create virtual machine configuration|POST|/API/courses/{courseId}/teams/{teamId}/configuration|Teacher|int min_vcpu<br>int max_vcpu<br>int min_disk_space<br>int max_disk_space<br>int min_ram<br>int max_ram<br>int max_on<br>int tot|-|-|
+|Update virtual machine configuration|PUT|/API/courses/{courseId}/teams/{teamId}/configuration|Teacher|-|-|-|
 |Create virtual machine model|POST|/API/courses/{courseName}/model|Teacher|SystemImage os|-|-|
 |Delete virtual machine model|DELETE|/API/courses/{courseName}/model|Teacher|-|-|By deleting a VM model, all the related virtual machines are deleted as well|
-|Get virtual machine model by course|GET|/API/courses/{courseName}/model|Teacher|-|-|-|
-|Get virtual machine configuration by team|GET|/API/teams/{teamId}/configuration|Teacher|-|-|-|
-|Get CPU (cores) in use|GET|/API/teams/{teamId}/virtual-machines/active-cpu|Student/Teacher|-|-|-|
-|Get disk space (MB) in use|GET|/API/teams/{teamId}/virtual-machines/active-disk-space|Student/Teacher|-|-|-|
-|Get RAM (GB) in use|GET|/API/teams/{teamId}/virtual-machines/active-ram|Student/Teacher|-|-|-|
-|Get total virtual machines number|GET|/API/teams/{teamId}/virtual-machines/tot|Student/Teacher|-|-|-|
-|Get active virtual machines number|GET|/API/teams/{teamId}/virtual-machines/tot-on|Student/Teacher|-|-|-|
-|Get total/active resources|GET|/API/teams/{teamId}/virtual-machines/resources|Student/Teacher|-|-|-|
+|Get virtual machine model|GET|/API/courses/{courseName}/model|Teacher|-|-|-|
+|~~Get virtual machine configuration by team~~|GET|/API/teams/{teamId}/configuration|Teacher|-|-|-|
+|Get CPU (cores) in use|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/active-cpu|Student/Teacher|-|-|-|
+|Get disk space (MB) in use|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/active-disk-space|Student/Teacher|-|-|-|
+|Get RAM (GB) in use|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/active-ram|Student/Teacher|-|-|-|
+|Get total virtual machines number|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/tot|Student/Teacher|-|-|-|
+|Get active virtual machines number|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/tot-on|Student/Teacher|-|-|-|
+|Get total/active resources|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/resources|Student/Teacher|-|-|-|
 
 
 ## Exercise and Assignment service
@@ -52,8 +52,8 @@ Nella classe ScheduledTasks c'è un metodo che parte in maniera automatica alle 
 ## Team service
 | Use case | Operation | URL | Roles | Request body | Request params | Notes |
 |---|---|---|---|---|---|---|
-|Get team|GET|/API/teams/{teamId}|Student/Teacher|-|-|-|
-|Get team members|GET|/API/teams/{teamId}/members|Student|-|-|-|
+|Get team|GET|/API/courses/{courseId}/teams/{teamId}|Student/Teacher|-|-|-|
+|Get team members|GET|/API/courses/{courseId}/teams/{teamId}/members|Student|-|-|-|
 |Get students in team|GET|/API/courses/{courseId}/teams/students|Teacher|-|-|-|
 |Get available students|GET|/API/courses/{courseId}/teams/available-students|Student|-|-|A student is not available if he is part of a "completed" team. A team is "completed" only if all proposed students have confirmed their participation|
 |Enable course|POST|/API/courses/{courseId}/enable|Teacher|-|-|-|
@@ -62,13 +62,13 @@ Nella classe ScheduledTasks c'è un metodo che parte in maniera automatica alle 
 |Add teacher to a course|POST|/API/courses/{courseId}/addTeacher|Teacher|String teacherId|-|-|
 |Add and enroll students|POST|/API/courses/{courseId}/enrollMany|Teacher|csv file|-|-|
 |Enroll students|POST|/API/courses/{courseId}/enrollAll|Teacher|csv file|-|-|
-|Create team|POST|/API/courses/{courseId}/createTeam|Student|String teamName<br>List\<String\> memberIds|-|-|
+|Create team|POST|/API/courses/{courseId}/teams|Student|String teamName<br>List\<String\> memberIds|-|-|
 |Get all courses|GET|/API/courses|-|-|-|
 |Get course|GET|/API/courses/{courseId}|Teacher|-|-|-|
 |Get enrolled students|GET|/API/courses/{courseId}/enrolled|Teacher|-|-|-|
-|Get teams by course|GET|/API/courses/{courseId}/teams|Teacher|-|-|-|
-|Get teachers by course|GET|/API/courses/{courseId}/teachers|Teacher|-|-|-|
-|Create course|POST|/API/courses|Teacher|CourseDTO course|-|-|-|
+|Get teams|GET|/API/courses/{courseId}/teams|Teacher|-|-|-|
+|Get teachers|GET|/API/courses/{courseId}/teachers|Teacher|-|-|-|
+|Create course|POST|/API/courses|Teacher|CourseDTO course|-|-|
 |Delete a course|DELETE|/API/courses/{courseId}|Teacher|-|-|-|
 |Update name course|PUT|/API/courses/{courseId}|Teacher|String name|-|-|
 |Update course|PUT|/API/courses/{courseId}/setCourse|Teacher|String name <br>String min <br>String max <br>String enabled|-|-|
@@ -78,5 +78,5 @@ Nella classe ScheduledTasks c'è un metodo che parte in maniera automatica alle 
 |---|---|---|---|---|---|---|
 |Confirm token|GET|/API/notifications/confirm/{token}|Student|-|-|-|
 |Reject token|GET|/API/notifications/reject/{token}|Student|-|-|-|
-|Get unexpired tokens by team|GET|/API/teams/{teamId}/tokens|Student|-|-|-|
-|Get unexpired tokens by student|GET|/API/courses/{courseId}/tokens|Student|-|String studentId|-|
+|~~Get unexpired tokens by team~~|GET|/API/teams/{teamId}/tokens|Student|-|-|-|
+|Get unexpired tokens by student|GET|/API/courses/{courseId}/enrolled/{studentId}/tokens|Student|-|-|-|
