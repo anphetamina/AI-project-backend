@@ -10,7 +10,7 @@ import javax.persistence.*;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class VirtualMachineConfiguration {
+public class Configuration {
     @Id
     @GeneratedValue
     @EqualsAndHashCode.Include
@@ -40,16 +40,16 @@ public class VirtualMachineConfiguration {
      */
     int max_on;
 
-    @OneToOne(mappedBy = "virtualMachineConfiguration", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToOne(mappedBy = "configuration", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     Team team;
 
     public void setTeam(Team team) {
         if (this.team != null) {
-            this.team.virtualMachineConfiguration = null;
+            this.team.configuration = null;
         }
         this.team = team;
         if (team != null) {
-            team.virtualMachineConfiguration = this;
+            team.configuration = this;
         }
     }
 }

@@ -26,9 +26,9 @@ public interface TeamService {
 
     boolean addStudentToCourse(String studentId, String courseId);
 
-    void enableCourse(String  courseId);
+    void enableCourse(String courseId);
 
-    void disableCourse(String  courseId);
+    void disableCourse(String courseId);
 
     List<Boolean> addAll(List<StudentDTO> students);
     List<Boolean> enrollAll(List<String> studentIds, String courseId);
@@ -41,8 +41,8 @@ public interface TeamService {
 
     TeamDTO proposeTeam(String courseId, String name, List<String> memberIds);
 
-    List<TeamDTO> getTeamsForCourse(String  courseId);
-    List<TeacherDTO> getTeachersForCourse(String  courseId);
+    List<TeamDTO> getTeamsForCourse(String courseId);
+    List<TeacherDTO> getTeachersForCourse(String courseId);
 
     List<StudentDTO> getStudentsInTeams(String courseId);
     List<StudentDTO> getAvailableStudents(String courseId);

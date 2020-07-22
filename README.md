@@ -7,21 +7,19 @@
 |Get virtual machine|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}|Student/Teacher|-|-|-|
 |Get virtual machine owners|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}/owners|Student/Teacher|-|-|-|
 |Get virtual machine model|GET|/API/courses/{courseId}/model|Student/Teacher|-|-|-|
-|~~Get virtual machine team~~|GET|/API/virtual-machines/{vmId}/team|Student/Teacher|-|-|-|
-|Create virtual machine|POST|/API/courses/{courseId}/teams/{teamId}/virtual-machines|Student|String studentId<br>Long teamId<br>int numVcpu<br>int diskSpace<br>int ram|-|-|
+|Create virtual machine|POST|/API/courses/{courseId}/teams/{teamId}/virtual-machines|Student|String studentId<br>int numVcpu<br>int diskSpace<br>int ram|-|-|
 |Delete virtual machine|DELETE|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}|Student|-|-|-|
 |Update virtual machine|PUT|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}|Student|-|-|-|
 |Turn on virtual machine|POST|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}/on|Student|-|-|-|
 |Turn off virtual machine|POST|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}/off|Student|-|-|-|
 |Get virtual machines|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines|Student|-|-|-|
-|~~Get virtual machines by owner~~|GET|/API/students/{studentId}/virtual-machines|Student|-|-|-|
 |Share virtual machine ownership|POST|/API/courses/{courseId}/teams/{teamId}/virtual-machines/{vmId}/owners|Student|String studentId|-|-|
-|Create virtual machine configuration|POST|/API/courses/{courseId}/teams/{teamId}/configuration|Teacher|int min_vcpu<br>int max_vcpu<br>int min_disk_space<br>int max_disk_space<br>int min_ram<br>int max_ram<br>int max_on<br>int tot|-|-|
-|Update virtual machine configuration|PUT|/API/courses/{courseId}/teams/{teamId}/configuration|Teacher|-|-|-|
-|Create virtual machine model|POST|/API/courses/{courseName}/model|Teacher|SystemImage os|-|-|
-|Delete virtual machine model|DELETE|/API/courses/{courseName}/model|Teacher|-|-|By deleting a VM model, all the related virtual machines are deleted as well|
-|Get virtual machine model|GET|/API/courses/{courseName}/model|Teacher|-|-|-|
-|~~Get virtual machine configuration by team~~|GET|/API/teams/{teamId}/configuration|Teacher|-|-|-|
+|Create configuration|POST|/API/courses/{courseId}/teams/{teamId}/configuration|Teacher|int min_vcpu<br>int max_vcpu<br>int min_disk_space<br>int max_disk_space<br>int min_ram<br>int max_ram<br>int max_on<br>int tot|-|-|
+|Update configuration|PUT|/API/courses/{courseId}/teams/{teamId}/configuration|Teacher|-|-|-|
+|Create virtual machine model|POST|/API/courses/{courseId}/model|Teacher|SystemImage os|-|-|
+|Delete virtual machine model|DELETE|/API/courses/{courseId}/model|Teacher|-|-|By deleting a VM model, all the related virtual machines are deleted as well|
+|Get virtual machine model|GET|/API/courses/{courseId}/model|Teacher|-|-|-|
+|Get configuration|GET|/API/courses/{courseId}/teams/{teamId}/configuration|Teacher|-|-|-|
 |Get CPU (cores) in use|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/active-cpu|Student/Teacher|-|-|-|
 |Get disk space (MB) in use|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/active-disk-space|Student/Teacher|-|-|-|
 |Get RAM (GB) in use|GET|/API/courses/{courseId}/teams/{teamId}/virtual-machines/active-ram|Student/Teacher|-|-|-|
@@ -40,8 +38,8 @@ Tutte le immagini sono state salvate come array di byte nel db.(Se seguendo ques
 |Get the history of the assignment for a student|GET|/API/exercises/{exerciseId}/history|Teacher/Student ony for his id|-|-|-|
 |Add assignment state equal to null|POST|/API/exercises/{exerciseId}/assignmentNull|da fare in maniera automatica dopo che viene caricato un exercise|-|-|-|
 |Add assignment state equal to read|POST|/API/exercises/{exerciseId}/assignmentRead|Student|String studentId|-|-|
-|Add assignment for exercise|POST|API/exercises/{exerciseId}/assignmentSubmit|Student|String studentId|image=MultipartFile file|Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo|
-|Add review for assignment|POST|API/exercises/{exerciseId}/assignmentReview|Teacher|String studentId <br>String flag<br>String voto|image=MultipartFile file| Il voto viene richiesto solo se il flag=false e dunque l'elaborato e definitivo, se il falg=true l'elaborato dovrà essere letto e consegnato dallo studente|
+|Add assignment for exercise|POST|/API/exercises/{exerciseId}/assignmentSubmit|Student|String studentId|image=MultipartFile file|Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo|
+|Add review for assignment|POST|/API/exercises/{exerciseId}/assignmentReview|Teacher|String studentId <br>String flag<br>String voto|image=MultipartFile file| Il voto viene richiesto solo se il flag=false e dunque l'elaborato e definitivo, se il falg=true l'elaborato dovrà essere letto e consegnato dallo studente|
 |Add exercise for course|POST|/API/courses/{courseId}/createExercise|Teacher|String expired|image=MultipartFile file|-|
 |Get exercise for course|GET|/API/courses/{courseId}/exercises|Teacher/Student|-|-|-|
 |Get assignment for id|GET|/API/assignments/{courseId}/{assignmentId}|Teacher/Student|-|-|-|
@@ -59,11 +57,11 @@ Nella classe ScheduledTasks c'è un metodo che parte in maniera automatica alle 
 |Enable course|POST|/API/courses/{courseId}/enable|Teacher|-|-|-|
 |Disable course|POST|/API/courses/{courseId}/disable|Teacher|-|-|-|
 |Enroll student|POST|/API/courses/{courseId}/enrollOne|Teacher|String studentId|-|-|
-|Add teacher to a course|POST|/API/courses/{courseId}/addTeacher|Teacher|String teacherId|-|-|
+|Add teacher to a course|POST|/API/courses/{courseId}/teachers|Teacher|String teacherId|-|-|
 |Add and enroll students|POST|/API/courses/{courseId}/enrollMany|Teacher|csv file|-|-|
 |Enroll students|POST|/API/courses/{courseId}/enrollAll|Teacher|csv file|-|-|
 |Create team|POST|/API/courses/{courseId}/teams|Student|String teamName<br>List\<String\> memberIds|-|-|
-|Get all courses|GET|/API/courses|-|-|-|
+|Get all courses|GET|/API/courses|-|-|-|-|
 |Get course|GET|/API/courses/{courseId}|Teacher|-|-|-|
 |Get enrolled students|GET|/API/courses/{courseId}/enrolled|Teacher|-|-|-|
 |Get teams|GET|/API/courses/{courseId}/teams|Teacher|-|-|-|

@@ -64,16 +64,16 @@ public class Team {
     }
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    @JoinColumn(name = "vm_conf")
-    VirtualMachineConfiguration virtualMachineConfiguration;
+    @JoinColumn(name = "configuration")
+    Configuration configuration;
 
-    public void setVirtualMachineConfiguration(VirtualMachineConfiguration virtualMachineConfiguration) {
-        if (this.virtualMachineConfiguration != null) {
-            this.virtualMachineConfiguration.team = null;
+    public void setConfiguration(Configuration configuration) {
+        if (this.configuration != null) {
+            this.configuration.team = null;
         }
-        this.virtualMachineConfiguration = virtualMachineConfiguration;
-        if (virtualMachineConfiguration != null) {
-            virtualMachineConfiguration.team = this;
+        this.configuration = configuration;
+        if (configuration != null) {
+            configuration.team = this;
         }
     }
 

@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 @Transactional
@@ -35,10 +34,22 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     ModelMapper modelMapper;
 
     @Override
-    public VirtualMachineDTO createVirtualMachine(String studentId, Long teamId, int numVcpu, int diskSpace, int ram) {
-        Student student = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
-        Team team = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
-        Course course = team.getCourse();
+    public VirtualMachineDTO createVirtualMachine(String courseId, Long teamId, String studentId, int numVcpu, int diskSpace, int ram) {
+
+
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        Team team = course.getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+
+        Student student = team.getMembers()
+                .stream()
+                .filter(s -> s.getId().equals(studentId))
+                .findFirst()
+                .orElseThrow(() -> new StudentNotFoundException(studentId));
 
         /**
          * check whether the model has been defined for the given course or not
@@ -53,11 +64,11 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
          * check whether the configuration has been defined for the team or not
          * and if the given configuration is owned by the given team
          */
-        if (team.getVirtualMachineConfiguration() == null) {
+        if (team.getConfiguration() == null) {
             throw new ConfigurationNotDefinedException(teamId.toString());
         }
 
-        VirtualMachineConfiguration configuration = team.getVirtualMachineConfiguration();
+        Configuration configuration = team.getConfiguration();
 
         /**
          * check vm instances number
@@ -65,7 +76,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
          * otherwise check the available resources for the team of the student
          */
 
-        int vm_tot = this.getCountVirtualMachinesForTeam(teamId);
+        int vm_tot = team.getVirtualMachines().size();
 
         if (vm_tot + 1 > configuration.getTot()) {
             throw new VirtualMachineNumberException(String.valueOf(vm_tot+1));
@@ -119,11 +130,22 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public VirtualMachineDTO updateVirtualMachine(Long vmId, VirtualMachineDTO newVM) {
+    public VirtualMachineDTO updateVirtualMachine(String courseId, Long teamId, Long vmId, VirtualMachineDTO newVM) {
 
-        VirtualMachine virtualMachine = virtualMachineRepository.findById(vmId).orElseThrow(() -> new VirtualMachineNotFoundException(String.valueOf(vmId)));
+        VirtualMachine virtualMachine = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getVirtualMachines()
+                .stream()
+                .filter(vm -> vm.getId().equals(vmId))
+                .findFirst()
+                .orElseThrow(() -> new VirtualMachineNotFoundException(String.valueOf(vmId)));
 
-        VirtualMachineConfiguration configuration = virtualMachine.getTeam().getVirtualMachineConfiguration();
+        Configuration configuration = virtualMachine.getTeam().getConfiguration();
         if (configuration == null) {
             throw new ConfigurationNotDefinedException(virtualMachine.getTeam().getId().toString());
         }
@@ -198,9 +220,20 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public boolean deleteVirtualMachine(Long id) {
+    public boolean deleteVirtualMachine(String courseId, Long teamId, Long vmId) {
 
-        VirtualMachine virtualMachine = virtualMachineRepository.findById(id).orElseThrow(() -> new VirtualMachineNotFoundException(id.toString()));
+        VirtualMachine virtualMachine = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getVirtualMachines()
+                .stream()
+                .filter(vm -> vm.getId().equals(vmId))
+                .findFirst()
+                .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
 
         if (virtualMachine.getStatus() == VirtualMachineStatus.ON) {
             return false;
@@ -217,16 +250,27 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public void turnOnVirtualMachine(Long id) {
+    public void turnOnVirtualMachine(String courseId, Long teamId, Long vmId) {
 
-        VirtualMachine virtualMachine = virtualMachineRepository.findById(id).orElseThrow(() -> new VirtualMachineNotFoundException(id.toString()));
+        VirtualMachine virtualMachine = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getVirtualMachines()
+                .stream()
+                .filter(vm -> vm.getId().equals(vmId))
+                .findFirst()
+                .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
 
         if (virtualMachine.getStatus() == VirtualMachineStatus.ON) {
             return;
         }
 
         Team team = virtualMachine.getTeam();
-        VirtualMachineConfiguration configuration = team.getVirtualMachineConfiguration();
+        Configuration configuration = team.getConfiguration();
 
         if (configuration == null) {
             throw new ConfigurationNotDefinedException(team.getId().toString());
@@ -273,17 +317,47 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public void turnOffVirtualMachine(Long id) {
+    public void turnOffVirtualMachine(String courseId, Long teamId, Long vmId) {
 
-        VirtualMachine virtualMachine = virtualMachineRepository.findById(id).orElseThrow(() -> new VirtualMachineNotFoundException(id.toString()));
+        VirtualMachine virtualMachine = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getVirtualMachines()
+                .stream()
+                .filter(vm -> vm.getId().equals(vmId))
+                .findFirst()
+                .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
+
         virtualMachine.setStatus(VirtualMachineStatus.OFF);
     }
 
     @Override
-    public boolean addOwnerToVirtualMachine(String studentId, Long vmId) {
+    public boolean addOwnerToVirtualMachine(String courseId, Long teamId, String studentId, Long vmId) {
 
-        VirtualMachine virtualMachine = virtualMachineRepository.findById(vmId).orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
-        Student student = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
+        Team team = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+
+        VirtualMachine virtualMachine = team.getVirtualMachines()
+                .stream()
+                .filter(vm -> vm.getId().equals(vmId))
+                .findFirst()
+                .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
+
+        Student student = team.getMembers()
+                .stream()
+                .filter(s -> s.getId().equals(studentId))
+                .findFirst()
+                .orElseThrow(() -> new StudentNotFoundException(studentId));
+
         if (!virtualMachine.getOwners().contains(student)) {
             virtualMachine.getOwners().add(student);
             return true;
@@ -293,23 +367,30 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
     @Override
     public Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseId) {
-        return Optional.ofNullable(courseRepository.findById(courseId)
-                .map(c -> modelMapper.map(c.getVirtualMachineModel(), VirtualMachineModelDTO.class))
-                .orElseThrow(() -> new CourseNotFoundException(courseId)));
+        Course course =  courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        return Optional.ofNullable(modelMapper.map(course.getVirtualMachineModel(), VirtualMachineModelDTO.class));
     }
 
     @Override
-    public VirtualMachineConfigurationDTO createVirtualMachineConfiguration(Long teamId, int min_vcpu, int max_vcpu, int min_disk_space, int max_disk_space, int min_ram, int max_ram, int max_on, int tot) {
+    public ConfigurationDTO createVirtualMachineConfiguration(String courseId, Long teamId, int min_vcpu, int max_vcpu, int min_disk_space, int max_disk_space, int min_ram, int max_ram, int max_on, int tot) {
 
-        Team team = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+        Team team = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
 
-        if (team.getVirtualMachineConfiguration() != null) {
+        if (team.getConfiguration() != null) {
             throw new ConfigurationAlreadyDefinedException(teamId.toString());
         }
 
         validateConfiguration(max_on, tot, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram);
 
-        VirtualMachineConfiguration configuration = VirtualMachineConfiguration.builder()
+        Configuration configuration = Configuration.builder()
                 .min_vcpu(min_vcpu)
                 .max_vcpu(max_vcpu)
                 .min_disk_space(min_disk_space)
@@ -319,18 +400,24 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
                 .max_on(max_on)
                 .tot(tot)
                 .build();
-        team.setVirtualMachineConfiguration(configuration);
+        team.setConfiguration(configuration);
         virtualMachineConfigurationRepository.save(configuration);
 
-        return modelMapper.map(configuration, VirtualMachineConfigurationDTO.class);
+        return modelMapper.map(configuration, ConfigurationDTO.class);
     }
 
     @Override
-    public VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(Long teamId, VirtualMachineConfigurationDTO configuration) {
+    public ConfigurationDTO updateVirtualMachineConfiguration(String courseId, Long teamId, ConfigurationDTO configuration) {
 
-        Team team = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+        Team team = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
 
-        VirtualMachineConfiguration vmc = team.getVirtualMachineConfiguration();
+        Configuration vmc = team.getConfiguration();
         if (vmc == null) {
             throw new ConfigurationNotDefinedException(teamId.toString());
         }
@@ -346,14 +433,17 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
         validateConfiguration(max_on, tot, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram);
 
-        int vm_tot = this.getCountVirtualMachinesForTeam(teamId);
+        int vm_tot = team.getVirtualMachines().size();
 
         if (configuration.getTot() < vm_tot) {
             throw new InvalidTotNumException(String.valueOf(configuration.getTot()), String.valueOf(vm_tot));
         }
 
         List<VirtualMachine> virtualMachines = team.getVirtualMachines();
-        int activeVMs = this.getCountActiveVirtualMachinesForTeam(teamId);
+        int activeVMs = Math.toIntExact(virtualMachines
+                .stream()
+                .filter(vm -> vm.getStatus() == VirtualMachineStatus.ON)
+                .count());
 
         if (activeVMs > configuration.getMax_on()) {
             throw new InvalidMaxActiveException(String.valueOf(configuration.getMax_on()), String.valueOf(activeVMs));
@@ -400,7 +490,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         vmc.setMax_ram(configuration.getMax_ram());
         vmc.setMin_ram(configuration.getMin_ram());
 
-        return modelMapper.map(virtualMachineConfigurationRepository.save(vmc), VirtualMachineConfigurationDTO.class);
+        return modelMapper.map(virtualMachineConfigurationRepository.save(vmc), ConfigurationDTO.class);
     }
 
     private void validateConfiguration(int max_on, int tot, int min_vcpu, int max_vcpu, int min_disk_space, int max_disk_space, int min_ram, int max_ram) {
@@ -460,16 +550,35 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public Optional<VirtualMachineDTO> getVirtualMachine(Long id) {
-        return Optional.ofNullable(virtualMachineRepository.findById(id)
-                .map(vm -> modelMapper.map(vm, VirtualMachineDTO.class))
-                .orElseThrow(() -> new VirtualMachineNotFoundException(id.toString())));
+    public Optional<VirtualMachineDTO> getVirtualMachine(String courseId, Long teamId, Long vmId) {
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getVirtualMachines()
+                .stream()
+                .filter(vm -> vm.getId().equals(vmId))
+                .findFirst()
+                .map(vm -> modelMapper.map(vm, VirtualMachineDTO.class));
     }
 
     @Override
-    public List<StudentDTO> getOwnersForVirtualMachine(Long id) {
-        return virtualMachineRepository.findById(id)
-                .orElseThrow(() -> new VirtualMachineNotFoundException(id.toString()))
+    public List<StudentDTO> getOwnersForVirtualMachine(String courseId, Long teamId, Long vmId) {
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getVirtualMachines()
+                .stream()
+                .filter(vm -> vm.getId().equals(vmId))
+                .findFirst()
+                .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()))
                 .getOwners()
                 .stream()
                 .map(s -> modelMapper.map(s, StudentDTO.class))
@@ -477,29 +586,13 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public Optional<VirtualMachineModelDTO> getVirtualMachineModelForVirtualMachine(Long id) {
-        return Optional.ofNullable(virtualMachineRepository.findById(id)
-                .map(vm -> modelMapper.map(vm.getVirtualMachineModel(), VirtualMachineModelDTO.class))
-                .orElseThrow(() -> new VirtualMachineNotFoundException(id.toString())));
-    }
-
-    @Override
-    public Optional<CourseDTO> getCourseForVirtualMachineModel(Long modelId) {
-        return Optional.ofNullable(virtualMachineModelRepository.findById(modelId)
-                .map(m -> modelMapper.map(m.getCourse(), CourseDTO.class))
-                .orElseThrow(() -> new VirtualMachineModelNotFoundException(modelId.toString())));
-    }
-
-    @Override
-    public Optional<TeamDTO> getTeamForVirtualMachine(Long id) {
-        return Optional.ofNullable(virtualMachineRepository.findById(id)
-                .map(vm -> modelMapper.map(vm.getTeam(), TeamDTO.class))
-                .orElseThrow(() -> new VirtualMachineNotFoundException(id.toString())));
-    }
-
-    @Override
-    public List<VirtualMachineDTO> getVirtualMachinesForTeam(Long teamId) {
-        return teamRepository.findById(teamId)
+    public List<VirtualMachineDTO> getVirtualMachinesForTeam(String courseId, Long teamId) {
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
                 .getVirtualMachines()
                 .stream()
@@ -508,66 +601,91 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public List<VirtualMachineDTO> getVirtualMachinesForStudent(String studentId) {
-        return studentRepository.findById(studentId)
-                .orElseThrow(() -> new StudentNotFoundException(studentId))
-                .getVirtual_machines()
+    public Optional<ConfigurationDTO> getVirtualMachineConfigurationForTeam(String courseId, Long teamId) {
+        Configuration configuration = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
                 .stream()
-                .map(vm -> modelMapper.map(vm, VirtualMachineDTO.class))
-                .collect(Collectors.toList());
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getConfiguration();
+
+        return Optional.ofNullable(modelMapper.map(configuration, ConfigurationDTO.class));
     }
 
     @Override
-    public Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfigurationForTeam(Long teamId) {
-        return Optional.ofNullable(teamRepository.findById(teamId)
-                .map(t -> modelMapper.map(t.getVirtualMachineConfiguration(), VirtualMachineConfigurationDTO.class))
-                .orElseThrow(() -> new TeamNotFoundException(teamId.toString())));
-    }
+    public int getActiveVcpuForTeam(String courseId, Long teamId) {
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
 
-    @Override
-    public int getActiveVcpuForTeam(Long teamId) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new TeamNotFoundException(teamId.toString());
-        }
         return teamRepository.getActiveNumVcpuByTeam(teamId);
     }
 
     @Override
-    public int getActiveDiskSpaceForTeam(Long teamId) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new TeamNotFoundException(teamId.toString());
-        }
+    public int getActiveDiskSpaceForTeam(String courseId, Long teamId) {
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
         return teamRepository.getActiveDiskSpaceByTeam(teamId);
     }
 
     @Override
-    public int getActiveRAMForTeam(Long teamId) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new TeamNotFoundException(teamId.toString());
-        }
+    public int getActiveRAMForTeam(String courseId, Long teamId) {
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
         return teamRepository.getActiveRamByTeam(teamId);
     }
 
     @Override
-    public int getCountActiveVirtualMachinesForTeam(Long teamId) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new TeamNotFoundException(teamId.toString());
-        }
+    public int getCountActiveVirtualMachinesForTeam(String courseId, Long teamId) {
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
         return teamRepository.countVirtualMachinesByTeamAndStatus(teamId, VirtualMachineStatus.ON);
     }
 
     @Override
-    public int getCountVirtualMachinesForTeam(Long teamId) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new TeamNotFoundException(teamId.toString());
-        }
+    public int getCountVirtualMachinesForTeam(String courseId, Long teamId) {
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
         return teamRepository.countVirtualMachinesByTeam(teamId);
     }
 
     @Override
-    public Map<String, Integer> getResourcesByTeam(Long teamId) {
-        Team team = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
-        VirtualMachineConfiguration configuration = team.getVirtualMachineConfiguration();
+    public Map<String, Integer> getResourcesByTeam(String courseId, Long teamId) {
+        Team team = courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+
+        Configuration configuration = team.getConfiguration();
 
         if (configuration == null) {
             throw new ConfigurationNotDefinedException(teamId.toString());

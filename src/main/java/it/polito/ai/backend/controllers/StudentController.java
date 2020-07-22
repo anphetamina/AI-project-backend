@@ -140,21 +140,4 @@ public class StudentController {
         }
 
     }
-
-
-
-    @GetMapping("/{studentId}/virtual-machines")
-    CollectionModel<VirtualMachineDTO> getVirtualMachines(@PathVariable @NotBlank String studentId) {
-        try {
-            List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForStudent(studentId);
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentId)).withSelfRel();
-            return CollectionModel.of(virtualMachineDTOList, selfLink);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 }

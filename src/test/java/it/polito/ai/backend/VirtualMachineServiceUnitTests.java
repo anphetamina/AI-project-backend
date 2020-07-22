@@ -1,11 +1,10 @@
 package it.polito.ai.backend;
 
-import it.polito.ai.backend.dtos.VirtualMachineConfigurationDTO;
+import it.polito.ai.backend.dtos.ConfigurationDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
 import it.polito.ai.backend.entities.*;
 import it.polito.ai.backend.repositories.*;
 import it.polito.ai.backend.services.vm.*;
-import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,7 @@ class VirtualMachineServiceUnitTests {
 
     static List<Team> teams;
     static List<VirtualMachine> virtualMachines;
-    static List<VirtualMachineConfiguration> configurations;
+    static List<Configuration> configurations;
     static List<VirtualMachineModel> models;
     static List<Student> students;
     static List<Course> courses;
@@ -138,7 +137,7 @@ class VirtualMachineServiceUnitTests {
 
                     team.setCourse(courses.get(i%nCourses));
 
-                    VirtualMachineConfiguration configuration = VirtualMachineConfiguration.builder()
+                    Configuration configuration = Configuration.builder()
                             .tot(6 + i%4)
                             .max_on(1 + i%3)
                             .min_vcpu(2)
@@ -150,7 +149,7 @@ class VirtualMachineServiceUnitTests {
                             .build();
                     configurations.add(configuration);
 
-                    team.setVirtualMachineConfiguration(configuration);
+                    team.setConfiguration(configuration);
 
                 });
 
@@ -163,7 +162,7 @@ class VirtualMachineServiceUnitTests {
                         if (team.getMembers().size() < c.getMin()) {
                             team.addStudent(student);
 
-                            VirtualMachineConfiguration configuration = team.getVirtualMachineConfiguration();
+                            Configuration configuration = team.getConfiguration();
 
                             if (team.getVirtualMachines().size() == 0) {
 
@@ -203,17 +202,19 @@ class VirtualMachineServiceUnitTests {
     @Test
     void createVirtualMachine() {
 
-        Team team = teams.get(0);
+        Course course = courses.get(0);
+        String courseId = course.getId();
+        Team team = course.getTeams().get(0);
         Long teamId = team.getId();
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
-        VirtualMachineConfiguration virtualMachineConfiguration = team.getVirtualMachineConfiguration();
+        Configuration configuration = team.getConfiguration();
         VirtualMachineModel virtualMachineModel = team.getCourse().getVirtualMachineModel();
-        int vcpu = virtualMachineConfiguration.getMin_vcpu();
-        int diskSpace = virtualMachineConfiguration.getMin_disk_space();
-        int ram = virtualMachineConfiguration.getMin_ram();
+        int vcpu = configuration.getMin_vcpu();
+        int diskSpace = configuration.getMin_disk_space();
+        int ram = configuration.getMin_ram();
 
-        VirtualMachineDTO virtualMachineDTO = virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram);
+        VirtualMachineDTO virtualMachineDTO = virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram);
 
         Assertions.assertTrue(virtualMachineDTO.getId() > 0);
 
@@ -231,106 +232,118 @@ class VirtualMachineServiceUnitTests {
 
     @Test
     void createVirtualMachine_exceedsTot() {
-        Team team = teams.get(0);
+        Course course = courses.get(0);
+        String courseId = course.getId();
+        Team team = course.getTeams().get(0);
         Long teamId = team.getId();
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
-        VirtualMachineConfiguration virtualMachineConfiguration = team.getVirtualMachineConfiguration();
-        int vcpu = virtualMachineConfiguration.getMin_vcpu();
-        int diskSpace = virtualMachineConfiguration.getMin_disk_space();
-        int ram = virtualMachineConfiguration.getMin_ram();
-        IntStream.range(0, virtualMachineConfiguration.getTot()-team.getVirtualMachines().size())
+        Configuration configuration = team.getConfiguration();
+        int vcpu = configuration.getMin_vcpu();
+        int diskSpace = configuration.getMin_disk_space();
+        int ram = configuration.getMin_ram();
+        IntStream.range(0, configuration.getTot()-team.getVirtualMachines().size())
                 .forEach(i -> {
-                    virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram);
+                    virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram);
                 });
 
-        Assertions.assertThrows(VirtualMachineNumberException.class, () -> virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(VirtualMachineNumberException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
     }
 
     @Test
     void createVirtualMachine_configurationNotDefined() {
-        Team team = teams.get(0);
+        Course course = courses.get(0);
+        String courseId = course.getId();
+        Team team = course.getTeams().get(0);
         Long teamId = team.getId();
-        VirtualMachineConfiguration virtualMachineConfiguration = team.getVirtualMachineConfiguration();
-        int vcpu = virtualMachineConfiguration.getMin_vcpu();
-        int diskSpace = virtualMachineConfiguration.getMin_disk_space();
-        int ram = virtualMachineConfiguration.getMin_ram();
+        Configuration configuration = team.getConfiguration();
+        int vcpu = configuration.getMin_vcpu();
+        int diskSpace = configuration.getMin_disk_space();
+        int ram = configuration.getMin_ram();
 
         Team team1 = teamRepository.getOne(teamId);
-        team1.setVirtualMachineConfiguration(null);
+        team1.setConfiguration(null);
         teamRepository.save(team1);
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertThrows(ConfigurationNotDefinedException.class, () -> virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(ConfigurationNotDefinedException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
     }
 
     @Test
     void createVirtualMachine_modelNotDefined() {
-        Team team = teams.get(0);
+        Course course = courses.get(0);
+        String courseId = course.getId();
+        Team team = course.getTeams().get(0);
         Long teamId = team.getId();
-        VirtualMachineConfiguration virtualMachineConfiguration = team.getVirtualMachineConfiguration();
-        int vcpu = virtualMachineConfiguration.getMin_vcpu();
-        int diskSpace = virtualMachineConfiguration.getMin_disk_space();
-        int ram = virtualMachineConfiguration.getMin_ram();
+        Configuration configuration = team.getConfiguration();
+        int vcpu = configuration.getMin_vcpu();
+        int diskSpace = configuration.getMin_disk_space();
+        int ram = configuration.getMin_ram();
 
-        Course course = courseRepository.getOne(team.getCourse().getId());
-        course.setVirtualMachineModel(null);
-        courseRepository.save(course);
+        Course course1 = courseRepository.getOne(courseId);
+        course1.setVirtualMachineModel(null);
+        courseRepository.save(course1);
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertThrows(VirtualMachineModelNotDefinedException.class, () -> virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(VirtualMachineModelNotDefinedException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
 
     }
 
     @Test
     void createVirtualMachine_numVcpuNotAvailable() {
-        Team team = teams.get(0);
+        Course course = courses.get(0);
+        String courseId = course.getId();
+        Team team = course.getTeams().get(0);
         Long teamId = team.getId();
-        VirtualMachineConfiguration virtualMachineConfiguration = team.getVirtualMachineConfiguration();
-        int vcpu = virtualMachineConfiguration.getMax_vcpu()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).sum());
-        int diskSpace = virtualMachineConfiguration.getMin_disk_space();
-        int ram = virtualMachineConfiguration.getMin_ram();
+        Configuration configuration = team.getConfiguration();
+        int vcpu = configuration.getMax_vcpu()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).sum());
+        int diskSpace = configuration.getMin_disk_space();
+        int ram = configuration.getMin_ram();
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram));
+        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
 
-        Assertions.assertThrows(NumVcpuNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(NumVcpuNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
     }
 
     @Test
     void createVirtualMachine_diskSpaceNotAvailable() {
-        Team team = teams.get(0);
+        Course course = courses.get(0);
+        String courseId = course.getId();
+        Team team = course.getTeams().get(0);
         Long teamId = team.getId();
-        VirtualMachineConfiguration virtualMachineConfiguration = team.getVirtualMachineConfiguration();
-        int vcpu = virtualMachineConfiguration.getMin_vcpu();
-        int diskSpace = virtualMachineConfiguration.getMax_disk_space()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).sum());
-        int ram = virtualMachineConfiguration.getMin_ram();
+        Configuration configuration = team.getConfiguration();
+        int vcpu = configuration.getMin_vcpu();
+        int diskSpace = configuration.getMax_disk_space()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).sum());
+        int ram = configuration.getMin_ram();
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram));
+        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
 
-        Assertions.assertThrows(DiskSpaceNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(DiskSpaceNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
 
     }
 
     @Test
     void createVirtualMachine_ramNotAvailable() {
-        Team team = teams.get(0);
+        Course course = courses.get(0);
+        String courseId = course.getId();
+        Team team = course.getTeams().get(0);
         Long teamId = team.getId();
-        VirtualMachineConfiguration virtualMachineConfiguration = team.getVirtualMachineConfiguration();
-        int vcpu = virtualMachineConfiguration.getMin_vcpu();
-        int diskSpace = virtualMachineConfiguration.getMin_disk_space();
-        int ram = virtualMachineConfiguration.getMax_ram()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getRam).sum());
+        Configuration configuration = team.getConfiguration();
+        int vcpu = configuration.getMin_vcpu();
+        int diskSpace = configuration.getMin_disk_space();
+        int ram = configuration.getMax_ram()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getRam).sum());
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram));
+        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
 
-        Assertions.assertThrows(RamNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(studentId, teamId, vcpu, diskSpace, ram+1));
+        Assertions.assertThrows(RamNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram+1));
 
     }
 
@@ -346,7 +359,7 @@ class VirtualMachineServiceUnitTests {
                 .ram(virtualMachine.getRam()+1)
                 .build();
 
-        VirtualMachineDTO updated = virtualMachineService.updateVirtualMachine(virtualMachine.getId(), virtualMachineDTO);
+        VirtualMachineDTO updated = virtualMachineService.updateVirtualMachine(virtualMachine.getTeam().getCourse().getId(), virtualMachine.getTeam().getId(), virtualMachine.getId(), virtualMachineDTO);
 
         Assertions.assertEquals(virtualMachineDTO.getNum_vcpu(), updated.getNum_vcpu());
         Assertions.assertEquals(virtualMachineDTO.getDisk_space(), updated.getDisk_space());
@@ -363,12 +376,12 @@ class VirtualMachineServiceUnitTests {
          */
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
                 .id(virtualMachine.getId())
-                .num_vcpu(virtualMachine.getTeam().getVirtualMachineConfiguration().getMax_vcpu())
+                .num_vcpu(virtualMachine.getTeam().getConfiguration().getMax_vcpu())
                 .disk_space(virtualMachine.getDisk_space())
                 .ram(virtualMachine.getRam())
                 .build();
 
-        Assertions.assertThrows(NumVcpuNotAvailableException.class, () -> virtualMachineService.updateVirtualMachine(virtualMachine.getId(), virtualMachineDTO));
+        Assertions.assertThrows(NumVcpuNotAvailableException.class, () -> virtualMachineService.updateVirtualMachine(virtualMachine.getTeam().getCourse().getId(), virtualMachine.getTeam().getId(), virtualMachine.getId(), virtualMachineDTO));
     }
 
     @Test
@@ -381,11 +394,11 @@ class VirtualMachineServiceUnitTests {
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
                 .id(virtualMachine.getId())
                 .num_vcpu(virtualMachine.getNum_vcpu())
-                .disk_space(virtualMachine.getTeam().getVirtualMachineConfiguration().getMax_disk_space())
+                .disk_space(virtualMachine.getTeam().getConfiguration().getMax_disk_space())
                 .ram(virtualMachine.getRam())
                 .build();
 
-        Assertions.assertThrows(DiskSpaceNotAvailableException.class, () -> virtualMachineService.updateVirtualMachine(virtualMachine.getId(), virtualMachineDTO));
+        Assertions.assertThrows(DiskSpaceNotAvailableException.class, () -> virtualMachineService.updateVirtualMachine(virtualMachine.getTeam().getCourse().getId(), virtualMachine.getTeam().getId(), virtualMachine.getId(), virtualMachineDTO));
     }
 
     @Test
@@ -399,10 +412,10 @@ class VirtualMachineServiceUnitTests {
                 .id(virtualMachine.getId())
                 .num_vcpu(virtualMachine.getNum_vcpu())
                 .disk_space(virtualMachine.getDisk_space())
-                .ram(virtualMachine.getTeam().getVirtualMachineConfiguration().getMax_ram())
+                .ram(virtualMachine.getTeam().getConfiguration().getMax_ram())
                 .build();
 
-        Assertions.assertThrows(RamNotAvailableException.class, () -> virtualMachineService.updateVirtualMachine(virtualMachine.getId(), virtualMachineDTO));
+        Assertions.assertThrows(RamNotAvailableException.class, () -> virtualMachineService.updateVirtualMachine(virtualMachine.getTeam().getCourse().getId(), virtualMachine.getTeam().getId(), virtualMachine.getId(), virtualMachineDTO));
     }
 
     @Test
@@ -410,7 +423,7 @@ class VirtualMachineServiceUnitTests {
         Team team = teams.get(0);
         VirtualMachine virtualMachine = team.getVirtualMachines().get(0);
 
-        virtualMachineService.deleteVirtualMachine(virtualMachine.getId());
+        virtualMachineService.deleteVirtualMachine(virtualMachine.getTeam().getCourse().getId(), virtualMachine.getTeam().getId(), virtualMachine.getId());
         Team team1 = teamRepository.getOne(team.getId());
 
         Assertions.assertFalse(team1.getVirtualMachines().contains(virtualMachine));
@@ -423,9 +436,10 @@ class VirtualMachineServiceUnitTests {
 
     @Test
     void turnOnVirtualMachine() {
-        Long vmId = virtualMachines.get(0).getId();
+        VirtualMachine virtualMachine = virtualMachines.get(0);
+        Long vmId = virtualMachine.getId();
 
-        virtualMachineService.turnOnVirtualMachine(vmId);
+        virtualMachineService.turnOnVirtualMachine(virtualMachine.getTeam().getCourse().getId(), virtualMachine.getTeam().getId(), vmId);
         VirtualMachineStatus actual = virtualMachineRepository.getOne(vmId).getStatus();
 
         Assertions.assertEquals(VirtualMachineStatus.ON, actual);
@@ -436,8 +450,8 @@ class VirtualMachineServiceUnitTests {
 
         Team team = teams.get(0);
         Team team1 = teamRepository.getOne(team.getId());
-        VirtualMachineConfiguration configuration = team.getVirtualMachineConfiguration();
-        IntStream.range(0, team.getVirtualMachineConfiguration().getMax_on())
+        Configuration configuration = team.getConfiguration();
+        IntStream.range(0, team.getConfiguration().getMax_on())
                 .forEach(i -> {
                     VirtualMachine virtualMachine = VirtualMachine.builder()
                             .num_vcpu(configuration.getMin_vcpu())
@@ -451,14 +465,15 @@ class VirtualMachineServiceUnitTests {
 
         Long vmId = team.getVirtualMachines().stream().filter(vm -> vm.getStatus() == VirtualMachineStatus.OFF).findFirst().orElseThrow(() -> new TestAbortedException("no turned off vm for the team")).getId();
 
-        Assertions.assertThrows(ActiveVirtualMachineNumberException.class, () -> virtualMachineService.turnOnVirtualMachine(vmId));
+        Assertions.assertThrows(ActiveVirtualMachineNumberException.class, () -> virtualMachineService.turnOnVirtualMachine(team.getCourse().getId(), team.getId(), vmId));
     }
 
     @Test
     void turnOffVirtualMachine() {
-        Long vmId = virtualMachines.get(0).getId();
+        VirtualMachine virtualMachine = virtualMachines.get(0);
+        Long vmId = virtualMachine.getId();
 
-        virtualMachineService.turnOffVirtualMachine(vmId);
+        virtualMachineService.turnOffVirtualMachine(virtualMachine.getTeam().getCourse().getId(), virtualMachine.getTeam().getId(), vmId);
         VirtualMachineStatus actual = virtualMachineRepository.getOne(vmId).getStatus();
 
         Assertions.assertEquals(VirtualMachineStatus.OFF, actual);
@@ -471,13 +486,13 @@ class VirtualMachineServiceUnitTests {
         Student student = team.getMembers().stream().filter(m -> !virtualMachine.getOwners().contains(m)).findFirst().orElseThrow(() -> new TestAbortedException("all students own the first vm"));
         Long vmId = virtualMachine.getId();
 
-        virtualMachineService.addOwnerToVirtualMachine(student.getId(), vmId);
+        virtualMachineService.addOwnerToVirtualMachine(team.getCourse().getId(), team.getId(), student.getId(), vmId);
 
         Assertions.assertTrue(virtualMachineRepository.getOne(vmId).getOwners().contains(student));
         /**
          * does not add the same student to the owner list
          */
-        Assertions.assertFalse(virtualMachineService.addOwnerToVirtualMachine(student.getId(), vmId));
+        Assertions.assertFalse(virtualMachineService.addOwnerToVirtualMachine(team.getCourse().getId(), team.getId(), student.getId(), vmId));
     }
 
     @Test
@@ -485,7 +500,7 @@ class VirtualMachineServiceUnitTests {
         Team team = teams.get(0);
         Long teamId = team.getId();
 
-        VirtualMachineConfigurationDTO configuration = modelMapper.map(team.getVirtualMachineConfiguration(), VirtualMachineConfigurationDTO.class);
+        ConfigurationDTO configuration = modelMapper.map(team.getConfiguration(), ConfigurationDTO.class);
 
         int minVcpu = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).min().orElseThrow(NoSuchElementException::new);
         int minDiskSpace = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).min().orElseThrow(NoSuchElementException::new);
@@ -500,17 +515,17 @@ class VirtualMachineServiceUnitTests {
         configuration.setMax_on(configuration.getMax_on()+1);
         configuration.setTot(configuration.getTot()+1);
 
-        VirtualMachineConfigurationDTO virtualMachineConfigurationDTO = virtualMachineService.updateVirtualMachineConfiguration(teamId, configuration);
+        ConfigurationDTO configurationDTO = virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration);
 
-        Assertions.assertEquals(virtualMachineConfigurationDTO.getMin_vcpu(), configuration.getMin_vcpu());
-        Assertions.assertEquals(virtualMachineConfigurationDTO.getMin_disk(), configuration.getMin_disk());
-        Assertions.assertEquals(virtualMachineConfigurationDTO.getMin_ram(), configuration.getMin_ram());
-        Assertions.assertEquals(virtualMachineConfigurationDTO.getMax_vcpu(), configuration.getMax_vcpu());
-        Assertions.assertEquals(virtualMachineConfigurationDTO.getMax_disk(), configuration.getMax_disk());
-        Assertions.assertEquals(virtualMachineConfigurationDTO.getMax_ram(), configuration.getMax_ram());
-        Assertions.assertEquals(virtualMachineConfigurationDTO.getMax_on(), configuration.getMax_on());
-        Assertions.assertEquals(virtualMachineConfigurationDTO.getTot(), configuration.getTot());
-        Assertions.assertEquals(virtualMachineConfigurationDTO.getId(), configuration.getId());
+        Assertions.assertEquals(configurationDTO.getMin_vcpu(), configuration.getMin_vcpu());
+        Assertions.assertEquals(configurationDTO.getMin_disk(), configuration.getMin_disk());
+        Assertions.assertEquals(configurationDTO.getMin_ram(), configuration.getMin_ram());
+        Assertions.assertEquals(configurationDTO.getMax_vcpu(), configuration.getMax_vcpu());
+        Assertions.assertEquals(configurationDTO.getMax_disk(), configuration.getMax_disk());
+        Assertions.assertEquals(configurationDTO.getMax_ram(), configuration.getMax_ram());
+        Assertions.assertEquals(configurationDTO.getMax_on(), configuration.getMax_on());
+        Assertions.assertEquals(configurationDTO.getTot(), configuration.getTot());
+        Assertions.assertEquals(configurationDTO.getId(), configuration.getId());
 
     }
 
@@ -519,7 +534,7 @@ class VirtualMachineServiceUnitTests {
         Team team = teams.get(0);
         Long teamId = team.getId();
 
-        VirtualMachineConfigurationDTO configuration = modelMapper.map(team.getVirtualMachineConfiguration(), VirtualMachineConfigurationDTO.class);
+        ConfigurationDTO configuration = modelMapper.map(team.getConfiguration(), ConfigurationDTO.class);
 
         int minVcpu = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).min().orElseThrow(NoSuchElementException::new);
         int minDiskSpace = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).min().orElseThrow(NoSuchElementException::new);
@@ -534,11 +549,11 @@ class VirtualMachineServiceUnitTests {
         configuration.setMax_on(configuration.getMax_on()+1);
         configuration.setTot(configuration.getTot()+1);
 
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
 
         int totNumVcpu = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).sum();
         configuration.setMax_vcpu(totNumVcpu-1);
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
 
     }
 
@@ -547,7 +562,7 @@ class VirtualMachineServiceUnitTests {
         Team team = teams.get(0);
         Long teamId = team.getId();
 
-        VirtualMachineConfigurationDTO configuration = modelMapper.map(team.getVirtualMachineConfiguration(), VirtualMachineConfigurationDTO.class);
+        ConfigurationDTO configuration = modelMapper.map(team.getConfiguration(), ConfigurationDTO.class);
 
         int minVcpu = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).min().orElseThrow(NoSuchElementException::new);
         int minDiskSpace = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).min().orElseThrow(NoSuchElementException::new);
@@ -562,11 +577,11 @@ class VirtualMachineServiceUnitTests {
         configuration.setMax_on(configuration.getMax_on()+1);
         configuration.setTot(configuration.getTot()+1);
 
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
 
         int totDiskSpace = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).sum();
         configuration.setMax_vcpu(totDiskSpace-1);
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
 
     }
 
@@ -575,7 +590,7 @@ class VirtualMachineServiceUnitTests {
         Team team = teams.get(0);
         Long teamId = team.getId();
 
-        VirtualMachineConfigurationDTO configuration = modelMapper.map(team.getVirtualMachineConfiguration(), VirtualMachineConfigurationDTO.class);
+        ConfigurationDTO configuration = modelMapper.map(team.getConfiguration(), ConfigurationDTO.class);
 
         int minVcpu = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).min().orElseThrow(NoSuchElementException::new);
         int minDiskSpace = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).min().orElseThrow(NoSuchElementException::new);
@@ -590,11 +605,11 @@ class VirtualMachineServiceUnitTests {
         configuration.setMax_on(configuration.getMax_on()+1);
         configuration.setTot(configuration.getTot()+1);
 
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
 
         int totRam = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getRam).sum();
         configuration.setMax_vcpu(totRam-1);
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
 
     }
 
@@ -624,7 +639,7 @@ class VirtualMachineServiceUnitTests {
                 .filter(vm -> vm.getStatus() == VirtualMachineStatus.ON)
                 .reduce(0, (partial, current) -> partial + current.getNum_vcpu(), Integer::sum);
 
-        Assertions.assertEquals(activeVcpu, virtualMachineService.getActiveVcpuForTeam(team.getId()));
+        Assertions.assertEquals(activeVcpu, virtualMachineService.getActiveVcpuForTeam(team.getCourse().getId(), team.getId()));
 
     }
 
@@ -636,7 +651,7 @@ class VirtualMachineServiceUnitTests {
                 .filter(vm -> vm.getStatus() == VirtualMachineStatus.ON)
                 .count();
 
-        Assertions.assertEquals(activeVMs, virtualMachineService.getCountActiveVirtualMachinesForTeam(team.getId()));
+        Assertions.assertEquals(activeVMs, virtualMachineService.getCountActiveVirtualMachinesForTeam(team.getCourse().getId(), team.getId()));
     }
 
     @Test
@@ -644,7 +659,7 @@ class VirtualMachineServiceUnitTests {
         Team team = teams.get(0);
         long count = team.getVirtualMachines().size();
 
-        Assertions.assertEquals(count, virtualMachineService.getCountVirtualMachinesForTeam(team.getId()));
+        Assertions.assertEquals(count, virtualMachineService.getCountVirtualMachinesForTeam(team.getCourse().getId(), team.getId()));
     }
 
     /*@Test

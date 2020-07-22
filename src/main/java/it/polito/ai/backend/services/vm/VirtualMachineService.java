@@ -12,21 +12,18 @@ public interface VirtualMachineService {
     /**
      * student
      */
-    VirtualMachineDTO createVirtualMachine(String studentId, // owner of the vm
-                                           Long teamId, // to fetch the configuration
-                                           int numVcpu,
-                                           int diskSpace,
-                                           int ram);
-    VirtualMachineDTO updateVirtualMachine(Long vmId, VirtualMachineDTO virtualMachine);
-    boolean deleteVirtualMachine(Long id);
-    void turnOnVirtualMachine(Long id);
-    void turnOffVirtualMachine(Long id);
-    boolean addOwnerToVirtualMachine(String studentId, Long vmId);
+    VirtualMachineDTO createVirtualMachine(String courseId, Long teamId, String studentId, int numVcpu, int diskSpace, int ram);
+    VirtualMachineDTO updateVirtualMachine(String courseId, Long teamId, Long vmId, VirtualMachineDTO virtualMachine);
+    boolean deleteVirtualMachine(String courseId, Long teamId, Long vmId);
+    void turnOnVirtualMachine(String courseId, Long teamId, Long vmId);
+    void turnOffVirtualMachine(String courseId, Long teamId, Long vmId);
+    boolean addOwnerToVirtualMachine(String courseId, Long teamId, String studentId, Long vmId);
 
     /**
      * teacher
      */
-    VirtualMachineConfigurationDTO createVirtualMachineConfiguration(
+    ConfigurationDTO createVirtualMachineConfiguration(
+                                                String courseId,
                                                 Long teamId,
                                                 int min_vcpu,
                                                 int max_vcpu,
@@ -37,26 +34,22 @@ public interface VirtualMachineService {
                                                 int max_on,
                                                 int tot
                                                 );
-    VirtualMachineConfigurationDTO updateVirtualMachineConfiguration(Long teamId, VirtualMachineConfigurationDTO configuration);
+    ConfigurationDTO updateVirtualMachineConfiguration(String courseId, Long teamId, ConfigurationDTO configuration);
     VirtualMachineModelDTO createVirtualMachineModel(String courseId, SystemImage os);
     boolean deleteVirtualMachineModel(String courseId);
 
     /**
      * teacher/student
      */
-    Optional<VirtualMachineDTO> getVirtualMachine(Long id);
-    List<StudentDTO> getOwnersForVirtualMachine(Long id);
-    Optional<VirtualMachineModelDTO> getVirtualMachineModelForVirtualMachine(Long id);
-    Optional<CourseDTO> getCourseForVirtualMachineModel(Long modelId);
-    Optional<TeamDTO> getTeamForVirtualMachine(Long id);
-    List<VirtualMachineDTO> getVirtualMachinesForTeam(Long teamId);
-    List<VirtualMachineDTO> getVirtualMachinesForStudent(String studentId);
+    Optional<VirtualMachineDTO> getVirtualMachine(String courseId, Long teamId, Long vmId);
+    List<StudentDTO> getOwnersForVirtualMachine(String courseId, Long teamId, Long vmId);
+    List<VirtualMachineDTO> getVirtualMachinesForTeam(String courseId, Long teamId);
     Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseId);
-    Optional<VirtualMachineConfigurationDTO> getVirtualMachineConfigurationForTeam(Long teamId);
-    int getActiveVcpuForTeam(Long teamId);
-    int getActiveDiskSpaceForTeam(Long teamId);
-    int getActiveRAMForTeam(Long teamId);
-    int getCountActiveVirtualMachinesForTeam(Long teamId);
-    int getCountVirtualMachinesForTeam(Long teamId);
-    Map<String, Integer> getResourcesByTeam(Long teamId);
+    Optional<ConfigurationDTO> getVirtualMachineConfigurationForTeam(String courseId, Long teamId);
+    int getActiveVcpuForTeam(String courseId, Long teamId);
+    int getActiveDiskSpaceForTeam(String courseId, Long teamId);
+    int getActiveRAMForTeam(String courseId, Long teamId);
+    int getCountActiveVirtualMachinesForTeam(String courseId, Long teamId);
+    int getCountVirtualMachinesForTeam(String courseId, Long teamId);
+    Map<String, Integer> getResourcesByTeam(String courseId, Long teamId);
 }

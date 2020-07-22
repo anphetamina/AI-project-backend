@@ -22,17 +22,16 @@ public class ModelHelper {
         Link coursesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getCourses(studentDTO.getId())).withRel("enrolledTo");
         Link teamsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentDTO.getId())).withRel("partOf");
         Link assignmentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getAssignments(studentDTO.getId())).withRel("assignments");
-        Link virtualMachinesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentDTO.getId())).withRel("owns");
-        return studentDTO.add(selfLink).add(coursesLink).add(teamsLink).add(virtualMachinesLink).add(assignmentsLink);
+        return studentDTO.add(selfLink).add(coursesLink).add(teamsLink).add(assignmentsLink);
     }
 
-    public static TeamDTO enrich(TeamDTO teamDTO, String courseName) {
-        Link selfLink = WebMvcLinkBuilder.linkTo(TeamController.class).slash(teamDTO.getId()).withSelfRel();
-        Link courseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseName)).withRel("course");
-        Link membersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getMembers(teamDTO.getId())).withRel("composedOf");
-        Link configurationLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getConfiguration(teamDTO.getId())).withRel("virtualMachineConfiguration");
-        Link virtualMachinesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getVirtualMachines(teamDTO.getId())).withRel("virtualMachines");
-        return teamDTO.add(selfLink).addIf(courseName != null, () -> courseLink).add(membersLink).add(configurationLink).add(virtualMachinesLink);
+    public static TeamDTO enrich(TeamDTO teamDTO, String courseId) {
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeam(courseId, teamDTO.getId())).withSelfRel();
+        Link courseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseId)).withRel("course");
+        Link membersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembers(courseId, teamDTO.getId())).withRel("composedOf");
+        Link configurationLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getConfiguration(courseId, teamDTO.getId())).withRel("virtualMachineConfiguration");
+        Link virtualMachinesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getVirtualMachines(courseId, teamDTO.getId())).withRel("virtualMachines");
+        return teamDTO.add(selfLink).add(courseLink).add(membersLink).add(configurationLink).add(virtualMachinesLink);
     }
 
     public static TokenDTO enrich(TokenDTO tokenDTO, String op) {
@@ -61,23 +60,23 @@ public class ModelHelper {
         return  assignmentDTO;
     }
 
-    public static VirtualMachineDTO enrich(VirtualMachineDTO virtualMachineDTO, Long teamId) {
-        Link selfLink = WebMvcLinkBuilder.linkTo(VirtualMachineController.class).slash(virtualMachineDTO.getId()).withSelfRel();
-        Link modelLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineController.class).getModel(virtualMachineDTO.getId())).withRel("model");
-        Link teamLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getOne(teamId)).withRel("usedBy");
-        Link ownersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineController.class).getOwners(virtualMachineDTO.getId())).withRel("ownedBy");
-        return virtualMachineDTO.add(selfLink).add(modelLink).addIf(teamId != null, () -> teamLink).add(ownersLink);
+    public static VirtualMachineDTO enrich(VirtualMachineDTO virtualMachineDTO, String courseId, Long teamId) {
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getVirtualMachine(courseId, teamId, virtualMachineDTO.getId())).withSelfRel();
+        Link modelLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getVirtualMachineModel(courseId)).withRel("model");
+        Link teamLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeam(courseId, teamId)).withRel("usedBy");
+        Link ownersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOwners(courseId, teamId, virtualMachineDTO.getId())).withRel("ownedBy");
+        return virtualMachineDTO.add(selfLink).add(modelLink).add(teamLink).add(ownersLink);
     }
 
-    public static VirtualMachineConfigurationDTO enrich(VirtualMachineConfigurationDTO virtualMachineConfigurationDTO, Long teamId) {
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getConfiguration(teamId)).withSelfRel();
-        Link teamLink = WebMvcLinkBuilder.linkTo(TeamController.class).slash(teamId).withRel("definedFor");
-        return virtualMachineConfigurationDTO.add(selfLink).addIf(teamId != null, () -> teamLink);
+    public static ConfigurationDTO enrich(ConfigurationDTO configurationDTO, String courseId, Long teamId) {
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getConfiguration(courseId, teamId)).withSelfRel();
+        Link teamLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeam(courseId, teamId)).withRel("definedFor");
+        return configurationDTO.add(selfLink).add(teamLink);
     }
 
-    public static VirtualMachineModelDTO enrich(VirtualMachineModelDTO virtualMachineModelDTO, String courseName) {
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineController.class).getModel(virtualMachineModelDTO.getId())).withSelfRel();
-        Link courseLink = WebMvcLinkBuilder.linkTo(CourseController.class).slash(courseName).withRel("definedFor");
-        return virtualMachineModelDTO.add(selfLink).addIf(courseName != null, () -> courseLink);
+    public static VirtualMachineModelDTO enrich(VirtualMachineModelDTO virtualMachineModelDTO, String courseId) {
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getVirtualMachineModel(courseId)).withSelfRel();
+        Link courseLink = WebMvcLinkBuilder.linkTo(CourseController.class).slash(courseId).withRel("definedFor");
+        return virtualMachineModelDTO.add(selfLink).add(courseLink);
     }
 }

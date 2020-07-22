@@ -13,7 +13,7 @@ import javax.validation.constraints.Positive;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class VirtualMachineConfigurationDTO extends RepresentationModel<VirtualMachineConfigurationDTO> {
+public class ConfigurationDTO extends RepresentationModel<ConfigurationDTO> {
 
     @NotNull Long id;
     @Positive int min_vcpu;
