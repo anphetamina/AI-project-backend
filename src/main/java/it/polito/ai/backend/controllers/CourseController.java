@@ -780,7 +780,7 @@ public class CourseController {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid tot number " + tot);
                 }
 
-                ConfigurationDTO configurationDTO = virtualMachineService.createVirtualMachineConfiguration(courseId, teamId, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram, max_on, tot);
+                ConfigurationDTO configurationDTO = virtualMachineService.createConfiguration(courseId, teamId, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram, max_on, tot);
                 return ModelHelper.enrich(configurationDTO, courseId, teamId);
             } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
@@ -798,7 +798,7 @@ public class CourseController {
     @GetMapping("/{courseId}/teams/{teamId}/configuration")
     ConfigurationDTO getConfiguration(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
         try {
-            return ModelHelper.enrich(virtualMachineService.getVirtualMachineConfigurationForTeam(courseId, teamId).orElseThrow(() -> new ConfigurationNotDefinedException(teamId.toString())), courseId, teamId);
+            return ModelHelper.enrich(virtualMachineService.getConfigurationForTeam(courseId, teamId).orElseThrow(() -> new ConfigurationNotDefinedException(teamId.toString())), courseId, teamId);
         } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
@@ -811,7 +811,7 @@ public class CourseController {
     @PutMapping("/{courseId}/teams/{teamId}/configuration")
     ConfigurationDTO setConfiguration(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @RequestBody @Valid ConfigurationDTO configurationDTO) {
         try {
-            ConfigurationDTO newConfigurationDTO = virtualMachineService.updateVirtualMachineConfiguration(courseId, teamId, configurationDTO);
+            ConfigurationDTO newConfigurationDTO = virtualMachineService.updateConfiguration(courseId, teamId, configurationDTO);
             return ModelHelper.enrich(newConfigurationDTO, courseId, teamId);
         } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());

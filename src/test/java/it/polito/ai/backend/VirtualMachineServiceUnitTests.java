@@ -35,7 +35,8 @@ class VirtualMachineServiceUnitTests {
 
     @Autowired TeamRepository teamRepository;
     @Autowired VirtualMachineRepository virtualMachineRepository;
-    @Autowired VirtualMachineConfigurationRepository virtualMachineConfigurationRepository;
+    @Autowired
+    ConfigurationRepository configurationRepository;
     @Autowired VirtualMachineModelRepository virtualMachineModelRepository;
     @Autowired StudentRepository studentRepository;
     @Autowired CourseRepository courseRepository;
@@ -44,14 +45,14 @@ class VirtualMachineServiceUnitTests {
     @BeforeAll
     static void beforeAll(@Autowired TeamRepository teamRepository,
                           @Autowired VirtualMachineRepository virtualMachineRepository,
-                          @Autowired VirtualMachineConfigurationRepository virtualMachineConfigurationRepository,
+                          @Autowired ConfigurationRepository configurationRepository,
                           @Autowired VirtualMachineModelRepository virtualMachineModelRepository,
                           @Autowired StudentRepository studentRepository,
                           @Autowired CourseRepository courseRepository) {
 
         if (virtualMachineRepository.count() > 0 &&
             teamRepository.count() > 0 &&
-            virtualMachineConfigurationRepository.count() > 0 &&
+            configurationRepository.count() > 0 &&
             virtualMachineModelRepository.count() > 0 &&
             studentRepository.count() > 0 &&
             courseRepository.count() > 0)
@@ -59,7 +60,7 @@ class VirtualMachineServiceUnitTests {
 
             teams = teamRepository.findAll();
             virtualMachines = virtualMachineRepository.findAll();
-            configurations = virtualMachineConfigurationRepository.findAll();
+            configurations = configurationRepository.findAll();
             models = virtualMachineModelRepository.findAll();
             students = studentRepository.findAll();
             courses = courseRepository.findAll();
@@ -79,7 +80,7 @@ class VirtualMachineServiceUnitTests {
         final int nTeams = 20;
 
         virtualMachineModelRepository.deleteAll();
-        virtualMachineConfigurationRepository.deleteAll();
+        configurationRepository.deleteAll();
         virtualMachineRepository.deleteAll();
         teamRepository.deleteAll();
         studentRepository.deleteAll();
@@ -515,7 +516,7 @@ class VirtualMachineServiceUnitTests {
         configuration.setMax_on(configuration.getMax_on()+1);
         configuration.setTot(configuration.getTot()+1);
 
-        ConfigurationDTO configurationDTO = virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration);
+        ConfigurationDTO configurationDTO = virtualMachineService.updateConfiguration(team.getCourse().getId(), teamId, configuration);
 
         Assertions.assertEquals(configurationDTO.getMin_vcpu(), configuration.getMin_vcpu());
         Assertions.assertEquals(configurationDTO.getMin_disk(), configuration.getMin_disk());
@@ -549,11 +550,11 @@ class VirtualMachineServiceUnitTests {
         configuration.setMax_on(configuration.getMax_on()+1);
         configuration.setTot(configuration.getTot()+1);
 
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateConfiguration(team.getCourse().getId(), teamId, configuration));
 
         int totNumVcpu = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).sum();
         configuration.setMax_vcpu(totNumVcpu-1);
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateConfiguration(team.getCourse().getId(), teamId, configuration));
 
     }
 
@@ -577,11 +578,11 @@ class VirtualMachineServiceUnitTests {
         configuration.setMax_on(configuration.getMax_on()+1);
         configuration.setTot(configuration.getTot()+1);
 
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateConfiguration(team.getCourse().getId(), teamId, configuration));
 
         int totDiskSpace = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).sum();
         configuration.setMax_vcpu(totDiskSpace-1);
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateConfiguration(team.getCourse().getId(), teamId, configuration));
 
     }
 
@@ -605,11 +606,11 @@ class VirtualMachineServiceUnitTests {
         configuration.setMax_on(configuration.getMax_on()+1);
         configuration.setTot(configuration.getTot()+1);
 
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateConfiguration(team.getCourse().getId(), teamId, configuration));
 
         int totRam = team.getVirtualMachines().stream().mapToInt(VirtualMachine::getRam).sum();
         configuration.setMax_vcpu(totRam-1);
-        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateVirtualMachineConfiguration(team.getCourse().getId(), teamId, configuration));
+        Assertions.assertThrows(InvalidConfigurationException.class, () -> virtualMachineService.updateConfiguration(team.getCourse().getId(), teamId, configuration));
 
     }
 

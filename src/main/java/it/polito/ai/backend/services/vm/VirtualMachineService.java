@@ -22,19 +22,19 @@ public interface VirtualMachineService {
     /**
      * teacher
      */
-    ConfigurationDTO createVirtualMachineConfiguration(
-                                                String courseId,
-                                                Long teamId,
-                                                int min_vcpu,
-                                                int max_vcpu,
-                                                int min_disk_space,
-                                                int max_disk_space,
-                                                int min_ram,
-                                                int max_ram,
-                                                int max_on,
-                                                int tot
-                                                );
-    ConfigurationDTO updateVirtualMachineConfiguration(String courseId, Long teamId, ConfigurationDTO configuration);
+    ConfigurationDTO createConfiguration(
+                                        String courseId,
+                                        Long teamId,
+                                        int min_vcpu,
+                                        int max_vcpu,
+                                        int min_disk_space,
+                                        int max_disk_space,
+                                        int min_ram,
+                                        int max_ram,
+                                        int max_on,
+                                        int tot
+                                        );
+    ConfigurationDTO updateConfiguration(String courseId, Long teamId, ConfigurationDTO configuration);
     VirtualMachineModelDTO createVirtualMachineModel(String courseId, SystemImage os);
     boolean deleteVirtualMachineModel(String courseId);
 
@@ -45,7 +45,7 @@ public interface VirtualMachineService {
     List<StudentDTO> getOwnersForVirtualMachine(String courseId, Long teamId, Long vmId);
     List<VirtualMachineDTO> getVirtualMachinesForTeam(String courseId, Long teamId);
     Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseId);
-    Optional<ConfigurationDTO> getVirtualMachineConfigurationForTeam(String courseId, Long teamId);
+    Optional<ConfigurationDTO> getConfigurationForTeam(String courseId, Long teamId);
     int getActiveVcpuForTeam(String courseId, Long teamId);
     int getActiveDiskSpaceForTeam(String courseId, Long teamId);
     int getActiveRAMForTeam(String courseId, Long teamId);
