@@ -37,10 +37,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -439,17 +436,36 @@ public class CourseController {
 
     // http -v POST http://localhost:8080/API/courses/ase/createTeam teamName=aseTeam0 memberIds:=[\"264000\",\"264001\",\"264002\",\"264004\"]
     @PostMapping("/{courseId}/teams")
-    TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable String courseId) {
-        if (map.containsKey("teamName") && map.containsKey("memberIds")) {
+    void createTeam(@RequestBody Map<String, Object> map, @PathVariable String courseId) {
+        if (map.containsKey("teamName") && map.containsKey("memberIds") && map.containsKey("timeout") &&
+                map.containsKey("studentId")) {
             try {
+                SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                Timestamp timeout = new Timestamp(format.parse(map.get("timeout").toString()).getTime());
                 String teamName = modelMapper.map(map.get("teamName"), String.class);
+                System.out.println(teamName+" "+timeout);
+                //team must have name unique in a course
+                List<String> teamsName = teamService.getTeamsForCourse(courseId).stream().map(TeamDTO::getName).collect(Collectors.toList());
+                for (String name:teamsName) {
+                    System.out.println(name);
+                    if(name.equals(teamName))
+                        throw  new TeamServiceConflictException(teamName);
+                }
+                Optional<StudentDTO> proponent = teamService.getStudent(map.get("studentId").toString());
+                if(!proponent.isPresent())
+                    throw new StudentNotFoundException(map.get("studentId").toString());
                 if (!teamName.isEmpty() && teamName.matches("[a-zA-Z0-9]+")) {
                     Type listType = new TypeToken<List<String>>() {}.getType();
                     List<String> memberIds = modelMapper.map(map.get("memberIds"), listType);
+                    //add the student proposing team for control
+                    memberIds.add(proponent.get().getId());
                     if (memberIds.stream().noneMatch(id -> id == null) && memberIds.stream().allMatch(id -> id.matches("[0-9]+"))) {
                         TeamDTO team = teamService.proposeTeam(courseId, teamName, memberIds);
-                        notificationService.notifyTeam(team, memberIds);
-                        return ModelHelper.enrich(team, courseId);
+                        //remove the student proposing team because no where to confirm
+                        memberIds.remove(proponent.get().getId());
+
+                        notificationService.notifyTeam(team, memberIds,timeout,proponent.get());
+
                     } else {
                         throw new InvalidRequestException(memberIds.toString());
                     }
@@ -459,12 +475,15 @@ public class CourseController {
             }/* catch (AccessDeniedException exception) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
             }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
+                System.out.println(exception.getMessage());
+                System.out.println(exception.getCause());
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
             } catch (InvalidRequestException | IllegalArgumentException | MappingException | ConfigurationException exception) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
             } catch (TeamServiceException exception) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
             } catch (Exception exception) {
+                System.out.println(exception.getMessage());
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
             }
         } else {

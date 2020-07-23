@@ -40,8 +40,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Async
     @Override
-    public void sendMessage(String address, String subject, String body) {
+    public void sendMessage(String address, String subject, String body ,String sender) {
         SimpleMailMessage message = new SimpleMailMessage();
+        //todo in application.propretis bisogna loggarsi con un utente che detiene il domino di mittente
+        message.setFrom(sender);
         message.setTo(address);
         message.setSubject(subject);
         message.setText(body);
@@ -113,23 +115,19 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void notifyTeam(TeamDTO teamDTO, List<String> memberIds) {
-
-        long nowPlusOneHourLong = LocalDateTime.now().plusHours(1).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        Timestamp nowPlusOneHour = new Timestamp(nowPlusOneHourLong);
+    public void notifyTeam(TeamDTO teamDTO, List<String> memberIds, Timestamp timeout, StudentDTO studentDTO) {
         List<StudentDTO> members = teamService.getMembers(teamDTO.getId());
-        if (!(members.size() == memberIds.size())){
+        if (!(members.size()-1 == memberIds.size())){
             throw new StudentNotFoundException(members.toString());
         }
         memberIds.forEach(id -> {
             String tokenId = UUID.randomUUID().toString();
-            TokenDTO tokenDTO = new TokenDTO(tokenId, teamDTO.getId(), nowPlusOneHour);
+            TokenDTO tokenDTO = new TokenDTO(tokenId, teamDTO.getId(), timeout);
             if (addToken(tokenDTO)) {
                 TokenDTO enrichedConfirmToken = ModelHelper.enrich(tokenDTO, "confirm");
                 TokenDTO enrichedRejectToken = ModelHelper.enrich(tokenDTO, "reject");
-                String address = "s"+id+"@studenti.polito.it";
-                String myAddress = "t.santoro1993@gmail.com";
                 StudentDTO currentStudent = teamService.getStudent(id).orElseThrow(() -> new StudentNotFoundException(id));
+                String address = currentStudent.getEmail();
                 String subject = "Request for team creation";
                 StringBuilder body = new StringBuilder(String.format("Hi %s %s,\n", currentStudent.getName(), currentStudent.getFirstName()));
                 body.append(String.format("you have been added to a team (%s).\n\n", teamDTO.getName()));
@@ -140,7 +138,8 @@ public class NotificationServiceImpl implements NotificationService {
                 body.append(String.format("\nIf you want to confirm please click the following link:\n%s\n\n", enrichedConfirmToken.getLink("confirm").get().getHref()));
                 body.append(String.format("Otherwise, if you want to refuse this invitation, please click the following link:\n%s\n\n", enrichedRejectToken.getLink("reject").get().getHref()));
                 body.append("\nRegards.");
-                sendMessage(myAddress, subject, body.toString());
+                System.out.println(studentDTO.getEmail());
+                sendMessage(address, subject, body.toString(),studentDTO.getEmail());
             } else {
                 throw new DuplicateTokenException(tokenId);
             }

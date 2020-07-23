@@ -21,6 +21,7 @@ import java.io.Reader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -235,13 +236,12 @@ public class TeamServiceImpl implements TeamService {
     @Override
     public TeamDTO proposeTeam(String courseId, String name, List<String> memberIds) {
         Optional<Course> course = courseRepository.findById(courseId);
-
         if (!course.isPresent()) {
             throw new CourseNotFoundException(courseId);
         } else if (!course.get().isEnabled()) {
             throw new CourseNotEnabledException(courseId);
         }
-        if (memberIds.size() < course.get().getMin()) {
+        if (memberIds.size()+1 < course.get().getMin()) {
             throw new TeamSizeMinException(name);
         } else if (memberIds.size() > course.get().getMax()) {
             throw new TeamSizeMaxException(name);
@@ -263,6 +263,7 @@ public class TeamServiceImpl implements TeamService {
 
         return modelMapper.map(team, TeamDTO.class);
     }
+
 
     private Student checkStudent(String id, Course course, HashSet<String> uniqueIds) {
         Student student = studentRepository.findById(id)
