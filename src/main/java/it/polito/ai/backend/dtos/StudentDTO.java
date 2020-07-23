@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.hateoas.RepresentationModel;
 
 import javax.persistence.Id;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
 @Data
@@ -24,5 +25,7 @@ public class StudentDTO extends RepresentationModel<StudentDTO> {
     @CsvBindByName(column = "first_name")
     @NotBlank
     String firstName;
-    byte[] profilePicture;
+    @Email
+    private String email;
+    private Byte[] image;
 }
