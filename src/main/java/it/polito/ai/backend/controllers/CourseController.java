@@ -3,8 +3,6 @@ package it.polito.ai.backend.controllers;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import it.polito.ai.backend.dtos.*;
-import it.polito.ai.backend.entities.Course;
-import it.polito.ai.backend.entities.Exercise;
 import it.polito.ai.backend.entities.SystemImage;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.exercise.*;
@@ -24,6 +22,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -45,7 +44,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/API/courses")
-
+@Validated
 public class CourseController {
 
     @Autowired
@@ -73,7 +72,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}")
-    CourseDTO getOne(@PathVariable String courseId) {
+    CourseDTO getOne(@PathVariable @NotBlank String courseId) {
         try {
             return ModelHelper.enrich(teamService.getCourse(courseId).orElseThrow(() -> new CourseNotFoundException(courseId)));
         }/* catch (AccessDeniedException exception) {
@@ -86,7 +85,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/teams/{teamId}")
-    TeamDTO getTeam(@PathVariable String courseId, @PathVariable Long teamId) {
+    TeamDTO getTeam(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
         try {
             TeamDTO teamDTO = teamService.getTeam(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
             return ModelHelper.enrich(teamDTO, courseId);
@@ -100,7 +99,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/enrolled")
-    CollectionModel<StudentDTO> enrolledStudents(@PathVariable String courseId) {
+    CollectionModel<StudentDTO> enrolledStudents(@PathVariable @NotBlank String courseId) {
         try {
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(courseId)).withSelfRel();
             List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
@@ -115,7 +114,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/teams/{teamId}/members")
-    CollectionModel<StudentDTO> getMembers(@PathVariable String courseId, @PathVariable Long teamId) {
+    CollectionModel<StudentDTO> getMembers(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
         try {
             List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembers(courseId, teamId)).withSelfRel();
@@ -130,7 +129,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/teams")
-    CollectionModel<TeamDTO> getTeams(@PathVariable String courseId) {
+    CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String courseId) {
         try {
             List<TeamDTO> teams = teamService.getTeamsForCourse(courseId).stream().map(t -> ModelHelper.enrich(t, courseId)).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeams(courseId)).withSelfRel();
@@ -145,7 +144,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/teachers")
-    CollectionModel<TeacherDTO> getTeachers(@PathVariable String courseId) {
+    CollectionModel<TeacherDTO> getTeachers(@PathVariable @NotBlank String courseId) {
         try {
             List<TeacherDTO> teachers = teamService.getTeachersForCourse(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeachers(courseId)).withSelfRel();
@@ -160,13 +159,13 @@ public class CourseController {
     }
 
     @DeleteMapping({"/{courseId}"})
-    void deleteCourse(@PathVariable String courseId){
+    void deleteCourse(@PathVariable @NotBlank String courseId){
         // todo
         teamService.deleteCourse(courseId);
     }
 
     @PutMapping("/{courseId}")
-    CourseDTO updateNameCourse(@RequestBody Map<String, String> map, @PathVariable String courseId){
+    CourseDTO updateNameCourse(@RequestBody Map<String, String> map, @PathVariable @NotBlank String courseId){
         if (map.containsKey("name")) {
             String name = map.get("name");
             try {
@@ -189,7 +188,7 @@ public class CourseController {
 
 
     @PutMapping("/{courseId}/setCourse")
-    CourseDTO updateCourse(@RequestBody Map<String, String> map, @PathVariable String courseId){
+    CourseDTO updateCourse(@RequestBody Map<String, String> map, @PathVariable @NotBlank String courseId){
         if (map.containsKey("name") && map.containsKey("min") && map.containsKey("max") && map.containsKey("enabled")) {
             String name = map.get("name");
             int min = Integer.parseInt(map.get("min"));
@@ -236,7 +235,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/teams/students")
-    CollectionModel<StudentDTO> getStudentsInTeams(@PathVariable String courseId) {
+    CollectionModel<StudentDTO> getStudentsInTeams(@PathVariable @NotBlank String courseId) {
         try {
             List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getStudentsInTeams(courseId)).withSelfRel();
@@ -251,7 +250,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/teams/available-students")
-    CollectionModel<StudentDTO> getAvailableStudents(@PathVariable String courseId) {
+    CollectionModel<StudentDTO> getAvailableStudents(@PathVariable @NotBlank String courseId) {
         try {
             List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAvailableStudents(courseId)).withSelfRel();
@@ -267,7 +266,7 @@ public class CourseController {
 
     @PostMapping("/{courseId}/enable")
     @ResponseStatus(HttpStatus.OK)
-    void enable(@PathVariable String courseId) {
+    void enable(@PathVariable @NotBlank String courseId) {
         try {
             teamService.enableCourse(courseId);
         }/* catch (AccessDeniedException exception) {
@@ -281,7 +280,7 @@ public class CourseController {
 
     @PostMapping("/{courseId}/disable")
     @ResponseStatus(HttpStatus.OK)
-    void disable(@PathVariable String courseId) {
+    void disable(@PathVariable @NotBlank String courseId) {
         try {
             teamService.disableCourse(courseId);
         }/* catch (AccessDeniedException exception) {
@@ -297,7 +296,7 @@ public class CourseController {
     // http -v POST http://localhost:8080/API/courses/ai/enrollOne studentId=265000
     @PostMapping("/{courseId}/enrollOne")
     @ResponseStatus(HttpStatus.CREATED)
-    void addStudent(@RequestBody Map<String, String> map, @PathVariable String courseId) {
+    void addStudent(@RequestBody Map<String, String> map, @PathVariable @NotBlank String courseId) {
         if (map.containsKey("studentId")) {
             try {
                 if (!teamService.addStudentToCourse(map.get("studentId"), courseId)) {
@@ -319,7 +318,7 @@ public class CourseController {
 
     @PostMapping("/{courseId}/teachers")
     @ResponseStatus(HttpStatus.CREATED)
-    void addTeacher(@RequestBody Map<String, String> map, @PathVariable String courseId) {
+    void addTeacher(@RequestBody Map<String, String> map, @PathVariable @NotBlank String courseId) {
         if (map.containsKey("teacherId")) {
             try {
                 if (!teamService.addTeacherToCourse(map.get("teacherId"), courseId)) {
@@ -351,7 +350,7 @@ public class CourseController {
             "text/tab-separated-values");*/
 
     @PostMapping("/{courseId}/enrollMany")
-    List<Boolean> enrollStudents(@RequestParam("file") MultipartFile file, @PathVariable String courseId) {
+    List<Boolean> enrollStudents(@RequestParam("file") @NotNull MultipartFile file, @PathVariable @NotBlank String courseId) {
 
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -392,7 +391,7 @@ public class CourseController {
 
 
     @PostMapping("/{courseId}/enrollAll")
-    List<Boolean> enrollAll(@RequestParam("file") MultipartFile file, @PathVariable String courseId) {
+    List<Boolean> enrollAll(@RequestParam("file") @NotNull MultipartFile file, @PathVariable @NotBlank String courseId) {
 
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -439,7 +438,7 @@ public class CourseController {
 
     // http -v POST http://localhost:8080/API/courses/ase/createTeam teamName=aseTeam0 memberIds:=[\"264000\",\"264001\",\"264002\",\"264004\"]
     @PostMapping("/{courseId}/teams")
-    TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable String courseId) {
+    TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable @NotBlank String courseId) {
         if (map.containsKey("teamName") && map.containsKey("memberIds")) {
             try {
                 String teamName = modelMapper.map(map.get("teamName"), String.class);
@@ -474,7 +473,7 @@ public class CourseController {
 
 
     @PostMapping("/{courseId}/createExercise")
-    void createExercise(@RequestParam("image") MultipartFile file,@RequestParam Map<String, String> map, @PathVariable String courseId){
+    void createExercise(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId){
         if (map.containsKey("expired")) {
             try {
 
@@ -497,7 +496,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/exercises")
-    List<ExerciseDTO> getExercises(@PathVariable String courseId){
+    List<ExerciseDTO> getExercises(@PathVariable @NotBlank String courseId){
         try {
            List<ExerciseDTO> list = exerciseService.getExercisesForCourse(courseId);
             List<ExerciseDTO> exerciseDTOS = new ArrayList<>();
@@ -515,7 +514,7 @@ public class CourseController {
 
     @PostMapping("/{courseId}/model")
     @ResponseStatus(HttpStatus.CREATED)
-    VirtualMachineModelDTO addVirtualMachineModel(@PathVariable @NotBlank String courseId, @NotNull Map<String, Object> map) {
+    VirtualMachineModelDTO addVirtualMachineModel(@PathVariable @NotBlank String courseId, @RequestBody Map<String, Object> map) {
 
         if (!map.containsKey("systemImage")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -567,16 +566,18 @@ public class CourseController {
 
     @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}")
     VirtualMachineDTO getVirtualMachine(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId) {
-        try {
-            VirtualMachineDTO virtualMachineDTO = virtualMachineService.getVirtualMachine(courseId, teamId, vmId).orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
-            return ModelHelper.enrich(virtualMachineDTO, courseId, teamId);
+        /*try {
+
         } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        }*/
+
+        VirtualMachineDTO virtualMachineDTO = virtualMachineService.getVirtualMachine(courseId, teamId, vmId).orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
+        return ModelHelper.enrich(virtualMachineDTO, courseId, teamId);
     }
 
     @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}/owners")
@@ -597,7 +598,7 @@ public class CourseController {
 
     @PostMapping("/{courseId}/teams/{teamId}/virtual-machines")
     @ResponseStatus(HttpStatus.CREATED)
-    VirtualMachineDTO addVirtualMachine(@RequestBody @NotNull Map<String, Object> map, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
+    VirtualMachineDTO addVirtualMachine(@RequestBody Map<String, Object> map, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
 
         if (!(map.containsKey("studentId") && map.containsKey("numVcpu") && map.containsKey("diskSpace") && map.containsKey("ram"))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid number of parameters");
@@ -615,19 +616,19 @@ public class CourseController {
                  */
 
                 if (studentId.isEmpty() || studentId.trim().isEmpty()) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid student id" + studentId);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid student id " + studentId);
                 }
                 if (teamId == null || teamId <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid team id" + teamId);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid team id " + teamId);
                 }
                 if (numVcpu <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid num vcpu" + numVcpu);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid num vcpu " + numVcpu);
                 }
                 if (diskSpace <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid disk space" + diskSpace);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid disk space " + diskSpace);
                 }
                 if (ram <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid ram" + ram);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid ram " + ram);
                 }
 
                 VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(courseId, teamId, studentId, numVcpu, diskSpace, ram);
@@ -741,7 +742,7 @@ public class CourseController {
 
     @PostMapping("/{courseId}/teams/{teamId}/configuration")
     @ResponseStatus(HttpStatus.CREATED)
-    ConfigurationDTO addConfiguration(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @RequestBody @NotNull Map<String, Object> map) {
+    ConfigurationDTO addConfiguration(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @RequestBody Map<String, Object> map) {
         if (!(map.containsKey("min_vcpu") && map.containsKey("max_vcpu") && map.containsKey("min_disk_space") && map.containsKey("max_disk_space") && map.containsKey("min_ram") && map.containsKey("max_ram") && map.containsKey("max_on") && map.containsKey("tot"))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         } else {
@@ -903,7 +904,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/{exerciseId}")
-    ExerciseDTO getOne(@PathVariable String courseId, @PathVariable Long exerciseId) {
+    ExerciseDTO getExercise(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId) {
         try {
             ExerciseDTO exerciseDTO = exerciseService.getExercise(exerciseId)
                     .orElseThrow(() -> new TeamNotFoundException(exerciseId.toString()));
@@ -920,7 +921,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/{exerciseId}/assignments")
-    List<AssignmentDTO> getLastAssignments(@PathVariable String courseId, @PathVariable Long exerciseId ){
+    List<AssignmentDTO> getLastAssignments(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId ){
         try {
             Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
             if(!courseDTO.isPresent())
@@ -953,8 +954,8 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/{exerciseId}/history")
-    List<AssignmentDTO> getHistoryAssignments(@PathVariable String courseId,
-            @PathVariable Long exerciseId,@RequestBody Map<String,String> map ){
+    List<AssignmentDTO> getHistoryAssignments(@PathVariable @NotBlank String courseId,
+            @PathVariable @NotNull Long exerciseId,@RequestBody Map<String,String> map ){
         if(map.containsKey("studentId")){
             try{
                 Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
@@ -987,7 +988,7 @@ public class CourseController {
 
 
     @PostMapping("/{courseId}/{exerciseId}/assignmentNull")
-    void setNullAssignment(@PathVariable String courseId,@PathVariable Long exerciseId){
+    void setNullAssignment(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId){
         try{
             /*No duplicati*/
             List<AssignmentDTO> assignments = exerciseService.getAssignmentsForExercise(exerciseId);
@@ -1016,8 +1017,8 @@ public class CourseController {
     }
 
     @PostMapping("/{courseId}/{exerciseId}/assignmentRead")
-    void setReadAssignment(@PathVariable String courseId,
-            @PathVariable Long exerciseId, @RequestBody Map<String,String> map){
+    void setReadAssignment(@PathVariable @NotBlank String courseId,
+            @PathVariable @NotNull Long exerciseId, @RequestBody Map<String,String> map){
         if (map.containsKey("studentId")) {
             try {
                 Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
@@ -1050,7 +1051,7 @@ public class CourseController {
 
     @PostMapping("/{courseId}/{exerciseId}/assignmentSubmit")
     void submitAssignment(
-            @RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable String courseId, @PathVariable Long exerciseId){
+            @RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId){
         /*Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo*/
         if (map.containsKey("studentId")){
             try {
@@ -1086,7 +1087,7 @@ public class CourseController {
     }
 
     @PostMapping("/{courseId}/{exerciseId}/assignmentReview")
-    void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable String courseId, @PathVariable Long exerciseId){
+    void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId){
         /*Se il falg=false allora c'è anche il voto
          * se è true allora non c'è il voto*/
         if(map.containsKey("flag") && map.containsKey("studentId")){
@@ -1132,7 +1133,7 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/{exerciseId}/{assignmentId}")
-    AssignmentDTO getOne(@PathVariable Long assignmentId, @PathVariable String courseId, @PathVariable Long exerciseId) {
+    AssignmentDTO getAssignment(@PathVariable @NotNull Long assignmentId, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId) {
         try {
             Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
             if(!courseDTO.isPresent())

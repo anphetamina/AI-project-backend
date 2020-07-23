@@ -55,8 +55,8 @@ public class ModelHelper {
     }
 
     public static AssignmentDTO enrich(AssignmentDTO assignmentDTO, String studentId, Long exerciseId, String courseId){
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(assignmentDTO.getId(),courseId,exerciseId)).withSelfRel();
-        Link exerciseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseId,exerciseId)).withRel("exercise");
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAssignment(assignmentDTO.getId(),courseId,exerciseId)).withSelfRel();
+        Link exerciseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getExercise(courseId,exerciseId)).withRel("exercise");
         Link studentLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getOne(studentId)).withRel("student");
         assignmentDTO.add(selfLink).add(exerciseLink).add(studentLink);
         return  assignmentDTO;
