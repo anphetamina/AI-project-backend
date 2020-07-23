@@ -10,22 +10,25 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/API/teachers")
+@Validated
 public class TeacherController {
 
     @Autowired
     TeamService teamService;
 
     @GetMapping("/{id}")
-    TeacherDTO getOne(@PathVariable String id) {
+    TeacherDTO getOne(@PathVariable @NotBlank String id) {
         try {
             return ModelHelper.enrich(teamService.getTeacher(id).orElseThrow(() -> new TeacherNotFoundException(id)));
         }/* catch (AccessDeniedException exception) {
@@ -38,7 +41,7 @@ public class TeacherController {
     }
 
     @GetMapping("/{id}/courses")
-    CollectionModel<CourseDTO> getCourses(@PathVariable String id) {
+    CollectionModel<CourseDTO> getCourses(@PathVariable @NotBlank String id) {
         try {
             List<CourseDTO> courses = teamService.getCoursesForTeacher(id).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeacherController.class).getCourses(id)).withSelfRel();
