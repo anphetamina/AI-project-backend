@@ -3,6 +3,8 @@ package it.polito.ai.backend.entities;
 import lombok.*;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,9 +19,14 @@ public class Student {
     @Id
     @EqualsAndHashCode.Include
     String id;
+    @NotBlank(message = "The firstName is mandatory")
     String name;
+    @NotBlank(message = "The firstName is mandatory")
     String firstName;
-    byte[] profilePicture;
+    @Email
+    private String email;
+    @Lob
+    private Byte[] image;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "student_course",

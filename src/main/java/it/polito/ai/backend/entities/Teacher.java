@@ -29,7 +29,6 @@ public class Teacher {
     private String email;
     //Storing the image (bytes) in the database
     @Lob
-    @Basic(fetch = FetchType.LAZY)
     private byte[] profilePicture;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
