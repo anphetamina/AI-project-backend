@@ -35,8 +35,7 @@ class VirtualMachineServiceUnitTests {
 
     @Autowired TeamRepository teamRepository;
     @Autowired VirtualMachineRepository virtualMachineRepository;
-    @Autowired
-    ConfigurationRepository configurationRepository;
+    @Autowired ConfigurationRepository configurationRepository;
     @Autowired VirtualMachineModelRepository virtualMachineModelRepository;
     @Autowired StudentRepository studentRepository;
     @Autowired CourseRepository courseRepository;
