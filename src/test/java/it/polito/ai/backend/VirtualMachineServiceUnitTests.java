@@ -4,6 +4,7 @@ import it.polito.ai.backend.dtos.ConfigurationDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
 import it.polito.ai.backend.entities.*;
 import it.polito.ai.backend.repositories.*;
+import it.polito.ai.backend.services.team.StudentNotFoundException;
 import it.polito.ai.backend.services.vm.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -493,6 +494,17 @@ class VirtualMachineServiceUnitTests {
          * does not add the same student to the owner list
          */
         Assertions.assertFalse(virtualMachineService.addOwnerToVirtualMachine(team.getCourse().getId(), team.getId(), student.getId(), vmId));
+    }
+
+    @Test
+    void addOwnerToVirtualMachine_invalidParameters() {
+        Team team = teams.get(0);
+        VirtualMachine virtualMachine = team.getVirtualMachines().get(0);
+        Student student = team.getMembers().stream().filter(m -> !virtualMachine.getOwners().contains(m)).findFirst().orElseThrow(() -> new TestAbortedException("all students own the first vm"));
+        Long vmId = virtualMachine.getId();
+
+        Assertions.assertThrows(StudentNotFoundException.class, () -> virtualMachineService.addOwnerToVirtualMachine(team.getCourse().getId(), team.getId(), "  ", vmId));
+        Assertions.assertThrows(StudentNotFoundException.class, () -> virtualMachineService.addOwnerToVirtualMachine(team.getCourse().getId(), team.getId(), null, vmId));
     }
 
     @Test

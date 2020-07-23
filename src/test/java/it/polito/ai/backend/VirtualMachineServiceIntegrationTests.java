@@ -28,8 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -190,13 +189,38 @@ public class VirtualMachineServiceIntegrationTests {
     void shareOwnership_invalidRequestBody() {
         try {
 
-            String blank = null;
+            Map<String, String> body = new HashMap<>();
+            body.put("studentId", "  ");
             objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
-            String json = objectMapper.writeValueAsString(blank);
+            String json = objectMapper.writeValueAsString(body);
             mockMvc.perform(post("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines/"+vmId+"/owners")
-                    /*.contentType(MediaType.APPLICATION_JSON)
-                    .content(json)*/)
-            .andExpect(status().isBadRequest());
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json))
+            .andExpect(status().isBadRequest())
+            .andDo(print());
+
+            Map<String, String> body2 = new HashMap<>();
+            body2.put("studentId", null);
+            objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+            String json2 = objectMapper.writeValueAsString(body2);
+            mockMvc.perform(post("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines/"+vmId+"/owners")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json2))
+                    .andExpect(status().isBadRequest())
+                    .andDo(print());
+
+            /*Map<String, String> body3 = new HashMap<>();
+            body3.put("name", "ok");
+            body3.put("min", "1");
+            body3.put("max", "2");
+            body3.put("enabled", "erer");
+            objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+            String json3 = objectMapper.writeValueAsString(body3);
+            mockMvc.perform(put("/API/courses/"+courseId+"/setCourse")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json3))
+                    .andExpect(status().isBadRequest())
+                    .andDo(print());*/
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -242,9 +242,9 @@ public class TeamServiceImpl implements TeamService {
             throw new CourseNotEnabledException(courseId);
         }
         if (memberIds.size() < course.get().getMin()) {
-            throw new TeamSizeMinException(name);
+            throw new TeamSizeMinException(courseId, String.valueOf(course.get().getMin()));
         } else if (memberIds.size() > course.get().getMax()) {
-            throw new TeamSizeMaxException(name);
+            throw new TeamSizeMaxException(courseId, String.valueOf(course.get().getMax()));
         }
 
         HashSet<String> uniqueIds = new HashSet<String>();
@@ -405,6 +405,9 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public void deleteCourse(String courseId) {
+
+        // todo delete all teams, vm, model, teachers and assignments/exercises? related to the course
+
         Optional<Course> course =  courseRepository.findById(courseId);
         if(course.isPresent())
             courseRepository.delete(course.get());
@@ -416,6 +419,11 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public boolean update(CourseDTO courseDTO) {
+
+        // todo check if name is unique
+        // todo check if min/max are valid, if there are teams with a number of members lower than min
+        // todo check if the course is enabled, if disabled should not be modified?
+
         if (courseRepository.existsById(courseDTO.getId())) {
             Course c = modelMapper.map(courseDTO, Course.class);
             courseRepository.save(c);

@@ -1,5 +1,7 @@
 package it.polito.ai.backend.controllers;
 
+import it.polito.ai.backend.services.exercise.AssignmentNotFoundException;
+import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
 import it.polito.ai.backend.services.team.TeamServiceConflictException;
 import it.polito.ai.backend.services.team.TeamServiceNotFoundException;
 import it.polito.ai.backend.services.vm.VirtualMachineServiceConflictException;
@@ -15,7 +17,7 @@ import java.io.IOException;
 @ControllerAdvice
 public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({TeamServiceNotFoundException.class, VirtualMachineServiceNotFoundException.class})
+    @ExceptionHandler({TeamServiceNotFoundException.class, VirtualMachineServiceNotFoundException.class, AssignmentNotFoundException.class, ExerciseNotFoundException.class})
     void handleNotFound(HttpServletResponse response, Exception exception) throws IOException {
         response.sendError(HttpStatus.NOT_FOUND.value(), exception.getMessage());
     }
@@ -23,5 +25,9 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({TeamServiceConflictException.class, VirtualMachineServiceConflictException.class})
     void handleConflict(HttpServletResponse response, Exception exception) throws IOException {
         response.sendError(HttpStatus.CONFLICT.value(), exception.getMessage());
+    }
+    @ExceptionHandler({NumberFormatException.class, ClassCastException.class/*, NullPointerException.class*/})
+    void handleCast(HttpServletResponse response, Exception exception) throws IOException {
+        response.sendError(HttpStatus.BAD_REQUEST.value());
     }
 }
