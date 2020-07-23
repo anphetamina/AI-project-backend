@@ -18,6 +18,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/API/students")
+@Validated
 public class StudentController {
 
     @Autowired
@@ -55,7 +57,7 @@ public class StudentController {
     }
 
     @GetMapping("/{studentId}")
-    StudentDTO getOne(@PathVariable String studentId) {
+    StudentDTO getOne(@PathVariable @NotBlank String studentId) {
         try {
             return ModelHelper.enrich(teamService.getStudent(studentId).orElseThrow(() -> new StudentNotFoundException(studentId)));
         }/* catch (AccessDeniedException exception) {
@@ -68,7 +70,7 @@ public class StudentController {
     }
 
     @GetMapping("/{studentId}/courses")
-    CollectionModel<CourseDTO> getCourses(@PathVariable String studentId) {
+    CollectionModel<CourseDTO> getCourses(@PathVariable @NotBlank String studentId) {
         try {
             List<CourseDTO> courses = teamService.getCourses(studentId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getCourses(studentId)).withSelfRel();
@@ -83,7 +85,7 @@ public class StudentController {
     }
 
     @GetMapping("/{studentId}/teams")
-    CollectionModel<TeamDTO> getTeams(@PathVariable String studentId) {
+    CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String studentId) {
         try {
             List<TeamDTO> teams = teamService.getTeamsForStudent(studentId).stream()
                     .map(t -> {
@@ -120,7 +122,7 @@ public class StudentController {
     }
 
     @GetMapping("/{studentId}/assignments")
-    List<AssignmentDTO> getAssignments(@PathVariable String studentId){
+    List<AssignmentDTO> getAssignments(@PathVariable @NotBlank String studentId){
         try {
             Optional<StudentDTO> studentDTO = teamService.getStudent(studentId);
             if(!studentDTO.isPresent())
