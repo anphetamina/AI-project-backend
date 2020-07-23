@@ -938,7 +938,7 @@ public class CourseController {
             List<AssignmentDTO> assignmentDTOS= new ArrayList<>();
             for (AssignmentDTO a:lastAssignments) {
                 String studentId = exerciseService.getStudentForAssignment(a.getId()).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(a.getId().toString()));
-                assignmentDTOS.add(ModelHelper.enrich(a,studentId,exerciseId));
+                assignmentDTOS.add(ModelHelper.enrich(a,studentId,exerciseId,courseId));
 
             }
 
@@ -966,7 +966,7 @@ public class CourseController {
                 List<AssignmentDTO> assignmentDTOList = new ArrayList<>();
                 for (AssignmentDTO a:assignmentDTOS) {
                     String studentId = exerciseService.getStudentForAssignment(a.getId()).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(a.getId().toString()));
-                    assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId));
+                    assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId,courseId));
 
                 }
                 return  assignmentDTOList;
@@ -1142,7 +1142,7 @@ public class CourseController {
                throw  new ExerciseNotFoundException(exerciseId.toString());
             AssignmentDTO assignmentDTO = exerciseService.getAssignment(assignmentId).orElseThrow(() -> new AssignmentNotFoundException(assignmentId.toString()));
             String studentId = exerciseService.getStudentForAssignment(assignmentId).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(assignmentId.toString()));
-            return ModelHelper.enrich(assignmentDTO,studentId,exerciseId);
+            return ModelHelper.enrich(assignmentDTO,studentId,exerciseId,courseId);
         } catch (ExerciseServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
         } catch (Exception exception) {
