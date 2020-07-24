@@ -3,6 +3,7 @@ package it.polito.ai.backend.services.vm;
 import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.entities.*;
 import it.polito.ai.backend.repositories.*;
+import it.polito.ai.backend.services.team.CourseNotEnabledException;
 import it.polito.ai.backend.services.team.CourseNotFoundException;
 import it.polito.ai.backend.services.team.StudentNotFoundException;
 import it.polito.ai.backend.services.team.TeamNotFoundException;
@@ -40,6 +41,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
 
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
 
         Team team = course.getTeams()
                 .stream()
@@ -139,8 +144,13 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @Override
     public VirtualMachineDTO updateVirtualMachine(String courseId, Long teamId, Long vmId, VirtualMachineDTO newVM) {
 
-        VirtualMachine virtualMachine = courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId))
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
+
+        VirtualMachine virtualMachine = course
                 .getTeams()
                 .stream()
                 .filter(t -> t.getId().equals(teamId))
@@ -229,8 +239,13 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @Override
     public boolean deleteVirtualMachine(String courseId, Long teamId, Long vmId) {
 
-        VirtualMachine virtualMachine = courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId))
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
+
+        VirtualMachine virtualMachine = course
                 .getTeams()
                 .stream()
                 .filter(t -> t.getId().equals(teamId))
@@ -259,8 +274,13 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @Override
     public void turnOnVirtualMachine(String courseId, Long teamId, Long vmId) {
 
-        VirtualMachine virtualMachine = courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId))
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
+
+        VirtualMachine virtualMachine = course
                 .getTeams()
                 .stream()
                 .filter(t -> t.getId().equals(teamId))
@@ -299,8 +319,13 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @Override
     public void turnOffVirtualMachine(String courseId, Long teamId, Long vmId) {
 
-        VirtualMachine virtualMachine = courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId))
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
+
+        VirtualMachine virtualMachine = course
                 .getTeams()
                 .stream()
                 .filter(t -> t.getId().equals(teamId))
@@ -318,8 +343,13 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @Override
     public boolean addOwnerToVirtualMachine(String courseId, Long teamId, String studentId, Long vmId) {
 
-        Team team = courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId))
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
+
+        Team team = course
                 .getTeams()
                 .stream()
                 .filter(t -> t.getId().equals(teamId))
@@ -356,8 +386,13 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @Override
     public ConfigurationDTO createConfiguration(String courseId, Long teamId, ConfigurationDTO configurationDTO) {
 
-        Team team = courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId))
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
+
+        Team team = course
                 .getTeams()
                 .stream()
                 .filter(t -> t.getId().equals(teamId))
@@ -398,8 +433,13 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @Override
     public ConfigurationDTO updateConfiguration(String courseId, Long teamId, ConfigurationDTO configuration) {
 
-        Team team = courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId))
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
+
+        Team team = course
                 .getTeams()
                 .stream()
                 .filter(t -> t.getId().equals(teamId))
@@ -499,6 +539,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
 
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
+
         if (course.getVirtualMachineModel() != null) {
             throw new VirtualMachineModelAlreadyDefinedException(courseId);
         }
@@ -516,6 +560,11 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     public boolean deleteVirtualMachineModel(String courseId) {
 
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException(courseId);
+        }
+
         VirtualMachineModel model = course.getVirtualMachineModel();
 
         if (model == null) {
