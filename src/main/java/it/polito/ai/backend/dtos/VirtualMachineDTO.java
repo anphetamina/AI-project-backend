@@ -12,7 +12,7 @@ import javax.validation.constraints.Positive;
 @NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class VirtualMachineDTO extends RepresentationModel<VirtualMachineDTO> {
-    @Positive @EqualsAndHashCode.Include long id;
+    @EqualsAndHashCode.Include Long id;
     @Positive int num_vcpu;
     @Positive int disk_space;
     @Positive int ram;

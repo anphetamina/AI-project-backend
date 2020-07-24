@@ -20,6 +20,7 @@ import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -117,7 +118,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         long nowPlusOneHourLong = LocalDateTime.now().plusHours(1).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         Timestamp nowPlusOneHour = new Timestamp(nowPlusOneHourLong);
-        List<StudentDTO> members = teamService.getMembers(teamDTO.getId());
+        List<StudentDTO> members = new ArrayList<>()/*teamService.getMembers(teamDTO.getId())*/;
         if (!(members.size() == memberIds.size())){
             throw new StudentNotFoundException(members.toString());
         }

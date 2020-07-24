@@ -9,6 +9,6 @@ import javax.validation.constraints.Positive;
 
 @Data
 public class VirtualMachineModelDTO extends RepresentationModel<VirtualMachineModelDTO> {
-    @Positive long id;
+    Long id;
     @NotNull SystemImage os;
 }

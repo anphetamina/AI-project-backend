@@ -34,7 +34,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     ModelMapper modelMapper;
 
     @Override
-    public VirtualMachineDTO createVirtualMachine(String courseId, Long teamId, String studentId, int numVcpu, int diskSpace, int ram) {
+    public VirtualMachineDTO createVirtualMachine(String courseId, Long teamId, String studentId, VirtualMachineDTO virtualMachineDTO) {
 
 
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
@@ -87,6 +87,8 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
          */
         List<VirtualMachine> virtualMachines = team.getVirtualMachines();
 
+        int numVcpu = virtualMachineDTO.getNum_vcpu();
+
         // todo check when the list is empty
         int currentNumVcpu = virtualMachines
                 .stream()
@@ -97,6 +99,8 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
             throw new NumVcpuNotAvailableException(String.valueOf(numVcpu), String.valueOf(currentNumVcpu+numVcpu), String.valueOf(configuration.getMax_vcpu()));
         }
 
+        int diskSpace = virtualMachineDTO.getDisk_space();
+
         int currentDiskSpace = virtualMachines
                 .stream()
                 .reduce(0, (partial, current) -> partial + current.getDisk_space(), Integer::sum);
@@ -105,6 +109,8 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         } else if (diskSpace > configuration.getMax_disk_space() - currentDiskSpace) {
             throw new DiskSpaceNotAvailableException(String.valueOf(diskSpace), String.valueOf(currentDiskSpace+diskSpace), String.valueOf(configuration.getMax_disk_space()));
         }
+
+        int ram = virtualMachineDTO.getRam();
 
         int currentRam = virtualMachines
                 .stream()
@@ -347,7 +353,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public ConfigurationDTO createConfiguration(String courseId, Long teamId, int min_vcpu, int max_vcpu, int min_disk_space, int max_disk_space, int min_ram, int max_ram, int max_on, int tot) {
+    public ConfigurationDTO createConfiguration(String courseId, Long teamId, ConfigurationDTO configurationDTO) {
 
         Team team = courseRepository.findById(courseId)
                 .orElseThrow(() -> new CourseNotFoundException(courseId))
@@ -360,6 +366,15 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         if (team.getConfiguration() != null) {
             throw new ConfigurationAlreadyDefinedException(teamId.toString());
         }
+
+        int min_vcpu = configurationDTO.getMin_vcpu();
+        int max_vcpu = configurationDTO.getMax_vcpu();
+        int min_disk_space = configurationDTO.getMin_disk();
+        int max_disk_space = configurationDTO.getMax_disk();
+        int min_ram = configurationDTO.getMin_ram();
+        int max_ram = configurationDTO.getMax_ram();
+        int max_on = configurationDTO.getMax_on();
+        int tot = configurationDTO.getTot();
 
         validateConfiguration(max_on, tot, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram);
 
@@ -479,16 +494,16 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public VirtualMachineModelDTO createVirtualMachineModel(String courseName, SystemImage os) {
+    public VirtualMachineModelDTO createVirtualMachineModel(String courseId, VirtualMachineModelDTO modelDTO) {
 
-        Course course = courseRepository.findById(courseName).orElseThrow(() -> new CourseNotFoundException(courseName));
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
 
         if (course.getVirtualMachineModel() != null) {
-            throw new VirtualMachineModelAlreadyDefinedException(courseName);
+            throw new VirtualMachineModelAlreadyDefinedException(courseId);
         }
 
         VirtualMachineModel model = VirtualMachineModel.builder()
-                .system_image(os)
+                .system_image(modelDTO.getOs())
                 .build();
         course.setVirtualMachineModel(model);
         virtualMachineModelRepository.save(model);

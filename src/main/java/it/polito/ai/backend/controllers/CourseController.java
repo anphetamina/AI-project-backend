@@ -206,7 +206,7 @@ public class CourseController {
         }
 
         if (!teamService.addStudentToCourse(studentId, courseId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("student %s already exists", studentId));
+            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("student %s already inserted", studentId));
         }
     }
 
@@ -224,7 +224,7 @@ public class CourseController {
         }
 
         if (!teamService.addTeacherToCourse(teacherId, courseId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("teacher %s already exists", teacherId));
+            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("teacher %s already inserted", teacherId));
         }
     }
 
@@ -381,21 +381,9 @@ public class CourseController {
 
     @PostMapping("/{courseId}/model")
     @ResponseStatus(HttpStatus.CREATED)
-    VirtualMachineModelDTO addVirtualMachineModel(@PathVariable @NotBlank String courseId, @RequestBody Map<String, Object> map) {
-
-        if (!map.containsKey("systemImage")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        } else {
-            SystemImage os = modelMapper.map(map.get("systemImage"), SystemImage.class);
-
-            if (os == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-            }
-
-            VirtualMachineModelDTO virtualMachineModel = virtualMachineService.createVirtualMachineModel(courseId, os);
-            return ModelHelper.enrich(virtualMachineModel, courseId);
-        }
-
+    VirtualMachineModelDTO addVirtualMachineModel(@PathVariable @NotBlank String courseId, @RequestBody @Valid VirtualMachineModelDTO model) {
+        VirtualMachineModelDTO virtualMachineModel = virtualMachineService.createVirtualMachineModel(courseId, model);
+        return ModelHelper.enrich(virtualMachineModel, courseId);
     }
 
     @DeleteMapping("/{courseId}/model")
@@ -426,40 +414,15 @@ public class CourseController {
 
     @PostMapping("/{courseId}/teams/{teamId}/virtual-machines")
     @ResponseStatus(HttpStatus.CREATED)
-    VirtualMachineDTO addVirtualMachine(@RequestBody Map<String, Object> map, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
+    VirtualMachineDTO addVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
 
-        if (!(map.containsKey("studentId") && map.containsKey("numVcpu") && map.containsKey("diskSpace") && map.containsKey("ram"))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid number of parameters");
-        } else {
-
-            String studentId = modelMapper.map(map.get("studentId"), String.class);
-            int numVcpu = modelMapper.map(map.get("numVcpu"), int.class);
-            int diskSpace = modelMapper.map(map.get("diskSpace"), int.class);
-            int ram = modelMapper.map(map.get("ram"), int.class);
-
-            /**
-             * parameters validation
-             */
-
-            if (studentId == null || studentId.trim().isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid student id " + studentId);
-            }
-            if (teamId == null || teamId <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid team id " + teamId);
-            }
-            if (numVcpu <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid num vcpu " + numVcpu);
-            }
-            if (diskSpace <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid disk space " + diskSpace);
-            }
-            if (ram <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid ram " + ram);
-            }
-
-            VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(courseId, teamId, studentId, numVcpu, diskSpace, ram);
-            return ModelHelper.enrich(virtualMachine, courseId, teamId);
-        }
+        /**
+         * if the studentId has been provided in the request body
+         * it should be validated by looking it matches with the id of the authenticated user
+         */
+        String studentId = "s1"; // todo to be obtained from security context
+        VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(courseId, teamId, studentId, virtualMachineDTO);
+        return ModelHelper.enrich(virtualMachine, courseId, teamId);
 
 
     }
@@ -520,49 +483,9 @@ public class CourseController {
 
     @PostMapping("/{courseId}/teams/{teamId}/configuration")
     @ResponseStatus(HttpStatus.CREATED)
-    ConfigurationDTO addConfiguration(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @RequestBody Map<String, Object> map) {
-        if (!(map.containsKey("min_vcpu") && map.containsKey("max_vcpu") && map.containsKey("min_disk_space") && map.containsKey("max_disk_space") && map.containsKey("min_ram") && map.containsKey("max_ram") && map.containsKey("max_on") && map.containsKey("tot"))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        } else {
-
-            Integer min_vcpu = modelMapper.map(map.get("min_vcpu"), Integer.class);
-            Integer max_vcpu = modelMapper.map(map.get("max_vcpu"), Integer.class);
-            Integer min_disk_space = modelMapper.map(map.get("min_disk_space"), Integer.class);
-            Integer max_disk_space = modelMapper.map(map.get("max_disk_space"), Integer.class);
-            Integer min_ram = modelMapper.map(map.get("min_ram"), Integer.class);
-            Integer max_ram = modelMapper.map(map.get("max_ram"), Integer.class);
-            Integer max_on = modelMapper.map(map.get("max_on"), Integer.class);
-            Integer tot = modelMapper.map(map.get("tot"), Integer.class);
-
-            if (min_vcpu == null || min_vcpu <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid min vcpu number " + min_vcpu);
-            }
-            if (max_vcpu == null || max_vcpu <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid max vcpu number " + max_vcpu);
-            }
-            if (min_disk_space == null || min_disk_space <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid min disk space number " + min_disk_space);
-            }
-            if (max_disk_space == null || max_disk_space <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid max disk space number " + max_disk_space);
-            }
-            if (min_ram == null || min_ram <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid min ram number " + min_ram);
-            }
-            if (max_ram == null || max_ram <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid max ram number " + max_ram);
-            }
-            if (max_on == null || max_on <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid max on number " + max_on);
-            }
-            if (tot == null || tot <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid tot number " + tot);
-            }
-
-            ConfigurationDTO configurationDTO = virtualMachineService.createConfiguration(courseId, teamId, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram, max_on, tot);
-            return ModelHelper.enrich(configurationDTO, courseId, teamId);
-        }
-
+    ConfigurationDTO addConfiguration(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @RequestBody @Valid ConfigurationDTO configurationDTO) {
+        ConfigurationDTO newConfigurationDTO = virtualMachineService.createConfiguration(courseId, teamId, configurationDTO);
+        return ModelHelper.enrich(newConfigurationDTO, courseId, teamId);
     }
 
     @GetMapping("/{courseId}/teams/{teamId}/configuration")

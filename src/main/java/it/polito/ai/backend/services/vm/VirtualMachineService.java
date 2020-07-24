@@ -12,7 +12,7 @@ public interface VirtualMachineService {
     /**
      * student
      */
-    VirtualMachineDTO createVirtualMachine(String courseId, Long teamId, String studentId, int numVcpu, int diskSpace, int ram);
+    VirtualMachineDTO createVirtualMachine(String courseId, Long teamId, String studentId, VirtualMachineDTO virtualMachine);
     VirtualMachineDTO updateVirtualMachine(String courseId, Long teamId, Long vmId, VirtualMachineDTO virtualMachine);
     boolean deleteVirtualMachine(String courseId, Long teamId, Long vmId);
     void turnOnVirtualMachine(String courseId, Long teamId, Long vmId);
@@ -22,20 +22,9 @@ public interface VirtualMachineService {
     /**
      * teacher
      */
-    ConfigurationDTO createConfiguration(
-                                        String courseId,
-                                        Long teamId,
-                                        int min_vcpu,
-                                        int max_vcpu,
-                                        int min_disk_space,
-                                        int max_disk_space,
-                                        int min_ram,
-                                        int max_ram,
-                                        int max_on,
-                                        int tot
-                                        );
+    ConfigurationDTO createConfiguration(String courseId, Long teamId, ConfigurationDTO configuration);
     ConfigurationDTO updateConfiguration(String courseId, Long teamId, ConfigurationDTO configuration);
-    VirtualMachineModelDTO createVirtualMachineModel(String courseId, SystemImage os);
+    VirtualMachineModelDTO createVirtualMachineModel(String courseId, VirtualMachineModelDTO model);
     boolean deleteVirtualMachineModel(String courseId);
 
     /**

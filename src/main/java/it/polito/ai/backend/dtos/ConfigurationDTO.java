@@ -15,7 +15,7 @@ import javax.validation.constraints.Positive;
 @NoArgsConstructor
 public class ConfigurationDTO extends RepresentationModel<ConfigurationDTO> {
 
-    @NotNull Long id;
+    Long id;
     @Positive int min_vcpu;
     @Positive int max_vcpu;
     @Positive int min_disk;
