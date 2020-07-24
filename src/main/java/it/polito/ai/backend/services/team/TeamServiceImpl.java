@@ -220,14 +220,16 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public List<StudentDTO> getMembers(Long teamId) {
-        Optional<Team> team = teamRepository.findById(teamId);
-
-        if (!team.isPresent()) {
-            throw new TeamNotFoundException(teamId.toString());
-        }
-
-        return team.get().getMembers().stream()
+    public List<StudentDTO> getMembers(String courseId, Long teamId) {
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getMembers()
+                .stream()
                 .map(s -> modelMapper.map(s, StudentDTO.class))
                 .collect(Collectors.toList());
     }
@@ -323,15 +325,22 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public Optional<TeamDTO> getTeam(Long teamId) {
-        return teamRepository.findById(teamId)
+    public Optional<TeamDTO> getTeam(String courseId, Long teamId) {
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getTeams()
+                .stream()
+                .filter(t -> t.getId().equals(teamId))
+                .findFirst()
                 .map(t -> modelMapper.map(t, TeamDTO.class));
     }
 
     @Override
-    public Optional<CourseDTO> getCourse(Long teamId) {
-        return teamRepository.findById(teamId)
-                .map(t -> modelMapper.map(t.getCourse(), CourseDTO.class));
+    public Optional<CourseDTO> getCourseForTeam(Long teamId) {
+        Course course = teamRepository.findById(teamId)
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getCourse();
+        return Optional.ofNullable(modelMapper.map(course, CourseDTO.class));
     }
 
     @Override
@@ -418,11 +427,11 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public boolean update(CourseDTO courseDTO) {
+    public boolean updateCourse(CourseDTO courseDTO) {
 
         // todo check if name is unique
         // todo check if min/max are valid, if there are teams with a number of members lower than min
-        // todo check if the course is enabled, if disabled should not be modified?
+        // todo check if the course is disabled, if enabled should not be modified
 
         if (courseRepository.existsById(courseDTO.getId())) {
             Course c = modelMapper.map(courseDTO, Course.class);

@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class VirtualMachineServiceImpl implements VirtualMachineService {
 
-    // todo refactor
-
     @Autowired
     VirtualMachineRepository virtualMachineRepository;
     @Autowired
