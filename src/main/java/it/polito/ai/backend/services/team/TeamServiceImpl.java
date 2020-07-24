@@ -131,8 +131,29 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public boolean removeStudentFromCourse(String studentId, String courseId) {
-        // todo
-        return false;
+        /**
+         * check if the student is enrolled to the course
+         */
+
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        Student student = course
+                .getStudents()
+                .stream()
+                .filter(s -> s.getId().equals(studentId))
+                .findFirst()
+                .orElseThrow(() -> new StudentNotFoundException(studentId));
+
+        /**
+         * the student can be removed from the course if he/she is not part of any team
+         */
+        if (student.getTeams().stream().anyMatch(t -> t.getCourse().getId().compareTo(courseId) == 0)) {
+            return false;
+        }
+
+        course.removeStudent(student);
+        // todo check saves on repository
+        return true;
     }
 
     @Override

@@ -91,7 +91,6 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
         int numVcpu = virtualMachineDTO.getNum_vcpu();
 
-        // todo check when the list is empty
         int currentNumVcpu = virtualMachines
                 .stream()
                 .reduce(0, (partial, current) -> partial + current.getNum_vcpu(), Integer::sum);

@@ -180,6 +180,13 @@ public class CourseController {
         }
     }
 
+    @DeleteMapping("/{courseId}/enrolled/{studentId}")
+    void removeStudent(@PathVariable @NotBlank String courseId, @PathVariable @NotBlank String studentId) {
+        if (!teamService.removeStudentFromCourse(studentId, courseId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "the student is part of a team");
+        }
+    }
+
     @PostMapping("/{courseId}/teachers")
     @ResponseStatus(HttpStatus.CREATED)
     void addTeacher(@RequestBody Map<String, String> map, @PathVariable @NotBlank String courseId) {
