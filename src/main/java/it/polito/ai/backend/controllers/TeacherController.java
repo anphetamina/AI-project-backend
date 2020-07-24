@@ -29,45 +29,21 @@ public class TeacherController {
 
     @GetMapping("/{id}")
     TeacherDTO getOne(@PathVariable @NotBlank String id) {
-        try {
-            return ModelHelper.enrich(teamService.getTeacher(id).orElseThrow(() -> new TeacherNotFoundException(id)));
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch(TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+        return ModelHelper.enrich(teamService.getTeacher(id).orElseThrow(() -> new TeacherNotFoundException(id)));
     }
 
     @GetMapping("/{id}/courses")
     CollectionModel<CourseDTO> getCourses(@PathVariable @NotBlank String id) {
-        try {
-            List<CourseDTO> courses = teamService.getCoursesForTeacher(id).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeacherController.class).getCourses(id)).withSelfRel();
-            return CollectionModel.of(courses, selfLink);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+        List<CourseDTO> courses = teamService.getCoursesForTeacher(id).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeacherController.class).getCourses(id)).withSelfRel();
+        return CollectionModel.of(courses, selfLink);
     }
 
     @PostMapping({"", "/"})
     TeacherDTO addTeacher(@RequestBody @Valid TeacherDTO teacherDTO) {
-        try {
-            if (!teamService.addTeacher(teacherDTO)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, teacherDTO.getId());
-            }
-            return ModelHelper.enrich(teacherDTO);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (ResponseStatusException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        if (!teamService.addTeacher(teacherDTO)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("teacher %s already exists", teacherDTO.getId()));
         }
+        return ModelHelper.enrich(teacherDTO);
     }
 }
