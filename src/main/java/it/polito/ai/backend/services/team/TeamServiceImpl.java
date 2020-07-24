@@ -152,7 +152,7 @@ public class TeamServiceImpl implements TeamService {
         }
 
         course.removeStudent(student);
-        // todo check saves on repository
+
         return true;
     }
 

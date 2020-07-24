@@ -19,8 +19,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class VirtualMachineServiceImpl implements VirtualMachineService {
 
-    // todo check if the course is enabled
-
     @Autowired
     VirtualMachineRepository virtualMachineRepository;
     @Autowired
