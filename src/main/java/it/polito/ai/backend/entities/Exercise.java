@@ -36,7 +36,11 @@ public class Exercise {
     public void addAssignment(Assignment assignment) {
         assignment.exercise=this;
         assignments.add(assignment);
-        // assignment.setExercise(this);
 
+    }
+
+    public void removeAssignment(Assignment assignment) {
+        assignments.remove(assignment);
+        assignment.exercise = null;
     }
 }

@@ -3,12 +3,17 @@ package it.polito.ai.backend.controllers;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import it.polito.ai.backend.dtos.*;
-import it.polito.ai.backend.entities.SystemImage;
 import it.polito.ai.backend.services.Utils;
-import it.polito.ai.backend.services.exercise.*;
+import it.polito.ai.backend.services.exercise.AssignmentNotFoundException;
+import it.polito.ai.backend.services.exercise.AssignmentStatus;
+import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
+import it.polito.ai.backend.services.exercise.ExerciseService;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.*;
-import it.polito.ai.backend.services.vm.*;
+import it.polito.ai.backend.services.vm.ConfigurationNotDefinedException;
+import it.polito.ai.backend.services.vm.VirtualMachineModelNotDefinedException;
+import it.polito.ai.backend.services.vm.VirtualMachineNotFoundException;
+import it.polito.ai.backend.services.vm.VirtualMachineService;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
@@ -31,7 +36,6 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.xml.ws.Response;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -110,49 +114,15 @@ public class CourseController {
 
     @DeleteMapping({"/{courseId}"})
     void deleteCourse(@PathVariable @NotBlank String courseId){
-        // todo
-        teamService.deleteCourse(courseId);
+        if (!teamService.deleteCourse(courseId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "course is enabled or is associated with one or more entities");
+        }
     }
+
 
     @PutMapping("/{courseId}")
-    CourseDTO updateCourseName(@RequestBody Map<String, String> map, @PathVariable @NotBlank String courseId){
-        if (!map.containsKey("name")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "please provide a name");
-        }
-        String name = map.get("name");
-        if (name == null || name.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "please provide a valid name");
-        }
-        CourseDTO courseDTO = teamService.getCourse(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
-        courseDTO.setName(name);
-        if (!teamService.updateCourse(courseDTO))
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "course name not unique");
-        return ModelHelper.enrich(courseDTO);
-    }
-
-
-    @PutMapping("/{courseId}/setCourse")
-    CourseDTO updateCourse(@RequestBody Map<String, String> map, @PathVariable @NotBlank String courseId){
-        if (!map.containsKey("name") && !map.containsKey("min") && !map.containsKey("max") && !map.containsKey("enabled")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid request");
-        }
-        String name = map.get("name");
-        if (name == null || name.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "please provide a valid name");
-        }
-        int min = Integer.parseInt(map.get("min"));
-        int max = Integer.parseInt(map.get("max"));
-
-        // todo check: if I send enabled=random it gives me false and does not throw any exception
-        boolean enabled = Boolean.parseBoolean(map.get("enabled"));
-        CourseDTO courseDTO = teamService.getCourse(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
-        courseDTO.setName(name);
-        courseDTO.setMin(min);
-        courseDTO.setMax(max);
-        courseDTO.setEnabled(enabled);
-        if (!teamService.updateCourse(courseDTO))
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "todo message");
-        return ModelHelper.enrich(courseDTO);
+    CourseDTO updateCourse(@RequestBody @Valid CourseDTO courseDTO, @PathVariable @NotBlank String courseId){
+        return ModelHelper.enrich(teamService.updateCourse(courseDTO));
 
     }
 

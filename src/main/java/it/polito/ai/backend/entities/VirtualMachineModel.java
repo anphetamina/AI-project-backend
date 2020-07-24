@@ -36,6 +36,9 @@ public class VirtualMachineModel {
 
     public void removeVirtualMachines() {
         if (virtualMachines.size() > 0) {
+            /**
+             * make all virtual machines related to this model as orphans so they will get delete from the db
+             */
             for (VirtualMachine vm : virtualMachines) {
                 vm.virtualMachineModel = null;
                 vm.setTeam(null);

@@ -40,6 +40,11 @@ public class Student {
         course.students.add(this);
     }
 
+    public void removeCourse(Course course) {
+        courses.remove(course);
+        course.students.remove(this);
+    }
+
     @ManyToMany(mappedBy = "members", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     List<Team> teams = new ArrayList<>();
 
@@ -60,15 +65,6 @@ public class Student {
     )
     List<VirtualMachine> virtual_machines = new ArrayList<>();
 
-    @OneToMany(mappedBy = "student"/*, cascade = CascadeType.ALL, orphanRemoval = true*/)
-    List<Assignment> assignments = new ArrayList<Assignment>();
-    public void addAssignment(Assignment assignment) {
-        assignment.student = this;
-        assignments.add(assignment);
-        // assignment.setStudent(this);
-    }
-
-
     public void addVirtualMachine(VirtualMachine vm) {
         virtual_machines.add(vm);
         vm.owners.add(this);
@@ -77,5 +73,17 @@ public class Student {
     public void removeVirtualMachine(VirtualMachine vm) {
         virtual_machines.remove(vm);
         vm.owners.remove(this);
+    }
+
+    @OneToMany(mappedBy = "student", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    List<Assignment> assignments = new ArrayList<Assignment>();
+    public void addAssignment(Assignment assignment) {
+        assignment.student = this;
+        assignments.add(assignment);
+    }
+
+    public void removeAssignment(Assignment assignment) {
+        assignments.remove(assignment);
+        assignment.student = null;
     }
 }

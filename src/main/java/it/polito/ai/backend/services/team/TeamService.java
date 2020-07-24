@@ -26,6 +26,8 @@ public interface TeamService {
 
     boolean addStudentToCourse(String studentId, String courseId);
 
+    boolean removeStudentFromCourse(String studentId, String courseId);
+
     void enableCourse(String courseId);
 
     void disableCourse(String courseId);
@@ -56,7 +58,7 @@ public interface TeamService {
     boolean addTeacherToCourse(String teacherId, String courseId);
     Optional<TeacherDTO> getTeacher(String id);
     List<CourseDTO> getCoursesForTeacher(String id);
-    void deleteCourse(String courseId);
-    boolean updateCourse(CourseDTO courseDTO);
+    boolean deleteCourse(String courseId);
+    CourseDTO updateCourse(CourseDTO courseDTO);
 
 }

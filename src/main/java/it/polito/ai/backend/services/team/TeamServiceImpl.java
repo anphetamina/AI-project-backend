@@ -130,6 +130,12 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    public boolean removeStudentFromCourse(String studentId, String courseId) {
+        // todo
+        return false;
+    }
+
+    @Override
     public void enableCourse(String courseId) {
         Optional<Course> course = courseRepository.findById(courseId);
 
@@ -413,32 +419,64 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public void deleteCourse(String courseId) {
+    public boolean deleteCourse(String courseId) {
+        Course course =  courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
 
-        // todo delete all teams, vm, model, teachers and assignments/exercises? related to the course
+        /**
+         * a course cannot be deleted if is enabled or there are enrolled students
+         * having enrolled students means possibly having more entities related to this course
+         */
+        if (!course.isEnabled() || course.getStudents().size() > 0 || course.getTeams().size() > 0 || course.getExercises().size() > 0) {
+            return false;
+        }
 
-        Optional<Course> course =  courseRepository.findById(courseId);
-        if(course.isPresent())
-            courseRepository.delete(course.get());
+        course.setVirtualMachineModel(null);
+        courseRepository.delete(course);
 
-
-
+        return true;
 
     }
 
     @Override
-    public boolean updateCourse(CourseDTO courseDTO) {
+    public CourseDTO updateCourse(CourseDTO courseDTO) {
 
-        // todo check if name is unique
-        // todo check if min/max are valid, if there are teams with a number of members lower than min
-        // todo check if the course is disabled, if enabled should not be modified
+        Course course = courseRepository.findById(courseDTO.getId()).orElseThrow(() -> new CourseNotFoundException(courseDTO.getId()));
 
-        if (courseRepository.existsById(courseDTO.getId())) {
-            Course c = modelMapper.map(courseDTO, Course.class);
-            courseRepository.save(c);
-            return true;
+        /**
+         * check if the course is enabled
+         */
+        if (course.isEnabled()) {
+            throw new CourseEnabledException(courseDTO.getId());
         }
-        return false;
+
+        String name = courseDTO.getName();
+
+        /**
+         * check if the new name is unique
+         */
+        if (courseRepository.findAll().stream().anyMatch(c -> c.getName().equalsIgnoreCase(name))) {
+            throw new DuplicateCourseNameException(name);
+        }
+
+        int min = courseDTO.getMin();
+        int max = courseDTO.getMax();
+
+        /**
+         * check if there are no teams which size is lower than the new min and greater than the new max
+         */
+        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() < min)) {
+            throw new TeamSizeMinException(String.valueOf(min), String.valueOf(course.getMin()));
+        }
+        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() > max)) {
+            throw new TeamSizeMaxException(String.valueOf(max), String.valueOf(course.getMax()));
+        }
+
+        course.setName(name);
+        course.setMin(min);
+        course.setMax(max);
+
+        courseRepository.save(course);
+        return courseDTO;
     }
 
 

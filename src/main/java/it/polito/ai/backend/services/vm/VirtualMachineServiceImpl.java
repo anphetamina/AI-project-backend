@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class VirtualMachineServiceImpl implements VirtualMachineService {
 
+    // todo check if the course is enabled
+
     @Autowired
     VirtualMachineRepository virtualMachineRepository;
     @Autowired
@@ -530,6 +532,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         }
 
         model.setCourse(null);
+        /**
+         * this remove will remove all the virtual machines
+         * and cascade the operation to all their relationships (owners and teams)
+         */
         model.removeVirtualMachines();
         // model.getVirtualMachines().forEach(vm -> vm.setVirtualMachineModel(null)); throws java.util.ConcurrentModificationException
 
