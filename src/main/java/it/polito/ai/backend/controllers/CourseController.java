@@ -51,8 +51,6 @@ import java.util.stream.Collectors;
 @Validated
 public class CourseController {
 
-    // todo complete request bodies checking
-
     @Autowired
     TeamService teamService;
     @Autowired
@@ -78,7 +76,7 @@ public class CourseController {
 
     @GetMapping("/{courseId}/teams/{teamId}")
     TeamDTO getTeam(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        TeamDTO teamDTO = teamService.getTeam(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+        TeamDTO teamDTO = teamService.getTeam(courseId, teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
         return ModelHelper.enrich(teamDTO, courseId);
     }
 
@@ -91,7 +89,7 @@ public class CourseController {
 
     @GetMapping("/{courseId}/teams/{teamId}/members")
     CollectionModel<StudentDTO> getMembers(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<StudentDTO> students = teamService.getMembers(courseId, teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembers(courseId, teamId)).withSelfRel();
         return CollectionModel.of(students, selfLink);
     }
@@ -127,7 +125,7 @@ public class CourseController {
         }
         CourseDTO courseDTO = teamService.getCourse(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
         courseDTO.setName(name);
-        if (!teamService.update(courseDTO))
+        if (!teamService.updateCourse(courseDTO))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "course name not unique");
         return ModelHelper.enrich(courseDTO);
     }
@@ -152,7 +150,7 @@ public class CourseController {
         courseDTO.setMin(min);
         courseDTO.setMax(max);
         courseDTO.setEnabled(enabled);
-        if (!teamService.update(courseDTO))
+        if (!teamService.updateCourse(courseDTO))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "todo message");
         return ModelHelper.enrich(courseDTO);
 
@@ -203,7 +201,7 @@ public class CourseController {
 
         String studentId = map.get("studentId");
 
-        if (studentId.trim().isEmpty()) {
+        if (studentId == null || studentId.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid student id");
         }
 
@@ -221,7 +219,7 @@ public class CourseController {
 
         String teacherId = map.get("teacherId");
 
-        if (teacherId.trim().isEmpty()) {
+        if (teacherId == null || teacherId.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid teacher id");
         }
 
@@ -350,7 +348,7 @@ public class CourseController {
     }
 
 
-    @PostMapping("/{courseId}/createExercise")
+    @PostMapping("/{courseId}/exercises")
     void createExercise(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId){
         if (!map.containsKey("expired")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid request");
@@ -370,6 +368,8 @@ public class CourseController {
 
     @GetMapping("/{courseId}/exercises")
     List<ExerciseDTO> getExercises(@PathVariable @NotBlank String courseId){
+
+        // todo collection model
         List<ExerciseDTO> list = exerciseService.getExercisesForCourse(courseId);
         List<ExerciseDTO> exerciseDTOS = new ArrayList<>();
         for (ExerciseDTO exerciseDTO:list) {
@@ -441,7 +441,7 @@ public class CourseController {
              * parameters validation
              */
 
-            if (studentId.isEmpty() || studentId.trim().isEmpty()) {
+            if (studentId == null || studentId.trim().isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid student id " + studentId);
             }
             if (teamId == null || teamId <= 0) {
@@ -606,10 +606,10 @@ public class CourseController {
         return virtualMachineService.getResourcesByTeam(courseId, teamId);
     }
 
-    @GetMapping("/{courseId}/{exerciseId}")
+    @GetMapping("/{courseId}/exercises/{exerciseId}")
     ExerciseDTO getExercise(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId) {
         ExerciseDTO exerciseDTO = exerciseService.getExercise(exerciseId)
-                .orElseThrow(() -> new TeamNotFoundException(exerciseId.toString()));
+                .orElseThrow(() -> new ExerciseNotFoundException(exerciseId.toString()));
         Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
         if(!courseDTO.isPresent())
             throw new CourseNotFoundException(courseId);
@@ -617,8 +617,10 @@ public class CourseController {
         return ModelHelper.enrich(exerciseDTO, courseName);
     }
 
-    @GetMapping("/{courseId}/{exerciseId}/assignments")
+    @GetMapping("/{courseId}/exercises/{exerciseId}/assignments")
     List<AssignmentDTO> getLastAssignments(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId ){
+
+        // todo collection model
         Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
         if(!courseDTO.isPresent())
             throw new CourseNotFoundException(exerciseId.toString());
@@ -642,16 +644,18 @@ public class CourseController {
         return  assignmentDTOS;
     }
 
-    @GetMapping("/{courseId}/{exerciseId}/history")
+    @GetMapping("/{courseId}/exercises/{exerciseId}/history")
     List<AssignmentDTO> getHistoryAssignments(@PathVariable @NotBlank String courseId,
             @PathVariable @NotNull Long exerciseId,@RequestBody Map<String,String> map ){
+
+        // todo collection model
         if(!map.containsKey("studentId")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
         String studentId1 = map.get("studentId");
 
-        if (studentId1.trim().isEmpty()) {
+        if (studentId1 == null || studentId1.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
@@ -674,7 +678,7 @@ public class CourseController {
 
 
 
-    @PostMapping("/{courseId}/{exerciseId}/assignmentNull")
+    @PostMapping("/{courseId}/exercises/{exerciseId}/assignmentNull")
     void setNullAssignment(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId){
         /*No duplicati*/
         List<AssignmentDTO> assignments = exerciseService.getAssignmentsForExercise(exerciseId);
@@ -696,7 +700,7 @@ public class CourseController {
         }
     }
 
-    @PostMapping("/{courseId}/{exerciseId}/assignmentRead")
+    @PostMapping("/{courseId}/exercises/{exerciseId}/assignmentRead")
     void setReadAssignment(@PathVariable @NotBlank String courseId,
             @PathVariable @NotNull Long exerciseId, @RequestBody Map<String,String> map){
         if (!map.containsKey("studentId")) {
@@ -705,13 +709,13 @@ public class CourseController {
 
         String studentId = map.get("studentId");
 
-        if (studentId.trim().isEmpty()) {
+        if (studentId == null || studentId.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
         Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
         if(!courseDTO.isPresent())
-            throw new CourseNotFoundException(exerciseId.toString());
+            throw new CourseNotFoundException(courseId);
         List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
         AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
 
@@ -727,7 +731,7 @@ public class CourseController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, exerciseId.toString());
     }
 
-    @PostMapping("/{courseId}/{exerciseId}/assignmentSubmit")
+    @PostMapping("/{courseId}/exercises/{exerciseId}/assignments")
     void submitAssignment(
             @RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId){
         /*Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo*/
@@ -745,7 +749,7 @@ public class CourseController {
         try {
             Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
             if(!courseDTO.isPresent())
-                throw new CourseNotFoundException(exerciseId.toString());
+                throw new CourseNotFoundException(courseId);
             Utils.checkTypeImage(file);
             Optional<ExerciseDTO> exercise = exerciseService.getExercise(exerciseId);
             if(!exercise.isPresent())
@@ -768,7 +772,7 @@ public class CourseController {
 
     }
 
-    @PostMapping("/{courseId}/{exerciseId}/assignmentReview")
+    @PostMapping("/{courseId}/exercises/{exerciseId}/assignmentReview")
     void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId){
         /*Se il falg=false allora c'è anche il voto
          * se è true allora non c'è il voto*/
@@ -785,7 +789,7 @@ public class CourseController {
         try {
             Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
             if(!courseDTO.isPresent())
-                throw new CourseNotFoundException(exerciseId.toString());
+                throw new CourseNotFoundException(courseId);
             Utils.checkTypeImage(file);
             List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
             AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
@@ -816,7 +820,7 @@ public class CourseController {
 
     }
 
-    @GetMapping("/{courseId}/{exerciseId}/{assignmentId}")
+    @GetMapping("/{courseId}/exercises/{exerciseId}/assignments/{assignmentId}")
     AssignmentDTO getAssignment(@PathVariable @NotNull Long assignmentId, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long exerciseId) {
         Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
         if(!courseDTO.isPresent())

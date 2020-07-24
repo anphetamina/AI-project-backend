@@ -66,8 +66,8 @@ public class StudentController {
     CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String studentId) {
         List<TeamDTO> teams = teamService.getTeamsForStudent(studentId).stream()
                 .map(t -> {
-                    String courseName = teamService.getCourse(t.getId()).map(CourseDTO::getId).orElse(null);
-                    return ModelHelper.enrich(t, courseName);
+                    String courseId = teamService.getCourseForTeam(t.getId()).map(CourseDTO::getId).orElseThrow(() -> new CourseNotFoundException(String.format("for team %s", t.getId())));
+                    return ModelHelper.enrich(t, courseId);
                 })
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentId)).withSelfRel();
