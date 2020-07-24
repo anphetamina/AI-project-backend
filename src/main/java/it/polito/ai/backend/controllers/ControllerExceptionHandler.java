@@ -6,6 +6,7 @@ import it.polito.ai.backend.services.team.TeamServiceConflictException;
 import it.polito.ai.backend.services.team.TeamServiceNotFoundException;
 import it.polito.ai.backend.services.vm.VirtualMachineServiceConflictException;
 import it.polito.ai.backend.services.vm.VirtualMachineServiceNotFoundException;
+import org.modelmapper.MappingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,16 +19,17 @@ import java.io.IOException;
 public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({TeamServiceNotFoundException.class, VirtualMachineServiceNotFoundException.class, AssignmentNotFoundException.class, ExerciseNotFoundException.class})
-    void handleNotFound(HttpServletResponse response, Exception exception) throws IOException {
+    void handleNotFoundException(HttpServletResponse response, Exception exception) throws IOException {
         response.sendError(HttpStatus.NOT_FOUND.value(), exception.getMessage());
     }
 
     @ExceptionHandler({TeamServiceConflictException.class, VirtualMachineServiceConflictException.class})
-    void handleConflict(HttpServletResponse response, Exception exception) throws IOException {
+    void handleConflictException(HttpServletResponse response, Exception exception) throws IOException {
         response.sendError(HttpStatus.CONFLICT.value(), exception.getMessage());
     }
-    @ExceptionHandler({NumberFormatException.class, ClassCastException.class/*, NullPointerException.class*/})
-    void handleCast(HttpServletResponse response, Exception exception) throws IOException {
+
+    @ExceptionHandler({IllegalArgumentException.class, ClassCastException.class, MappingException.class/*, NullPointerException.class*/})
+    void handleArgumentException(HttpServletResponse response, Exception exception) throws IOException {
         response.sendError(HttpStatus.BAD_REQUEST.value());
     }
 }
