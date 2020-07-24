@@ -65,7 +65,7 @@ public class Student {
     public void addAssignment(Assignment assignment) {
         assignment.student = this;
         assignments.add(assignment);
-        assignment.setStudent(this);
+        // assignment.setStudent(this);
     }
 
 

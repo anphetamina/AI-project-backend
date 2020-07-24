@@ -18,7 +18,7 @@ public class VirtualMachineModel {
     @GeneratedValue
     @EqualsAndHashCode.Include
     Long id;
-    @NotNull SystemImage system_image;
+    SystemImage system_image;
 
 
     @OneToMany(mappedBy = "virtualMachineModel", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)

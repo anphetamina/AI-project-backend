@@ -36,7 +36,7 @@ public class Exercise {
     public void addAssignment(Assignment assignment) {
         assignment.exercise=this;
         assignments.add(assignment);
-        assignment.setExercise(this);
+        // assignment.setExercise(this);
 
     }
 }
