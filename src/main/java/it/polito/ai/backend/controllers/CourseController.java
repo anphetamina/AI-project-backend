@@ -127,6 +127,7 @@ public class CourseController {
     }
 
     @PostMapping({"", "/"})
+    @ResponseStatus(HttpStatus.CREATED)
     CourseDTO addCourse(@RequestBody @Valid CourseDTO courseDTO) {
         if (!teamService.addCourse(courseDTO)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("course %s already exists", courseDTO.getId()));
@@ -149,13 +150,11 @@ public class CourseController {
     }
 
     @PostMapping("/{courseId}/enable")
-    @ResponseStatus(HttpStatus.OK)
     void enable(@PathVariable @NotBlank String courseId) {
         teamService.enableCourse(courseId);
     }
 
     @PostMapping("/{courseId}/disable")
-    @ResponseStatus(HttpStatus.OK)
     void disable(@PathVariable @NotBlank String courseId) {
         teamService.disableCourse(courseId);
     }
@@ -243,7 +242,7 @@ public class CourseController {
             return addedAndEnrolledStudents;
         } catch (TikaException | IOException e) {
             e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "invalid file content");
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
         }
 
 
@@ -283,7 +282,7 @@ public class CourseController {
             return enrolledStudents;
         } catch (TikaException | IOException e) {
             e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "invalid file content");
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
         }
 
 
@@ -291,6 +290,7 @@ public class CourseController {
 
     // http -v POST http://localhost:8080/API/courses/ase/createTeam teamName=aseTeam0 memberIds:=[\"264000\",\"264001\",\"264002\",\"264004\"]
     @PostMapping("/{courseId}/teams")
+    @ResponseStatus(HttpStatus.CREATED)
     TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable @NotBlank String courseId) {
         if (map.containsKey("teamName") && map.containsKey("memberIds")) {
             try {
@@ -326,6 +326,7 @@ public class CourseController {
 
 
     @PostMapping("/{courseId}/exercises")
+    @ResponseStatus(HttpStatus.CREATED)
     void createExercise(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId){
         if (!map.containsKey("expired")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid request");
@@ -339,7 +340,7 @@ public class CourseController {
             exerciseService.addExerciseForCourse(courseId,published,expired,file);
         } catch (ParseException | IOException | TikaException e) {
             e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "invalid file content");
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
         }
     }
 
@@ -395,9 +396,9 @@ public class CourseController {
 
         /**
          * if the studentId has been provided in the request body
-         * it should be validated by looking it matches with the id of the authenticated user
+         * it should be validated by looking if it matches with the id of the authenticated user
          */
-        String studentId = "s1"; // todo to be obtained from security context
+        String studentId = "student"; // todo to be obtained from security context
         VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(courseId, teamId, studentId, virtualMachineDTO);
         return ModelHelper.enrich(virtualMachine, courseId, teamId);
 
@@ -419,13 +420,11 @@ public class CourseController {
     }
 
     @PostMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}/on")
-    @ResponseStatus(HttpStatus.OK)
     void turnOn(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId) {
         virtualMachineService.turnOnVirtualMachine(courseId, teamId, vmId);
     }
 
     @PostMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}/off")
-    @ResponseStatus(HttpStatus.OK)
     void turnOff(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId) {
         virtualMachineService.turnOffVirtualMachine(courseId, teamId, vmId);
     }
@@ -438,7 +437,6 @@ public class CourseController {
     }
 
     @PostMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}/owners")
-    @ResponseStatus(HttpStatus.OK)
     void shareOwnership(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId, @RequestBody Map<String, String> map) {
         if (!map.containsKey("studentId")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -666,7 +664,7 @@ public class CourseController {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exerciseId.toString());
         } catch (TikaException | IOException e) {
             e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "invalid file content");
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
         }
 
 
@@ -715,7 +713,7 @@ public class CourseController {
             }
         } catch (TikaException | IOException e) {
             e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "invalid file content");
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
         }
 
     }

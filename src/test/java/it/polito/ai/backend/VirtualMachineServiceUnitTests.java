@@ -19,6 +19,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -215,7 +216,13 @@ class VirtualMachineServiceUnitTests {
         int diskSpace = configuration.getMin_disk_space();
         int ram = configuration.getMin_ram();
 
-        VirtualMachineDTO virtualMachineDTO = virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram);
+        VirtualMachineDTO vm = VirtualMachineDTO.builder()
+                .num_vcpu(vcpu)
+                .disk_space(diskSpace)
+                .ram(ram)
+                .build();
+
+        VirtualMachineDTO virtualMachineDTO = virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vm);
 
         Assertions.assertTrue(virtualMachineDTO.getId() > 0);
 
@@ -243,12 +250,22 @@ class VirtualMachineServiceUnitTests {
         int vcpu = configuration.getMin_vcpu();
         int diskSpace = configuration.getMin_disk_space();
         int ram = configuration.getMin_ram();
+        VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
+                .num_vcpu(vcpu)
+                .disk_space(diskSpace)
+                .ram(ram)
+                .build();
         IntStream.range(0, configuration.getTot()-team.getVirtualMachines().size())
                 .forEach(i -> {
-                    virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram);
+                    VirtualMachineDTO vm = VirtualMachineDTO.builder()
+                            .num_vcpu(vcpu)
+                            .disk_space(diskSpace)
+                            .ram(ram)
+                            .build();
+                    virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vm);
                 });
 
-        Assertions.assertThrows(VirtualMachineNumberException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(VirtualMachineNumberException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, virtualMachineDTO));
     }
 
     @Test
@@ -261,6 +278,11 @@ class VirtualMachineServiceUnitTests {
         int vcpu = configuration.getMin_vcpu();
         int diskSpace = configuration.getMin_disk_space();
         int ram = configuration.getMin_ram();
+        VirtualMachineDTO vm = VirtualMachineDTO.builder()
+                .num_vcpu(vcpu)
+                .disk_space(diskSpace)
+                .ram(ram)
+                .build();
 
         Team team1 = teamRepository.getOne(teamId);
         team1.setConfiguration(null);
@@ -268,7 +290,7 @@ class VirtualMachineServiceUnitTests {
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertThrows(ConfigurationNotDefinedException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(ConfigurationNotDefinedException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vm));
     }
 
     @Test
@@ -281,6 +303,11 @@ class VirtualMachineServiceUnitTests {
         int vcpu = configuration.getMin_vcpu();
         int diskSpace = configuration.getMin_disk_space();
         int ram = configuration.getMin_ram();
+        VirtualMachineDTO vm = VirtualMachineDTO.builder()
+                .num_vcpu(vcpu)
+                .disk_space(diskSpace)
+                .ram(ram)
+                .build();
 
         Course course1 = courseRepository.getOne(courseId);
         course1.setVirtualMachineModel(null);
@@ -288,7 +315,7 @@ class VirtualMachineServiceUnitTests {
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertThrows(VirtualMachineModelNotDefinedException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(VirtualMachineModelNotDefinedException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vm));
 
     }
 
@@ -302,12 +329,17 @@ class VirtualMachineServiceUnitTests {
         int vcpu = configuration.getMax_vcpu()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getNum_vcpu).sum());
         int diskSpace = configuration.getMin_disk_space();
         int ram = configuration.getMin_ram();
+        VirtualMachineDTO vm = VirtualMachineDTO.builder()
+                .num_vcpu(vcpu)
+                .disk_space(diskSpace)
+                .ram(ram)
+                .build();
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
+        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vm));
 
-        Assertions.assertThrows(NumVcpuNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(NumVcpuNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vm));
     }
 
     @Test
@@ -320,12 +352,17 @@ class VirtualMachineServiceUnitTests {
         int vcpu = configuration.getMin_vcpu();
         int diskSpace = configuration.getMax_disk_space()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getDisk_space).sum());
         int ram = configuration.getMin_ram();
+        VirtualMachineDTO vm = VirtualMachineDTO.builder()
+                .num_vcpu(vcpu)
+                .disk_space(diskSpace)
+                .ram(ram)
+                .build();
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
+        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vm));
 
-        Assertions.assertThrows(DiskSpaceNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
+        Assertions.assertThrows(DiskSpaceNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vm));
 
     }
 
@@ -338,13 +375,16 @@ class VirtualMachineServiceUnitTests {
         Configuration configuration = team.getConfiguration();
         int vcpu = configuration.getMin_vcpu();
         int diskSpace = configuration.getMin_disk_space();
-        int ram = configuration.getMax_ram()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getRam).sum());
+        int ram = (configuration.getMax_ram()-(team.getVirtualMachines().stream().mapToInt(VirtualMachine::getRam).sum()))+1;
+        VirtualMachineDTO vm = VirtualMachineDTO.builder()
+                .num_vcpu(vcpu)
+                .disk_space(diskSpace)
+                .ram(ram)
+                .build();
         Student student = team.getMembers().get(0);
         String studentId = student.getId();
 
-        Assertions.assertDoesNotThrow(() -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram));
-
-        Assertions.assertThrows(RamNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vcpu, diskSpace, ram+1));
+        Assertions.assertThrows(RamNotAvailableException.class, () -> virtualMachineService.createVirtualMachine(courseId, teamId, studentId, vm));
 
     }
 
@@ -641,6 +681,14 @@ class VirtualMachineServiceUnitTests {
          * there is no student owning any virtual machine of the given model
          */
         Assertions.assertTrue(course1.getStudents().stream().noneMatch(s -> s.getVirtual_machines().containsAll(course.getVirtualMachineModel().getVirtualMachines())));
+    }
+
+    @Test
+    void getVirtualMachine_notFound() {
+        Course course = courses.get(0);
+        Long teamId = course.getTeams().get(0).getId();
+
+        Assertions.assertEquals(Optional.empty(), virtualMachineService.getVirtualMachine(course.getId(), teamId, 999L));
     }
 
     @Test
