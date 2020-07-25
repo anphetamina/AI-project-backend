@@ -1,5 +1,6 @@
 package it.polito.ai.backend.dtos;
 
+import it.polito.ai.backend.entities.TeamStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,7 +20,5 @@ public class TeamDTO extends RepresentationModel<TeamDTO> {
     @NotBlank
     String name;
     @NotNull
-    @Min(0)
-    @Max(1)
-    Integer status; // todo change with TeamStatus?
+    TeamStatus status; // todo change with TeamStatus?
 }

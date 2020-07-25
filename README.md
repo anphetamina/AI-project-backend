@@ -1,54 +1,117 @@
 # API documentation
 
+- [API documentation](#api-documentation)
+  - [/students](#students)
+  - [/teachers](#teachers)
+  - [Requests body](#requests-body)
+    - [Student request](#student-request)
+    - [Teacher request](#teacher-request)
+  - [Response entities](#response-entities)
+    - [Student entity](#student-entity)
+    - [Teacher entity](#teacher-entity)
+    - [Course entity](#course-entity)
+    - [Team entity](#team-entity)
+    - [Assignment entity](#assignment-entity)
+  - [Team service](#team-service)
+  - [Virtual Machine service](#virtual-machine-service)
+  - [Exercise and Assignment service](#exercise-and-assignment-service)
+  - [Notification service](#notification-service)
+
 ## /students
 
-### Use case
+| Use case | Operation | URL | Roles | Request body | Response |
+|---|---|---|---|---|---|
+| Get a student | GET | /{id} | Student | - | [Student](#student-entity) |
+| Get all students | GET | / | - | - | [Student](#student-entity) list |
+| Get courses in which a student is enrolled | GET | /{id}/courses | Student / Teacher | - | [Course](#course-entity) list |
+| Get teams to which a student is part of | GET | /{id}/teams | Student | - | [Team](#team-entity) list |
+| Get student assignments | GET | /{id}/assignments | Student / Teacher? | - | [Assignment](#assignment-entity) list |
+| Add new student | POST | / | ? | [Student request](#student-request) | [Student](#student-entity) |
 
-> OP URL
+## /teachers
 
-#### Request body
+| Use case | Operation | URL | Roles | Request body | Response |
+|---|---|---|---|---|---|
+| Get a teacher | GET | /{id} | Teacher | - | [Teacher](#teacher-entity) |
+| Get courses taught by a teacher | GET | /{id}/courses | Teacher | - | [Course](#course-entity) |
+| Add a new teacher | POST | / | ? | [Teacher request](#teacher-request) | [Teacher](#teacher-entity) |
 
-|Name|Type|Description|
+## Requests body
+
+### Student request
+
+| Name | Type | Description |
 |---|---|---|
-||||
-||||
-||||
+| id | String |  |
+| name | String |  |
+| firstName | String |  |
+| email? | String |  |
+| image? | Byte[] |  |
 
-#### Request parameters
+### Teacher request
 
-|Name|Type|Description|
+| Name | Type | Description |
 |---|---|---|
-||||
-||||
-||||
+| id | String |  |
+| name | String |  |
+| firstName | String |  |
+| email? | String |  |
+| image? | Byte[] |  |
 
-#### Response
+## Response entities
 
-```json
+### Student entity
 
-```
+| Name | Type | Description |
+|---|---|---|
+| id | String |  |
+| name | String |  |
+| firstName | String |  |
+| email | String |  |
+| image | Byte[] |  |
 
-#### Notes
+### Teacher entity
+
+| Name | Type | Description |
+|---|---|---|
+| id | String |  |
+| name | String |  |
+| firstName | String |  |
+| email | String |  |
+| image | Byte[] |  |
+
+### Course entity
+
+| Name | Type | Description |
+|---|---|---|
+| id | String |  |
+| name | String |  |
+| min | int | Minimum number of students per team |
+| max | int | Maximum number of students per team |
+| enabled | Boolean |  |
+
+### Team entity
+
+| Name | Type | Description |
+|---|---|---|
+| id | Long |  |
+| name | String |  |
+| firstName | String |  |
+| status | TeamStatus | UNCONFIRMED, ACTIVE |
+
+### Assignment entity
+
+| Name | Type | Description |
+|---|---|---|
+| id | Long |  |
+| published | Timestamp |  |
+| status | AssignmentStatus |  |
+| flag | boolean |  |
+| score | Integer |  |
+| image | Byte[] |  |
 
 ---
-
-### Get a student
-
-> GET /students/{id}
-
-#### Response
-
-todo add image
-```json
-{
-    "id": "s000000",
-    "name": "name",
-    "firstName": "first_name",
-    "email": "s000000@studenti.polito.it"
-}
-```
-
-
+to be removed
 
 ## Team service
 | Use case | Operation | URL | Roles | Request body | Request params | Notes |
@@ -130,3 +193,6 @@ Nella classe ScheduledTasks c'è un metodo che parte in maniera automatica alle 
 |Reject token|GET|/API/notifications/reject/{token}|Student|-|-|-|
 |~~Get unexpired tokens by team~~|GET|/API/teams/{teamId}/tokens|Student|-|-|-|
 |Get unexpired tokens by student|GET|/API/courses/{courseId}/enrolled/{studentId}/tokens|Student|-|-|-|
+
+
+[#student]: #student

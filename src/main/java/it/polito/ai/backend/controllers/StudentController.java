@@ -84,6 +84,7 @@ public class StudentController {
 
     @GetMapping("/{studentId}/assignments")
     List<AssignmentDTO> getAssignments(@PathVariable @NotBlank String studentId){
+        // todo collection model
         Optional<StudentDTO> studentDTO = teamService.getStudent(studentId);
         if(!studentDTO.isPresent())
             throw new StudentNotFoundException(studentId);
