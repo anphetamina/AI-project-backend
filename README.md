@@ -19,7 +19,7 @@
 
 ## /students
 
-| Use case | Operation | URL | Roles | Request body | Response |
+| Use case | Operation | URL | Roles | Request | Response |
 |---|---|---|---|---|---|
 | Get a student | GET | /{id} | Student | - | [Student](#student-entity) |
 | Get all students | GET | / | - | - | [Student](#student-entity) list |
@@ -30,13 +30,29 @@
 
 ## /teachers
 
-| Use case | Operation | URL | Roles | Request body | Response |
+| Use case | Operation | URL | Roles | Request | Response |
 |---|---|---|---|---|---|
 | Get a teacher | GET | /{id} | Teacher | - | [Teacher](#teacher-entity) |
 | Get courses taught by a teacher | GET | /{id}/courses | Teacher | - | [Course](#course-entity) |
 | Add a new teacher | POST | / | ? | [Teacher request](#teacher-request) | [Teacher](#teacher-entity) |
 
-## Requests body
+## /courses
+
+| Use case | Operation | URL | Roles | Request | Response |
+|---|---|---|---|---|---|
+| Get a course | GET | /{id} | Teacher | - | [Course](#course-entity) |
+| Get all courses | GET | / | ? | - | [Course](#course-entity) list |
+| Get a team | GET | /{id}/teams/{id} | ? | - | [Team](#team-entity) |
+| Get enrolled students | GET | /{id}/enrolled | Teacher | - | [Student](#student-entity) list |
+| Get members of a team | GET | /{id}/teams/{id}/members | Teacher / Student | - | [Student](#student-entity) list |
+| Get all teams | GET | /{id}/teams | Teacher | - | [Team](#team-entity) list |
+| Get course teachers | GET | /{id}/teachers | Teacher | - | [Teacher](#teacher-entity) list |
+| Delete a course | DELETE | /{id} | ? | - | - |
+| Update a course | PUT | /{id} | Teacher | [Course request](#course-request) | [Course](#course-entity) |
+| Add a new course | POST | / | Teacher | [Course request](#course-request) | [Course](#course-entity) |
+| Get students already part of a team | GET | /{id}/teams/students | ? | - | [Student](#student-entity) list |
+
+## Request types
 
 ### Student request
 
@@ -45,8 +61,7 @@
 | id | String |  |
 | name | String |  |
 | firstName | String |  |
-| email? | String |  |
-| image? | Byte[] |  |
+| image | MultipartFile | A default image is added during the registration phase |
 
 ### Teacher request
 
@@ -55,8 +70,17 @@
 | id | String |  |
 | name | String |  |
 | firstName | String |  |
-| email? | String |  |
-| image? | Byte[] |  |
+| image | MultipartFile | A default image is added during the registration phase |
+
+### Course request
+
+| Name | Type | Description |
+|---|---|---|
+| id | String |  |
+| name | String |  |
+| min | int | Minimum number of students per team |
+| max | int | Maximum number of students per team |
+| enabled | Boolean |  |
 
 ## Response entities
 
