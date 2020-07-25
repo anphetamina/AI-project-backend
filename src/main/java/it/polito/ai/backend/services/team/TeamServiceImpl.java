@@ -275,7 +275,7 @@ public class TeamServiceImpl implements TeamService {
         if (!uniqueIds.add(student.getId())) {
             throw new DuplicateIdException(id);
         }
-        if (student.getTeams().stream().anyMatch(t -> t.getCourse().equals(course))) {
+        if (student.getTeams().stream().anyMatch(t -> t.getCourse().equals(course) && t.getStatus()==TeamStatus.ACTIVE)) {
             throw new StudentAlreadyInTeamException(id);
         }
         return student;

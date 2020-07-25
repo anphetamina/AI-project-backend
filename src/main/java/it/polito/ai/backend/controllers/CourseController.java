@@ -248,7 +248,6 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/teams/available-students")
-    //todo
     CollectionModel<StudentDTO> getAvailableStudents(@PathVariable String courseId) {
         try {
             List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
@@ -441,6 +440,7 @@ public class CourseController {
         if (map.containsKey("teamName") && map.containsKey("memberIds") && map.containsKey("timeout") &&
                 map.containsKey("studentId")) {
             try {
+                //todo verifica che chi fa la proposta di team di essere loggato e che il suo studentId conincida
                 SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
                 Timestamp timeout = new Timestamp(format.parse(map.get("timeout").toString()).getTime());
                 String teamName = modelMapper.map(map.get("teamName"), String.class);
@@ -448,7 +448,6 @@ public class CourseController {
                 //team must have name unique in a course
                 List<String> teamsName = teamService.getTeamsForCourse(courseId).stream().map(TeamDTO::getName).collect(Collectors.toList());
                 for (String name:teamsName) {
-                    System.out.println(name);
                     if(name.equals(teamName))
                         throw  new TeamServiceConflictException(teamName);
                 }

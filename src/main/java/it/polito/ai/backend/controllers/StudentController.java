@@ -9,6 +9,7 @@ import it.polito.ai.backend.dtos.TeamDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
 import it.polito.ai.backend.services.exercise.ExerciseServiceException;
 import it.polito.ai.backend.services.notification.NotificationService;
+import it.polito.ai.backend.services.notification.TokenExpiredException;
 import it.polito.ai.backend.services.team.*;
 import it.polito.ai.backend.services.vm.VirtualMachineNotFoundException;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
@@ -18,6 +19,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -136,6 +138,28 @@ public class StudentController {
             return assignmentDTOList;
         }catch (TeamServiceException | ExerciseServiceException exception) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+
+    }
+
+    @GetMapping("{studentId}/teams/confirm/{token}")
+    boolean confirmToken(@PathVariable String token, @PathVariable String studentId) {
+        try {
+            return notificationService.confirm(token,studentId);
+           //todo più eccezioni
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
+    @GetMapping("{studentId}/teams/reject/{token}")
+    boolean rejectToken(@PathVariable String token, @PathVariable String studentId) {
+        try {
+            return  notificationService.reject(token);
+            //todo più eccezioni
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }

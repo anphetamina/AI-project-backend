@@ -4,9 +4,14 @@ import it.polito.ai.backend.controllers.ModelHelper;
 import it.polito.ai.backend.dtos.StudentDTO;
 import it.polito.ai.backend.dtos.TeamDTO;
 import it.polito.ai.backend.dtos.TokenDTO;
-import it.polito.ai.backend.entities.Token;
+import it.polito.ai.backend.entities.*;
+import it.polito.ai.backend.repositories.CourseRepository;
+import it.polito.ai.backend.repositories.StudentRepository;
+import it.polito.ai.backend.repositories.TeamRepository;
 import it.polito.ai.backend.repositories.TokenRepository;
+import it.polito.ai.backend.services.team.StudentNotEnrolledException;
 import it.polito.ai.backend.services.team.StudentNotFoundException;
+import it.polito.ai.backend.services.team.TeamNotFoundException;
 import it.polito.ai.backend.services.team.TeamService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +42,12 @@ public class NotificationServiceImpl implements NotificationService {
     TeamService teamService;
     @Autowired
     ModelMapper modelMapper;
+    @Autowired
+    StudentRepository studentRepository;
+    @Autowired
+    CourseRepository courseRepository;
+    @Autowired
+    TeamRepository teamRepository;
 
     @Async
     @Override
@@ -51,7 +62,8 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public boolean confirm(String tokenId) {
+    public boolean confirm(String tokenId, String studentId) {
+        //todo studentId è quello loggato
         Optional<Token> tokenOptional = tokenRepository.findById(tokenId);
 
         if (!tokenOptional.isPresent()) {
@@ -65,10 +77,32 @@ public class NotificationServiceImpl implements NotificationService {
         if (isTokenExpired) {
             throw new TokenExpiredException(tokenId);
         }
+        Optional<Student> student = studentRepository.findById(studentId);
+        if(!student.isPresent())
+            throw new StudentNotFoundException(studentId);
 
         Long teamId = tokenOptional.get().getTeamId();
+        Optional<Team> team = teamRepository.findById(teamId);
+        if(!team.isPresent())
+            throw new TeamNotFoundException(teamId.toString());
+        if(student.get().getCourses().stream().noneMatch(c -> c.getName().equals(team.get().getCourse().getName())))
+            throw new StudentNotEnrolledException(studentId);
+        if(team.get().getMembers().stream().noneMatch(m -> m.getId().equals(studentId)))
+            throw new StudentNotFoundException(studentId);
+
+
         List<Token> teamTokens = tokenRepository.findAllByTeamId(teamId);
         boolean isLastToken = teamTokens.size() == 1;
+
+        if(student.get().getTeams().stream().anyMatch(t ->
+                t.getCourse().getStudents().stream().anyMatch(s -> s.getId().equals(studentId)) &&
+                        t.getStatus().equals(TeamStatus.ACTIVE))){
+            //elimina tutti i token relativi a questo gruppo e la proposta del gruppo
+            teamTokens.forEach(t ->tokenRepository.delete(t));
+            teamRepository.deleteById(teamId);
+            return false;
+        }
+
 
         if (isLastToken) {
             teamService.confirmTeam(teamId);
@@ -124,8 +158,8 @@ public class NotificationServiceImpl implements NotificationService {
             String tokenId = UUID.randomUUID().toString();
             TokenDTO tokenDTO = new TokenDTO(tokenId, teamDTO.getId(), timeout);
             if (addToken(tokenDTO)) {
-                TokenDTO enrichedConfirmToken = ModelHelper.enrich(tokenDTO, "confirm");
-                TokenDTO enrichedRejectToken = ModelHelper.enrich(tokenDTO, "reject");
+                TokenDTO enrichedConfirmToken = ModelHelper.enrich(tokenDTO, "confirm",id);
+                TokenDTO enrichedRejectToken = ModelHelper.enrich(tokenDTO, "reject",id);
                 StudentDTO currentStudent = teamService.getStudent(id).orElseThrow(() -> new StudentNotFoundException(id));
                 String address = currentStudent.getEmail();
                 String subject = "Request for team creation";
@@ -138,7 +172,7 @@ public class NotificationServiceImpl implements NotificationService {
                 body.append(String.format("\nIf you want to confirm please click the following link:\n%s\n\n", enrichedConfirmToken.getLink("confirm").get().getHref()));
                 body.append(String.format("Otherwise, if you want to refuse this invitation, please click the following link:\n%s\n\n", enrichedRejectToken.getLink("reject").get().getHref()));
                 body.append("\nRegards.");
-                System.out.println(studentDTO.getEmail());
+
                 sendMessage(address, subject, body.toString(),studentDTO.getEmail());
             } else {
                 throw new DuplicateTokenException(tokenId);

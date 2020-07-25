@@ -22,11 +22,11 @@ public class NotificationController {
     @Autowired
     ModelMapper modelMapper;
 
-    @GetMapping("/confirm/{token}")
+ /*   @GetMapping("/confirm/{token}")
     public String confirmToken(Model model, @PathVariable String token) {
         model.addAttribute("class", "alert-danger");
         try {
-            if (notificationService.confirm(token)) {
+            if (notificationService.confirm(token, )) {
                 model.addAttribute("msg", "Your team is now active!");
             } else {
                 model.addAttribute("msg", "Your confirmation has been registered.");
@@ -59,5 +59,5 @@ public class NotificationController {
         }
         return "token";
     }
-
+*/
 }

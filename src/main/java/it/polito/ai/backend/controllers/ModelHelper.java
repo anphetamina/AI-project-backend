@@ -37,8 +37,8 @@ public class ModelHelper {
         return teamDTO.add(selfLink).add(courseLink).add(membersLink).add(configurationLink).add(virtualMachinesLink);
     }
 
-    public static TokenDTO enrich(TokenDTO tokenDTO, String op) {
-        Link opLink = WebMvcLinkBuilder.linkTo(NotificationController.class).slash("/"+op+"/"+tokenDTO.getId()).withRel(op);
+    public static TokenDTO enrich(TokenDTO tokenDTO, String op, String studentId) {
+        Link opLink = WebMvcLinkBuilder.linkTo(StudentController.class).slash("/"+studentId+"/teams/"+op+"/"+tokenDTO.getId()).withRel(op);
         return tokenDTO.add(opLink);
     }
 
