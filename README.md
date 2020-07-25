@@ -1,5 +1,79 @@
 # API documentation
 
+## /students
+
+### Use case
+
+> OP URL
+
+#### Request body
+
+|Name|Type|Description|
+|---|---|---|
+||||
+||||
+||||
+
+#### Request parameters
+
+|Name|Type|Description|
+|---|---|---|
+||||
+||||
+||||
+
+#### Response
+
+```json
+
+```
+
+#### Notes
+
+---
+
+### Get a student
+
+> GET /students/{id}
+
+#### Response
+
+todo add image
+```json
+{
+    "id": "s000000",
+    "name": "name",
+    "firstName": "first_name",
+    "email": "s000000@studenti.polito.it"
+}
+```
+
+
+
+## Team service
+| Use case | Operation | URL | Roles | Request body | Request params | Notes |
+|---|---|---|---|---|---|---|
+|Get team|GET|/API/courses/{courseId}/teams/{teamId}|Student/Teacher|-|-|-|
+|Get team members|GET|/API/courses/{courseId}/teams/{teamId}/members|Student|-|-|-|
+|Get students in team|GET|/API/courses/{courseId}/teams/students|Teacher|-|-|-|
+|Get available students|GET|/API/courses/{courseId}/teams/available-students|Student|-|-|A student is not available if he is part of a "completed" team. A team is "completed" only if all proposed students have confirmed their participation|
+|Enable course|POST|/API/courses/{courseId}/enable|Teacher|-|-|-|
+|Disable course|POST|/API/courses/{courseId}/disable|Teacher|-|-|-|
+|Enroll student|POST|/API/courses/{courseId}/enrollOne|Teacher|String studentId|-|-|
+|Add teacher to a course|POST|/API/courses/{courseId}/teachers|Teacher|String teacherId|-|-|
+|Add and enroll students|POST|/API/courses/{courseId}/enrollMany|Teacher|csv file|-|-|
+|Enroll students|POST|/API/courses/{courseId}/enrollAll|Teacher|csv file|-|-|
+|Create team|POST|/API/courses/{courseId}/teams|Student|String teamName<br>List\<String\> memberIds|-|-|
+|Get all courses|GET|/API/courses|-|-|-|-|
+|Get course|GET|/API/courses/{courseId}|Teacher|-|-|-|
+|Get enrolled students|GET|/API/courses/{courseId}/enrolled|Teacher|-|-|-|
+|Get teams|GET|/API/courses/{courseId}/teams|Teacher|-|-|-|
+|Get teachers|GET|/API/courses/{courseId}/teachers|Teacher|-|-|-|
+|Create course|POST|/API/courses|Teacher|CourseDTO course|-|-|
+|Delete a course|DELETE|/API/courses/{courseId}|Teacher|-|-|-|
+|Update name course|PUT|/API/courses/{courseId}|Teacher|String name|-|-|
+|Update course|PUT|/API/courses/{courseId}/setCourse|Teacher|String name <br>String min <br>String max <br>String enabled|-|-|
+
 ## Virtual Machine service
 
 | Use case | Operation | URL | Roles | Request body | Request params | Notes |
@@ -47,29 +121,7 @@ Tutte le immagini sono state salvate come array di byte nel db.(Se seguendo ques
 
 Nella classe ScheduledTasks c'è un metodo che parte in maniera automatica alle 4.30 per aggiungere lo stato consegnato agli elaborati non consegnati prima della scadenza della consega
 
-## Team service
-| Use case | Operation | URL | Roles | Request body | Request params | Notes |
-|---|---|---|---|---|---|---|
-|Get team|GET|/API/courses/{courseId}/teams/{teamId}|Student/Teacher|-|-|-|
-|Get team members|GET|/API/courses/{courseId}/teams/{teamId}/members|Student|-|-|-|
-|Get students in team|GET|/API/courses/{courseId}/teams/students|Teacher|-|-|-|
-|Get available students|GET|/API/courses/{courseId}/teams/available-students|Student|-|-|A student is not available if he is part of a "completed" team. A team is "completed" only if all proposed students have confirmed their participation|
-|Enable course|POST|/API/courses/{courseId}/enable|Teacher|-|-|-|
-|Disable course|POST|/API/courses/{courseId}/disable|Teacher|-|-|-|
-|Enroll student|POST|/API/courses/{courseId}/enrollOne|Teacher|String studentId|-|-|
-|Add teacher to a course|POST|/API/courses/{courseId}/teachers|Teacher|String teacherId|-|-|
-|Add and enroll students|POST|/API/courses/{courseId}/enrollMany|Teacher|csv file|-|-|
-|Enroll students|POST|/API/courses/{courseId}/enrollAll|Teacher|csv file|-|-|
-|Create team|POST|/API/courses/{courseId}/teams|Student|String teamName<br>List\<String\> memberIds|-|-|
-|Get all courses|GET|/API/courses|-|-|-|-|
-|Get course|GET|/API/courses/{courseId}|Teacher|-|-|-|
-|Get enrolled students|GET|/API/courses/{courseId}/enrolled|Teacher|-|-|-|
-|Get teams|GET|/API/courses/{courseId}/teams|Teacher|-|-|-|
-|Get teachers|GET|/API/courses/{courseId}/teachers|Teacher|-|-|-|
-|Create course|POST|/API/courses|Teacher|CourseDTO course|-|-|
-|Delete a course|DELETE|/API/courses/{courseId}|Teacher|-|-|-|
-|Update name course|PUT|/API/courses/{courseId}|Teacher|String name|-|-|
-|Update course|PUT|/API/courses/{courseId}/setCourse|Teacher|String name <br>String min <br>String max <br>String enabled|-|-|
+
 
 ## Notification service
 | Use case | Operation | URL | Roles | Request body | Request params | Notes |

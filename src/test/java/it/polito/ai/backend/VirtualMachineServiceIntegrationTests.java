@@ -2,15 +2,12 @@ package it.polito.ai.backend;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.polito.ai.backend.dtos.ConfigurationDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
-import it.polito.ai.backend.entities.SystemImage;
 import it.polito.ai.backend.entities.VirtualMachineStatus;
 import it.polito.ai.backend.services.team.CourseNotFoundException;
 import it.polito.ai.backend.services.vm.VirtualMachineNotFoundException;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
 import it.polito.ai.backend.services.vm.VirtualMachineServiceConflictException;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
