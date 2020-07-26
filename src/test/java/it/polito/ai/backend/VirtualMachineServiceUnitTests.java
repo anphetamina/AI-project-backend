@@ -28,7 +28,7 @@ import java.util.stream.IntStream;
 @AutoConfigureMockMvc(addFilters = false)
 class VirtualMachineServiceUnitTests {
 
-    static List<Team> teams;
+    /*static List<Team> teams;
     static List<VirtualMachine> virtualMachines;
     static List<Configuration> configurations;
     static List<VirtualMachineModel> models;
@@ -184,10 +184,10 @@ class VirtualMachineServiceUnitTests {
                                             virtualMachines.add(virtualMachine);
                                         });
 
-                                /*IntStream.range(0, configuration.getMax_on()-1)
+                                *//*IntStream.range(0, configuration.getMax_on()-1)
                                         .forEach(k -> {
                                             team.getVirtualMachines().get(k%team.getVirtualMachines().size()).setStatus(VirtualMachineStatus.ON);
-                                        });*/
+                                        });*//*
                             }
 
                         }
@@ -412,9 +412,9 @@ class VirtualMachineServiceUnitTests {
     void updateVirtualMachine_numVcpuNotAvailable() {
         VirtualMachine virtualMachine = virtualMachines.get(0);
 
-        /**
+        *//**
          * one vm using min num vcpu already inserted for the team
-         */
+         *//*
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
                 .id(virtualMachine.getId())
                 .num_vcpu(virtualMachine.getTeam().getConfiguration().getMax_vcpu())
@@ -429,9 +429,9 @@ class VirtualMachineServiceUnitTests {
     void updateVirtualMachine_diskSpaceNotAvailable() {
         VirtualMachine virtualMachine = virtualMachines.get(0);
 
-        /**
+        *//**
          * one vm using min disk space already inserted for the team
-         */
+         *//*
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
                 .id(virtualMachine.getId())
                 .num_vcpu(virtualMachine.getNum_vcpu())
@@ -446,9 +446,9 @@ class VirtualMachineServiceUnitTests {
     void updateVirtualMachine_ramNotAvailable() {
         VirtualMachine virtualMachine = virtualMachines.get(0);
 
-        /**
+        *//**
          * one vm using min ram already inserted for the team
-         */
+         *//*
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
                 .id(virtualMachine.getId())
                 .num_vcpu(virtualMachine.getNum_vcpu())
@@ -530,9 +530,9 @@ class VirtualMachineServiceUnitTests {
         virtualMachineService.addOwnerToVirtualMachine(team.getCourse().getId(), team.getId(), student.getId(), vmId);
 
         Assertions.assertTrue(virtualMachineRepository.getOne(vmId).getOwners().contains(student));
-        /**
+        *//**
          * does not add the same student to the owner list
-         */
+         *//*
         Assertions.assertFalse(virtualMachineService.addOwnerToVirtualMachine(team.getCourse().getId(), team.getId(), student.getId(), vmId));
     }
 
@@ -673,13 +673,13 @@ class VirtualMachineServiceUnitTests {
         Course course1 = courseRepository.getOne(course.getId());
 
         Assertions.assertNull(course1.getVirtualMachineModel());
-        /**
+        *//**
          * all teams have no vm for the given virtual machine model of the course
-         */
+         *//*
         Assertions.assertEquals(0, course1.getTeams().stream().mapToInt(t -> t.getVirtualMachines().size()).sum());
-        /**
+        *//**
          * there is no student owning any virtual machine of the given model
-         */
+         *//*
         Assertions.assertTrue(course1.getStudents().stream().noneMatch(s -> s.getVirtual_machines().containsAll(course.getVirtualMachineModel().getVirtualMachines())));
     }
 
@@ -720,7 +720,7 @@ class VirtualMachineServiceUnitTests {
         long count = team.getVirtualMachines().size();
 
         Assertions.assertEquals(count, virtualMachineService.getCountVirtualMachinesForTeam(team.getCourse().getId(), team.getId()));
-    }
+    }*/
 
     /*@Test
     void contextLoad() {

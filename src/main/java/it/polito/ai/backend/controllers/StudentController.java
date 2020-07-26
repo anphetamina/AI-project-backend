@@ -57,7 +57,13 @@ public class StudentController {
 
     @GetMapping("/{studentId}/courses")
     CollectionModel<CourseDTO> getCourses(@PathVariable @NotBlank String studentId) {
-        List<CourseDTO> courses = teamService.getCourses(studentId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<CourseDTO> courses = teamService.getCourses(studentId)
+                .stream()
+                .map(c -> {
+                    Long modelId = virtualMachineService.getVirtualMachineModelForCourse(c.getId()).map(VirtualMachineModelDTO::getId).orElse(null);
+                    return ModelHelper.enrich(c, modelId);
+                })
+                .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getCourses(studentId)).withSelfRel();
         return CollectionModel.of(courses, selfLink);
     }
@@ -66,8 +72,9 @@ public class StudentController {
     CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String studentId) {
         List<TeamDTO> teams = teamService.getTeamsForStudent(studentId).stream()
                 .map(t -> {
-                    String courseId = teamService.getCourseForTeam(t.getId()).map(CourseDTO::getId).orElseThrow(() -> new CourseNotFoundException(String.format("for team %s", t.getId())));
-                    return ModelHelper.enrich(t, courseId);
+                    String courseId = teamService.getCourseForTeam(t.getId()).map(CourseDTO::getId).orElse(null);
+                    Long configurationId = virtualMachineService.getConfigurationForTeam(t.getId()).map(ConfigurationDTO::getId).orElse(null);
+                    return ModelHelper.enrich(t, courseId, configurationId);
                 })
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentId)).withSelfRel();
@@ -85,18 +92,33 @@ public class StudentController {
     @GetMapping("/{studentId}/assignments")
     List<AssignmentDTO> getAssignments(@PathVariable @NotBlank String studentId){
         // todo collection model
-        Optional<StudentDTO> studentDTO = teamService.getStudent(studentId);
-        if(!studentDTO.isPresent())
-            throw new StudentNotFoundException(studentId);
-        List<AssignmentDTO> assignmentDTOS = exerciseService.getAssignmentsForStudent(studentId);
+        List<AssignmentDTO> assignmentDTOS = exerciseService.getAssignmentsForStudent(studentId).stream()
+                .map(a -> {
+                    Long exerciseId = exerciseService.getExerciseForAssignment(a.getId()).map(ExerciseDTO::getId).orElseThrow( () -> new ExerciseNotFoundException(a.getId().toString()));
+                    return ModelHelper.enrich(a,studentId,exerciseId);
+                })
+                .collect(Collectors.toList());
         List<AssignmentDTO> assignmentDTOList = new ArrayList<>();
         for (AssignmentDTO a:assignmentDTOS) {
             Long exerciseId = exerciseService.getExerciseForAssignment(a.getId()).map(ExerciseDTO::getId).orElseThrow( () -> new ExerciseNotFoundException(a.getId().toString()));
-            String courseId = exerciseService.getCourse(exerciseId).map(CourseDTO::getId).orElseThrow(() -> new CourseNotFoundException(exerciseId.toString()));
-            assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId,courseId));
+            assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId));
 
         }
         return assignmentDTOList;
 
+    }
+
+    @GetMapping("/{studentId}/virtual-machines")
+    CollectionModel<VirtualMachineDTO> getVirtualMachines(@PathVariable @NotBlank String studentId) {
+        List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForStudent(studentId)
+                .stream()
+                .map(vm -> {
+                    Long teamId = virtualMachineService.getTeamForVirtualMachine(vm.getId()).map(TeamDTO::getId).orElse(null);
+                    Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vm.getId()).map(VirtualMachineModelDTO::getId).orElse(null);
+                    return ModelHelper.enrich(vm, teamId, modelId);
+                })
+                .collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentId)).withSelfRel();
+        return CollectionModel.of(virtualMachineDTOList, selfLink);
     }
 }

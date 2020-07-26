@@ -2,9 +2,11 @@ package it.polito.ai.backend.controllers;
 
 import it.polito.ai.backend.dtos.CourseDTO;
 import it.polito.ai.backend.dtos.TeacherDTO;
+import it.polito.ai.backend.dtos.VirtualMachineModelDTO;
 import it.polito.ai.backend.services.team.TeacherNotFoundException;
 import it.polito.ai.backend.services.team.TeamService;
 import it.polito.ai.backend.services.team.TeamServiceException;
+import it.polito.ai.backend.services.vm.VirtualMachineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
@@ -26,6 +28,8 @@ public class TeacherController {
 
     @Autowired
     TeamService teamService;
+    @Autowired
+    VirtualMachineService virtualMachineService;
 
     @GetMapping("/{id}")
     TeacherDTO getOne(@PathVariable @NotBlank String id) {
@@ -34,7 +38,13 @@ public class TeacherController {
 
     @GetMapping("/{id}/courses")
     CollectionModel<CourseDTO> getCourses(@PathVariable @NotBlank String id) {
-        List<CourseDTO> courses = teamService.getCoursesForTeacher(id).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<CourseDTO> courses = teamService.getCoursesForTeacher(id)
+                .stream()
+                .map(c -> {
+                    Long modelId = virtualMachineService.getVirtualMachineModelForCourse(c.getId()).map(VirtualMachineModelDTO::getId).orElse(null);
+                    return ModelHelper.enrich(c, modelId);
+                })
+                .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeacherController.class).getCourses(id)).withSelfRel();
         return CollectionModel.of(courses, selfLink);
     }

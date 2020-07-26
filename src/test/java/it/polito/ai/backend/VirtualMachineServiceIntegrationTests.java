@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 public class VirtualMachineServiceIntegrationTests {
 
-    @MockBean
+    /*@MockBean
     VirtualMachineService virtualMachineService;
 
     @Autowired
@@ -221,5 +221,5 @@ public class VirtualMachineServiceIntegrationTests {
                 .content(body))
                 .andExpect(status().isOk())
                 .andDo(print());
-    }
+    }*/
 }

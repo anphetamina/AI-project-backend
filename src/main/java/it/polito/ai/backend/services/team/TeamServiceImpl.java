@@ -247,13 +247,8 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public List<StudentDTO> getMembers(String courseId, Long teamId) {
-        return courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId))
-                .getTeams()
-                .stream()
-                .filter(t -> t.getId().equals(teamId))
-                .findFirst()
+    public List<StudentDTO> getMembers(Long teamId) {
+        return teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
                 .getMembers()
                 .stream()
@@ -352,14 +347,11 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public Optional<TeamDTO> getTeam(String courseId, Long teamId) {
-        return courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId))
-                .getTeams()
-                .stream()
-                .filter(t -> t.getId().equals(teamId))
-                .findFirst()
-                .map(t -> modelMapper.map(t, TeamDTO.class));
+    public Optional<TeamDTO> getTeam(Long teamId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+
+        return Optional.ofNullable(modelMapper.map(team, TeamDTO.class));
     }
 
     @Override

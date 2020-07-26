@@ -39,7 +39,7 @@ public interface TeamService {
     List<CourseDTO> getCourses(String studentId);
 
     List<TeamDTO> getTeamsForStudent(String studentId);
-    List<StudentDTO> getMembers(String courseId, Long teamId);
+    List<StudentDTO> getMembers(Long teamId);
 
     TeamDTO proposeTeam(String courseId, String name, List<String> memberIds);
 
@@ -49,7 +49,7 @@ public interface TeamService {
     List<StudentDTO> getStudentsInTeams(String courseId);
     List<StudentDTO> getAvailableStudents(String courseId);
 
-    Optional<TeamDTO> getTeam(String courseId, Long teamId);
+    Optional<TeamDTO> getTeam(Long teamId);
     Optional<CourseDTO> getCourseForTeam(Long teamId);
     void confirmTeam(Long teamId);
     void evictTeam(Long teamId);
