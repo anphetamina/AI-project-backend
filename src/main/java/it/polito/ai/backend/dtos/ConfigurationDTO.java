@@ -32,4 +32,6 @@ public class ConfigurationDTO extends RepresentationModel<ConfigurationDTO> {
      * total number of active vms
      */
     @Positive int max_on;
+
+    @NotNull Long teamId;
 }

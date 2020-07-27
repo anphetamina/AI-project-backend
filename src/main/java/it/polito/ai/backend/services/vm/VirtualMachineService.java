@@ -14,7 +14,7 @@ public interface VirtualMachineService {
      * student
      */
     VirtualMachineDTO createVirtualMachine(String studentId, Long teamId, Long modelId, VirtualMachineDTO virtualMachine);
-    VirtualMachineDTO updateVirtualMachine(VirtualMachineDTO virtualMachine);
+    VirtualMachineDTO updateVirtualMachine(Long vmId, VirtualMachineDTO virtualMachine);
     boolean deleteVirtualMachine(Long vmId);
     void turnOnVirtualMachine(Long vmId);
     void turnOffVirtualMachine(Long vmId);
@@ -24,7 +24,7 @@ public interface VirtualMachineService {
      * teacher
      */
     ConfigurationDTO createConfiguration(Long teamId, ConfigurationDTO configuration);
-    ConfigurationDTO updateConfiguration(ConfigurationDTO configuration);
+    ConfigurationDTO updateConfiguration(Long configurationId, ConfigurationDTO configuration);
     VirtualMachineModelDTO createVirtualMachineModel(String courseId, VirtualMachineModelDTO model);
     boolean deleteVirtualMachineModel(Long modelId);
 

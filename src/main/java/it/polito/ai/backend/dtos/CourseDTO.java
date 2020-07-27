@@ -23,6 +23,4 @@ public class CourseDTO extends RepresentationModel<CourseDTO> {
     int min;
     @Positive
     int max;
-    @NotNull
-    Boolean enabled;
 }

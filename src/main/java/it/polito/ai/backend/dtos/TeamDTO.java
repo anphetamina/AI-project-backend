@@ -17,8 +17,5 @@ import javax.validation.constraints.*;
 public class TeamDTO extends RepresentationModel<TeamDTO> {
     // @NotNull
     Long id;
-    @NotBlank
-    String name;
-    @NotNull
-    TeamStatus status; // todo change with TeamStatus?
+    @NotBlank String name;
 }

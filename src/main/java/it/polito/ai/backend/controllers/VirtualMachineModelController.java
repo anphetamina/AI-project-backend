@@ -32,10 +32,9 @@ public class VirtualMachineModelController {
 
     @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
-    VirtualMachineModelDTO addVirtualMachineModel(@RequestBody @Valid VirtualMachineModelDTO model) {
-        // todo
-        String courseId = "";
-        VirtualMachineModelDTO virtualMachineModel = virtualMachineService.createVirtualMachineModel(courseId, model);
+    VirtualMachineModelDTO addVirtualMachineModel(@RequestBody @Valid VirtualMachineModelDTO virtualMachineModelDTO) {
+        String courseId = virtualMachineModelDTO.getCourseId();
+        VirtualMachineModelDTO virtualMachineModel = virtualMachineService.createVirtualMachineModel(courseId, virtualMachineModelDTO);
         return ModelHelper.enrich(virtualMachineModel, courseId);
     }
 

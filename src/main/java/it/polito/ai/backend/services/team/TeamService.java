@@ -59,6 +59,6 @@ public interface TeamService {
     Optional<TeacherDTO> getTeacher(String id);
     List<CourseDTO> getCoursesForTeacher(String id);
     boolean deleteCourse(String courseId);
-    CourseDTO updateCourse(CourseDTO courseDTO);
+    CourseDTO updateCourse(String courseId, CourseDTO courseDTO);
 
 }

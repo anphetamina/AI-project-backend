@@ -2,8 +2,10 @@ package it.polito.ai.backend.controllers;
 
 import it.polito.ai.backend.services.exercise.AssignmentNotFoundException;
 import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
+import it.polito.ai.backend.services.team.TeamServiceBadRequestException;
 import it.polito.ai.backend.services.team.TeamServiceConflictException;
 import it.polito.ai.backend.services.team.TeamServiceNotFoundException;
+import it.polito.ai.backend.services.vm.VirtualMachineServiceBadRequestException;
 import it.polito.ai.backend.services.vm.VirtualMachineServiceConflictException;
 import it.polito.ai.backend.services.vm.VirtualMachineServiceNotFoundException;
 import org.modelmapper.MappingException;
@@ -20,7 +22,10 @@ import java.io.IOException;
 @RestControllerAdvice
 public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({TeamServiceNotFoundException.class, VirtualMachineServiceNotFoundException.class, AssignmentNotFoundException.class, ExerciseNotFoundException.class})
+    @ExceptionHandler({TeamServiceNotFoundException.class,
+            VirtualMachineServiceNotFoundException.class,
+            AssignmentNotFoundException.class,
+            ExerciseNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     ResponseEntity<String> handleNotFoundException(HttpServletResponse response, Exception exception, RuntimeException runtimeException) throws IOException {
         // response.sendError(HttpStatus.NOT_FOUND.value(), exception.getMessage());
@@ -34,7 +39,11 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(runtimeException.getMessage(), HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler({IllegalArgumentException.class, ClassCastException.class, MappingException.class/*, NullPointerException.class*/})
+    @ExceptionHandler({VirtualMachineServiceBadRequestException.class,
+            TeamServiceBadRequestException.class,
+            IllegalArgumentException.class,
+            ClassCastException.class,
+            MappingException.class/*, NullPointerException.class*/})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     ResponseEntity<String> handleArgumentException(HttpServletResponse response, Exception exception, RuntimeException runtimeException) throws IOException {
         // response.sendError(HttpStatus.BAD_REQUEST.value());

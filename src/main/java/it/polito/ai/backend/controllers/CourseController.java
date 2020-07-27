@@ -114,7 +114,7 @@ public class CourseController {
 
     @PutMapping("/{courseId}")
     CourseDTO updateCourse(@RequestBody @Valid CourseDTO courseDTO, @PathVariable @NotBlank String courseId){
-        CourseDTO courseDTO1 = teamService.updateCourse(courseDTO);
+        CourseDTO courseDTO1 = teamService.updateCourse(courseId, courseDTO);
         Long modelId = virtualMachineService.getVirtualMachineModelForCourse(courseId).map(VirtualMachineModelDTO::getId).orElse(null);
         return ModelHelper.enrich(courseDTO1, modelId);
 

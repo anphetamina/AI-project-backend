@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 public class VirtualMachineServiceIntegrationTests {
 
-    /*@MockBean
+    @MockBean
     VirtualMachineService virtualMachineService;
 
     @Autowired
@@ -44,24 +44,26 @@ public class VirtualMachineServiceIntegrationTests {
         Long teamId = 1L;
         String studentId = "student";
         Long vmId = 1L;
+        Long modelId = 1L;
 
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
                 .id(vmId)
                 .num_vcpu(2)
                 .disk_space(1000)
                 .ram(4)
-                .status(VirtualMachineStatus.OFF)
+                .studentId(studentId)
+                .teamId(teamId)
+                .modelId(modelId)
                 .build();
 
         long id = virtualMachineDTO.getId();
         int numVcpu = virtualMachineDTO.getNum_vcpu();
         int diskSpace = virtualMachineDTO.getDisk_space();
         int ram = virtualMachineDTO.getRam();
-        VirtualMachineStatus status = virtualMachineDTO.getStatus();
 
-        Mockito.when(virtualMachineService.createVirtualMachine(courseId, teamId, studentId, virtualMachineDTO)).thenReturn(virtualMachineDTO);
+        Mockito.when(virtualMachineService.createVirtualMachine(studentId, teamId, modelId, virtualMachineDTO)).thenReturn(virtualMachineDTO);
         String json = objectMapper.writeValueAsString(virtualMachineDTO);
-        MvcResult mvcResult = mockMvc.perform(post("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines")
+        MvcResult mvcResult = mockMvc.perform(post("/API/virtual-machines")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isCreated())
@@ -69,18 +71,18 @@ public class VirtualMachineServiceIntegrationTests {
                 .andExpect(jsonPath("$.num_vcpu").value(numVcpu))
                 .andExpect(jsonPath("$.disk_space").value(diskSpace))
                 .andExpect(jsonPath("$.ram").value(ram))
-                .andExpect(jsonPath("$.status").value(status.toString()))
-                .andExpect(jsonPath("$._links.self.href").value("http://localhost/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines/"+vmId))
-                .andExpect(jsonPath("$._links.model.href").value("http://localhost/API/courses/"+courseId+"/model"))
-                .andExpect(jsonPath("$._links.usedBy.href").value("http://localhost/API/courses/"+courseId+"/teams/"+teamId))
-                .andExpect(jsonPath("$._links.ownedBy.href").value("http://localhost/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines/"+vmId+"/owners"))
+                .andExpect(jsonPath("$.status").value(VirtualMachineStatus.OFF))
+                .andExpect(jsonPath("$._links.self.href").value("http://localhost/API/virtual-machines/"+vmId))
+                .andExpect(jsonPath("$._links.model.href").value("http://localhost/API/virtual-machine-models/"+modelId))
+                .andExpect(jsonPath("$._links.usedBy.href").value("http://localhost/API/teams/"+teamId))
+                .andExpect(jsonPath("$._links.ownedBy.href").value("http://localhost/API/virtual-machines/"+vmId+"/owners"))
                 .andDo(print())
                 .andReturn();
         // String contentResult = mvcResult.getResponse().getContentAsString();
         // Long id = JsonPath.parse(contentResult).read("$.id", Long.class);
 
-        Mockito.when(virtualMachineService.createVirtualMachine(courseId, teamId, studentId, virtualMachineDTO)).thenThrow(CourseNotFoundException.class);
-        mockMvc.perform(post("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines")
+        Mockito.when(virtualMachineService.createVirtualMachine(studentId, teamId, modelId, virtualMachineDTO)).thenThrow(CourseNotFoundException.class);
+        mockMvc.perform(post("/API/virtual-machines")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isNotFound())
@@ -92,13 +94,13 @@ public class VirtualMachineServiceIntegrationTests {
         String courseId = "course";
         Long teamId = null;
 
-        mockMvc.perform(post("/API/courses/" + courseId + "/teams/" + teamId + "/virtual-machines"))
+        mockMvc.perform(post("/API/virtual-machines"))
                 .andExpect(status().isBadRequest());
         courseId = "  ";
-        mockMvc.perform(post("/API/courses/" + courseId + "/teams/" + teamId + "/virtual-machines"))
+        mockMvc.perform(post("/API/virtual-machines"))
                 .andExpect(status().isBadRequest());
         courseId = null;
-        mockMvc.perform(post("/API/courses/" + courseId + "/teams/" + teamId + "/virtual-machines"))
+        mockMvc.perform(post("/API/virtual-machines"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -117,30 +119,34 @@ public class VirtualMachineServiceIntegrationTests {
         body.put("ram", ram);
         body.put("studentId", studentId);
         String json = objectMapper.writeValueAsString(body);
-        mockMvc.perform(post("/API/courses/" + courseId + "/teams/" + teamId + "/virtual-machines"))
+        mockMvc.perform(post("/API/virtual-machines"))
                 .andExpect(status().isBadRequest());
-        mockMvc.perform(post("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines")
+        mockMvc.perform(post("/API/virtual-machines")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isBadRequest());
         body.put("numVcpu", 3);
         body.put("diskSpace", 0);
-        mockMvc.perform(post("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines")
+        mockMvc.perform(post("/API/virtual-machines")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isBadRequest());
+
+        Long modelId = 1L;
 
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
                 .id(1L)
                 .num_vcpu(2)
                 .disk_space(1000)
                 .ram(4)
-                .status(VirtualMachineStatus.OFF)
+                .studentId(studentId)
+                .teamId(teamId)
+                .modelId(modelId)
                 .build();
 
         String body2 = objectMapper.writeValueAsString(virtualMachineDTO);
-        Mockito.when(virtualMachineService.createVirtualMachine(Mockito.anyString(), Mockito.anyLong(), Mockito.anyString(), Mockito.any(VirtualMachineDTO.class))).thenThrow(VirtualMachineServiceConflictException.class);
-        mockMvc.perform(post("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines")
+        Mockito.when(virtualMachineService.createVirtualMachine(Mockito.anyString(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any(VirtualMachineDTO.class))).thenThrow(VirtualMachineServiceConflictException.class);
+        mockMvc.perform(post("/API/virtual-machines")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body2))
                 .andExpect(status().isConflict());
@@ -156,7 +162,7 @@ public class VirtualMachineServiceIntegrationTests {
         body.put("studentId", "  ");
         objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
         String json = objectMapper.writeValueAsString(body);
-        mockMvc.perform(post("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines/"+vmId+"/owners")
+        mockMvc.perform(post("/API/virtual-machines/"+vmId+"/owners")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isBadRequest())
@@ -166,7 +172,7 @@ public class VirtualMachineServiceIntegrationTests {
         body2.put("studentId", null);
         objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
         String json2 = objectMapper.writeValueAsString(body2);
-        mockMvc.perform(post("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines/"+vmId+"/owners")
+        mockMvc.perform(post("/API/virtual-machines/"+vmId+"/owners")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json2))
                 .andExpect(status().isBadRequest())
@@ -180,8 +186,8 @@ public class VirtualMachineServiceIntegrationTests {
         String courseId = "c0";
         long teamId = 1L;
 
-        Mockito.when(virtualMachineService.getVirtualMachine(Mockito.anyString(), Mockito.anyLong(), Mockito.anyLong())).thenThrow(VirtualMachineNotFoundException.class);
-        mockMvc.perform(get("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines/"+9999))
+        Mockito.when(virtualMachineService.getVirtualMachine(Mockito.anyLong())).thenThrow(VirtualMachineNotFoundException.class);
+        mockMvc.perform(get("/API/virtual-machines/"+9999))
                 .andExpect(status().isNotFound())
                 .andDo(print());
     }
@@ -193,8 +199,8 @@ public class VirtualMachineServiceIntegrationTests {
         Long teamId = 1L;
         Long vmId = 1L;
 
-        Mockito.when(virtualMachineService.deleteVirtualMachine(courseId, teamId, vmId)).thenReturn(true);
-        mockMvc.perform(delete("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines/"+vmId))
+        Mockito.when(virtualMachineService.deleteVirtualMachine(vmId)).thenReturn(true);
+        mockMvc.perform(delete("/API/virtual-machines/"+vmId))
                 .andExpect(status().isOk())
                 .andDo(print());
     }
@@ -205,21 +211,25 @@ public class VirtualMachineServiceIntegrationTests {
         String courseId = "c0";
         Long teamId = 1L;
         Long vmId = 1L;
+        Long modelId = 1L;
+        String studentId = "student";
 
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
                 .id(1L)
                 .num_vcpu(2)
                 .disk_space(1000)
                 .ram(4)
-                .status(VirtualMachineStatus.OFF)
+                .studentId(studentId)
+                .teamId(teamId)
+                .modelId(modelId)
                 .build();
 
-        Mockito.when(virtualMachineService.updateVirtualMachine(courseId, teamId, vmId, virtualMachineDTO)).thenReturn(virtualMachineDTO);
+        Mockito.when(virtualMachineService.updateVirtualMachine(vmId, virtualMachineDTO)).thenReturn(virtualMachineDTO);
         String body = objectMapper.writeValueAsString(virtualMachineDTO);
-        mockMvc.perform(put("/API/courses/"+courseId+"/teams/"+teamId+"/virtual-machines/"+vmId)
+        mockMvc.perform(put("/API/virtual-machines/"+vmId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
                 .andExpect(status().isOk())
                 .andDo(print());
-    }*/
+    }
 }

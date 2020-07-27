@@ -348,10 +348,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public Optional<TeamDTO> getTeam(Long teamId) {
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
-
-        return Optional.ofNullable(modelMapper.map(team, TeamDTO.class));
+        return teamRepository.findById(teamId).map(t -> modelMapper.map(t, TeamDTO.class));
     }
 
     @Override
@@ -451,7 +448,11 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public CourseDTO updateCourse(CourseDTO courseDTO) {
+    public CourseDTO updateCourse(String courseId, CourseDTO courseDTO) {
+
+        if (!courseId.equals(courseDTO.getId())) {
+            throw new CourseIdNotCorrespondingException(courseDTO.getId(), courseId);
+        }
 
         Course course = courseRepository.findById(courseDTO.getId()).orElseThrow(() -> new CourseNotFoundException(courseDTO.getId()));
 

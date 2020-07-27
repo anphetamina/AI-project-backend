@@ -33,15 +33,14 @@ public class ConfigurationController {
     @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
     ConfigurationDTO addConfiguration(@RequestBody @Valid ConfigurationDTO configurationDTO) {
-        // todo
-        Long teamId = 0L;
+        Long teamId = configurationDTO.getTeamId();
         ConfigurationDTO newConfigurationDTO = virtualMachineService.createConfiguration(teamId, configurationDTO);
         return ModelHelper.enrich(newConfigurationDTO, teamId);
     }
 
     @PutMapping("/{configurationId}")
     ConfigurationDTO setConfiguration(@RequestBody @Valid ConfigurationDTO configurationDTO, @PathVariable @NotNull Long configurationId) {
-        ConfigurationDTO configurationDTO1 = virtualMachineService.updateConfiguration(configurationDTO);
+        ConfigurationDTO configurationDTO1 = virtualMachineService.updateConfiguration(configurationId, configurationDTO);
         Long teamId = virtualMachineService.getTeamForConfiguration(configurationId).map(TeamDTO::getId).orElse(null);
         return ModelHelper.enrich(configurationDTO1, teamId);
     }

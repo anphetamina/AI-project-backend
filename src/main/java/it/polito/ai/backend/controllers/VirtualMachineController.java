@@ -1,5 +1,6 @@
 package it.polito.ai.backend.controllers;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import it.polito.ai.backend.dtos.StudentDTO;
 import it.polito.ai.backend.dtos.TeamDTO;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
@@ -16,8 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,10 +53,9 @@ public class VirtualMachineController {
     @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
     VirtualMachineDTO addVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO) {
-        // todo
-        String studentId = "";
-        Long teamId = 0L;
-        Long modelId = 0L;
+        String studentId = virtualMachineDTO.getStudentId();
+        Long teamId = virtualMachineDTO.getTeamId();
+        Long modelId = virtualMachineDTO.getModelId();
         VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(studentId, teamId, modelId, virtualMachineDTO);
         return ModelHelper.enrich(virtualMachine, teamId, modelId);
     }
@@ -69,8 +69,8 @@ public class VirtualMachineController {
     }
 
     @PutMapping("/{vmId}")
-    VirtualMachineDTO setVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO, @PathVariable @NotBlank Long vmId) {
-        VirtualMachineDTO virtualMachineDTO1 = virtualMachineService.updateVirtualMachine(virtualMachineDTO);
+    VirtualMachineDTO setVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO, @PathVariable @NotNull Long vmId) {
+        VirtualMachineDTO virtualMachineDTO1 = virtualMachineService.updateVirtualMachine(vmId, virtualMachineDTO);
         Long teamId = virtualMachineService.getTeamForVirtualMachine(vmId).map(TeamDTO::getId).orElse(null);
         Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vmId).map(VirtualMachineModelDTO::getId).orElse(null);
         return ModelHelper.enrich(virtualMachineDTO1, teamId, modelId);
@@ -87,7 +87,7 @@ public class VirtualMachineController {
     }
 
     @PostMapping("/{vmId}/owners")
-    void shareOwnership(@PathVariable @NotNull Long vmId, @RequestBody Map<String, String> map) {
+    void shareOwnership(@PathVariable @NotNull Long vmId, @Parameter(example = "studentId") @RequestBody HashMap<String, String> map) {
         if (!map.containsKey("studentId")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }

@@ -4,6 +4,8 @@ import it.polito.ai.backend.entities.VirtualMachineStatus;
 import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 
 @Data
@@ -17,6 +19,8 @@ public class VirtualMachineDTO extends RepresentationModel<VirtualMachineDTO> {
     @Positive int disk_space;
     @Positive int ram;
 
-    VirtualMachineStatus status;
+    @NotBlank String studentId;
+    @NotNull Long teamId;
+    @NotNull Long modelId;
 
 }

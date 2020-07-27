@@ -10,8 +10,10 @@ import it.polito.ai.backend.services.team.TeamNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import javax.transaction.Transactional;
+import javax.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -140,7 +142,11 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public VirtualMachineDTO updateVirtualMachine(VirtualMachineDTO virtualMachineDTO) {
+    public VirtualMachineDTO updateVirtualMachine(Long vmId, VirtualMachineDTO virtualMachineDTO) {
+
+        if (!vmId.equals(virtualMachineDTO.getId())) {
+            throw new VirtualMachineIdNotCorrespondingException(vmId.toString(), virtualMachineDTO.getId().toString());
+        }
 
         VirtualMachine virtualMachine = virtualMachineRepository.findById(virtualMachineDTO.getId()).orElseThrow(() -> new VirtualMachineNotFoundException(virtualMachineDTO.getId().toString()));
 
@@ -398,7 +404,11 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public ConfigurationDTO updateConfiguration(ConfigurationDTO configurationDTO) {
+    public ConfigurationDTO updateConfiguration(Long configurationId, ConfigurationDTO configurationDTO) {
+
+        if (!configurationId.equals(configurationDTO.getId())) {
+            throw new ConfigurationIdNotCorrespondingException(configurationId.toString(), configurationDTO.getId().toString());
+        }
 
         Configuration configuration = configurationRepository.findById(configurationDTO.getId()).orElseThrow(() -> new ConfigurationNotFoundException(configurationDTO.getId().toString()));
 
@@ -550,25 +560,17 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
     @Override
     public Optional<VirtualMachineDTO> getVirtualMachine(Long vmId) {
-        VirtualMachine virtualMachine = virtualMachineRepository.findById(vmId)
-                .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
-
-        return Optional.ofNullable(modelMapper.map(virtualMachine, VirtualMachineDTO.class));
+        return virtualMachineRepository.findById(vmId).map(vm -> modelMapper.map(vm, VirtualMachineDTO.class));
     }
 
     @Override
     public Optional<VirtualMachineModelDTO> getVirtualMachineModel(Long modelId) {
-        VirtualMachineModel virtualMachineModel = virtualMachineModelRepository.findById(modelId)
-                .orElseThrow(() -> new VirtualMachineModelNotFoundException(modelId.toString()));
-
-        return Optional.ofNullable(modelMapper.map(virtualMachineModel, VirtualMachineModelDTO.class));
+        return virtualMachineModelRepository.findById(modelId).map(m -> modelMapper.map(m, VirtualMachineModelDTO.class));
     }
 
     @Override
     public Optional<ConfigurationDTO> getConfiguration(Long configurationId) {
-        Configuration configuration = configurationRepository.findById(configurationId).orElseThrow(() -> new ConfigurationNotFoundException(configurationId.toString()));
-
-        return Optional.ofNullable(modelMapper.map(configuration, ConfigurationDTO.class));
+        return configurationRepository.findById(configurationId).map(c -> modelMapper.map(c, ConfigurationDTO.class));
     }
 
     @Override
