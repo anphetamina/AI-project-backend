@@ -1,5 +1,6 @@
 package it.polito.ai.backend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.CourseDTO;
 import it.polito.ai.backend.dtos.VirtualMachineModelDTO;
 import it.polito.ai.backend.services.vm.VirtualMachineModelNotFoundException;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @RestController
@@ -22,6 +22,7 @@ public class VirtualMachineModelController {
     @Autowired
     VirtualMachineService virtualMachineService;
 
+    @Operation(summary = "get virtual machine model")
     @GetMapping("/{modelId}")
     VirtualMachineModelDTO getOne(@PathVariable @NotNull Long modelId) {
         VirtualMachineModelDTO virtualMachineModelDTO = virtualMachineService.getVirtualMachineModel(modelId)
@@ -30,6 +31,7 @@ public class VirtualMachineModelController {
         return ModelHelper.enrich(virtualMachineModelDTO, courseId);
     }
 
+    @Operation(summary = "create a new virtual machine model")
     @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
     VirtualMachineModelDTO addVirtualMachineModel(@RequestBody @Valid VirtualMachineModelDTO virtualMachineModelDTO) {
@@ -38,6 +40,7 @@ public class VirtualMachineModelController {
         return ModelHelper.enrich(virtualMachineModel, courseId);
     }
 
+    @Operation(summary = "delete an existing virtual machine model")
     @DeleteMapping("/{modelId}")
     void deleteVirtualMachineModel(@PathVariable @NotNull Long modelId) {
         if (!virtualMachineService.deleteVirtualMachineModel(modelId)) {

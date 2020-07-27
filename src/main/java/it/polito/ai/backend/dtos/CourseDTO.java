@@ -1,5 +1,6 @@
 package it.polito.ai.backend.dtos;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,8 +20,8 @@ public class CourseDTO extends RepresentationModel<CourseDTO> {
     String id;
     @NotBlank
     String name;
-    @Positive
+    @Positive @Schema(description = "the min size of students per team")
     int min;
-    @Positive
+    @Positive @Schema(description = "the max size of students per team")
     int max;
 }

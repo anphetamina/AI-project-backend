@@ -1,5 +1,6 @@
 package it.polito.ai.backend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.AssignmentDTO;
 import it.polito.ai.backend.dtos.CourseDTO;
 import it.polito.ai.backend.dtos.ExerciseDTO;
@@ -37,6 +38,7 @@ public class ExerciseController {
     @Autowired
     ExerciseService exerciseService;
 
+    @Operation(summary = "get exercise")
     @GetMapping("/{exerciseId}")
     ExerciseDTO getOne(@PathVariable @NotNull Long exerciseId) {
         ExerciseDTO exerciseDTO = exerciseService.getExercise(exerciseId)
@@ -46,6 +48,7 @@ public class ExerciseController {
         return ModelHelper.enrich(exerciseDTO, courseId);
     }
 
+    @Operation(summary = "get the last assignments of an exercise")
     @GetMapping("/{exerciseId}/assignments")
     List<AssignmentDTO> getLastAssignments(@PathVariable @NotNull Long exerciseId ){
 
@@ -73,6 +76,7 @@ public class ExerciseController {
         return  assignmentDTOS;
     }
 
+    @Operation(summary = "get the assignments history of an exercise")
     @GetMapping("/{exerciseId}/history")
     List<AssignmentDTO> getHistoryAssignments(@PathVariable @NotNull Long exerciseId,@RequestBody Map<String,String> map ){
 
@@ -90,9 +94,7 @@ public class ExerciseController {
 
     }
 
-
-
-
+    @Operation(summary = "set an assignment as null")
     @PostMapping("/{exerciseId}/assignmentNull")
     void setNullAssignment(@PathVariable @NotNull Long exerciseId){
         /*No duplicati*/
@@ -115,6 +117,7 @@ public class ExerciseController {
         }
     }
 
+    @Operation(summary = "set an assignment as read")
     @PostMapping("/{exerciseId}/assignmentRead")
     void setReadAssignment(@PathVariable @NotNull Long exerciseId, @RequestBody Map<String,String> map){
         if (!map.containsKey("studentId")) {
@@ -142,6 +145,7 @@ public class ExerciseController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, exerciseId.toString());
     }
 
+    @Operation(summary = "create a new assignment for an exercise")
     @PostMapping("/{exerciseId}/assignments")
     void submitAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotNull Long exerciseId){
         /*Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo*/
@@ -179,6 +183,7 @@ public class ExerciseController {
 
     }
 
+    @Operation(summary = "todo")
     @PostMapping("/{exerciseId}/assignmentReview")
     void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotNull Long exerciseId){
         /*Se il falg=false allora c'è anche il voto

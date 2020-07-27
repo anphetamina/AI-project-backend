@@ -1,5 +1,6 @@
 package it.polito.ai.backend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.services.team.TeamNotFoundException;
 import it.polito.ai.backend.services.team.TeamService;
@@ -31,6 +32,7 @@ public class TeamController {
     @Autowired
     VirtualMachineService virtualMachineService;
 
+    @Operation(summary = "get team")
     @GetMapping("/{teamId}")
     TeamDTO getOne(@PathVariable @NotNull Long teamId) {
         TeamDTO teamDTO = teamService.getTeam(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
@@ -39,6 +41,7 @@ public class TeamController {
         return ModelHelper.enrich(teamDTO, courseId, configurationId);
     }
 
+    @Operation(summary = "get team members")
     @GetMapping("/{teamId}/members")
     CollectionModel<StudentDTO> getMembers(@PathVariable @NotNull Long teamId) {
         List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
@@ -46,6 +49,7 @@ public class TeamController {
         return CollectionModel.of(students, selfLink);
     }
 
+    @Operation(summary = "get virtual machines for a team")
     @GetMapping("/{teamId}/virtual-machines")
     CollectionModel<VirtualMachineDTO> getVirtualMachines(@PathVariable @NotNull Long teamId) {
         List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForTeam(teamId);
@@ -53,33 +57,39 @@ public class TeamController {
         return CollectionModel.of(virtualMachineDTOList, selfLink);
     }
 
+    @Operation(summary = "get the active number of cpu cores by a team")
     @GetMapping("/{teamId}/virtual-machines/active-cpu")
     int getActiveVcpu(@PathVariable @NotNull Long teamId) {
         return virtualMachineService.getActiveVcpuForTeam(teamId);
     }
 
+    @Operation(summary = "get the active number of disk amount (MB) by a team")
     @GetMapping("/{teamId}/virtual-machines/active-disk-space")
     int getActiveDiskSpace(@PathVariable @NotNull Long teamId) {
         return virtualMachineService.getActiveDiskSpaceForTeam(teamId);
     }
 
+    @Operation(summary = "get the active number of ram (GB) by a team")
     @GetMapping("/{teamId}/virtual-machines/active-ram")
     int getActiveRam(@PathVariable @NotNull Long teamId) {
         return virtualMachineService.getActiveRAMForTeam(teamId);
     }
 
+    @Operation(summary = "get the total number of virtual machines by a team")
     @GetMapping("/{teamId}/virtual-machines/tot")
     int getCountVirtualMachines(@PathVariable @NotNull Long teamId) {
         return virtualMachineService.getCountVirtualMachinesForTeam(teamId);
     }
 
+    @Operation(summary = "get the active number of virtual machines by a team")
     @GetMapping("/{teamId}/virtual-machines/tot-on")
     int getCountActiveVirtualMachines(@PathVariable @NotNull Long teamId) {
         return virtualMachineService.getCountActiveVirtualMachinesForTeam(teamId);
     }
 
+    @Operation(summary = "get the active resources and the configuration max numbers by a team")
     @GetMapping("/{teamId}/virtual-machines/resources")
-    Map<String, Integer> getResources(@PathVariable @NotNull Long teamId) {
+    ResourcesResponse getResources(@PathVariable @NotNull Long teamId) {
         return virtualMachineService.getResourcesByTeam(teamId);
     }
 }

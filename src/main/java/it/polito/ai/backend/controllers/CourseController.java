@@ -2,6 +2,7 @@ package it.polito.ai.backend.controllers;
 
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.exercise.ExerciseService;
@@ -58,6 +59,7 @@ public class CourseController {
     @Autowired
     ModelMapper modelMapper;
 
+    @Operation(summary = "get all courses")
     @GetMapping({"", "/"})
     CollectionModel<CourseDTO> all() {
         List<CourseDTO> courses = teamService.getAllCourses()
@@ -71,6 +73,7 @@ public class CourseController {
         return CollectionModel.of(courses, selfLink);
     }
 
+    @Operation(summary = "get course")
     @GetMapping("/{courseId}")
     CourseDTO getOne(@PathVariable @NotBlank String courseId) {
         CourseDTO courseDTO = teamService.getCourse(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
@@ -78,6 +81,7 @@ public class CourseController {
         return ModelHelper.enrich(courseDTO, modelId);
     }
 
+    @Operation(summary = "get enrolled students")
     @GetMapping("/{courseId}/enrolled")
     CollectionModel<StudentDTO> enrolledStudents(@PathVariable @NotBlank String courseId) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(courseId)).withSelfRel();
@@ -85,6 +89,7 @@ public class CourseController {
         return CollectionModel.of(enrolledStudents, selfLink);
     }
 
+    @Operation(summary = "get teams")
     @GetMapping("/{courseId}/teams")
     CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String courseId) {
         List<TeamDTO> teams = teamService.getTeamsForCourse(courseId)
@@ -98,6 +103,7 @@ public class CourseController {
         return CollectionModel.of(teams, selfLink);
     }
 
+    @Operation(summary = "get teachers")
     @GetMapping("/{courseId}/teachers")
     CollectionModel<TeacherDTO> getTeachers(@PathVariable @NotBlank String courseId) {
         List<TeacherDTO> teachers = teamService.getTeachersForCourse(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
@@ -105,6 +111,7 @@ public class CourseController {
         return CollectionModel.of(teachers, selfLink);
     }
 
+    @Operation(summary = "delete course")
     @DeleteMapping({"/{courseId}"})
     void deleteCourse(@PathVariable @NotBlank String courseId){
         if (!teamService.deleteCourse(courseId)) {
@@ -112,6 +119,7 @@ public class CourseController {
         }
     }
 
+    @Operation(summary = "update course")
     @PutMapping("/{courseId}")
     CourseDTO updateCourse(@RequestBody @Valid CourseDTO courseDTO, @PathVariable @NotBlank String courseId){
         CourseDTO courseDTO1 = teamService.updateCourse(courseId, courseDTO);
@@ -120,6 +128,7 @@ public class CourseController {
 
     }
 
+    @Operation(summary = "create a new course")
     @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
     CourseDTO addCourse(@RequestBody @Valid CourseDTO courseDTO) {
@@ -129,6 +138,7 @@ public class CourseController {
         return ModelHelper.enrich(courseDTO, null);
     }
 
+    @Operation(summary = "get all students enrolled to the course that are part of an active team")
     @GetMapping("/{courseId}/teams/students")
     CollectionModel<StudentDTO> getStudentsInTeams(@PathVariable @NotBlank String courseId) {
         List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
@@ -136,6 +146,7 @@ public class CourseController {
         return CollectionModel.of(studentsInTeams, selfLink);
     }
 
+    @Operation(summary = "get all students enrolled to the course not being part of an active team")
     @GetMapping("/{courseId}/teams/available-students")
     CollectionModel<StudentDTO> getAvailableStudents(@PathVariable @NotBlank String courseId) {
         List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
@@ -143,33 +154,30 @@ public class CourseController {
         return CollectionModel.of(availableStudents, selfLink);
     }
 
+    @Operation(summary = "enable a course")
     @PostMapping("/{courseId}/enable")
     void enable(@PathVariable @NotBlank String courseId) {
         teamService.enableCourse(courseId);
     }
 
+    @Operation(summary = "disable a course")
     @PostMapping("/{courseId}/disable")
     void disable(@PathVariable @NotBlank String courseId) {
         teamService.disableCourse(courseId);
     }
 
+    @Operation(summary = "enroll an existing student to a course")
     @PostMapping("/{courseId}/enrollOne")
-    void addStudent(@RequestBody Map<String, String> map, @PathVariable @NotBlank String courseId) {
-        if (!map.containsKey("studentId")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid request");
-        }
+    void addStudent(@RequestBody @Valid EnrollmentRequest request, @PathVariable @NotBlank String courseId) {
 
-        String studentId = map.get("studentId");
-
-        if (studentId == null || studentId.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid student id");
-        }
+        String studentId = request.getStudentId();
 
         if (!teamService.addStudentToCourse(studentId, courseId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("student %s already inserted", studentId));
         }
     }
 
+    @Operation(summary = "remove an enrolled students from a course")
     @DeleteMapping("/{courseId}/enrolled/{studentId}")
     void removeStudent(@PathVariable @NotBlank String courseId, @PathVariable @NotBlank String studentId) {
         if (!teamService.removeStudentFromCourse(studentId, courseId)) {
@@ -177,17 +185,10 @@ public class CourseController {
         }
     }
 
+    @Operation(summary = "add an existing teacher to the course management")
     @PostMapping("/{courseId}/teachers")
-    void addTeacher(@RequestBody Map<String, String> map, @PathVariable @NotBlank String courseId) {
-        if (!map.containsKey("teacherId")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid request");
-        }
-
-        String teacherId = map.get("teacherId");
-
-        if (teacherId == null || teacherId.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid teacher id");
-        }
+    void addTeacher(@RequestBody @Valid ManagementRequest request, @PathVariable @NotBlank String courseId) {
+        String teacherId = request.getTeacherId();
 
         if (!teamService.addTeacherToCourse(teacherId, courseId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("teacher %s already inserted", teacherId));
@@ -205,6 +206,7 @@ public class CourseController {
             "text/x-comma-separated-values",
             "text/tab-separated-values");*/
 
+    @Operation(summary = "add new students and enroll them to a course by uploading a csv file")
     @PostMapping("/{courseId}/enrollMany")
     List<Boolean> enrollStudents(@RequestParam("file") MultipartFile file, @PathVariable @NotBlank String courseId) {
 
@@ -238,6 +240,7 @@ public class CourseController {
 
     }
 
+    @Operation(summary = "enroll existing students to a course by uploading a csv file")
     @PostMapping("/{courseId}/enrollAll")
     List<Boolean> enrollAll(@RequestParam("file") MultipartFile file, @PathVariable @NotBlank String courseId) {
 
@@ -278,6 +281,7 @@ public class CourseController {
     }
 
     // http -v POST http://localhost:8080/API/courses/ase/createTeam teamName=aseTeam0 memberIds:=[\"264000\",\"264001\",\"264002\",\"264004\"]
+    @Operation(summary = "create a new unconfirmed team in a course")
     @PostMapping("/{courseId}/createTeam")
     @ResponseStatus(HttpStatus.CREATED)
     TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable @NotBlank String courseId) {
@@ -313,7 +317,7 @@ public class CourseController {
         }
     }
 
-
+    @Operation(summary = "create a new exercise for a course")
     @PostMapping("/{courseId}/exercises")
     void createExercise(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId){
         if (!map.containsKey("expired")) {
@@ -332,6 +336,7 @@ public class CourseController {
         }
     }
 
+    @Operation(summary = "get all exercises of a course")
     @GetMapping("/{courseId}/exercises")
     List<ExerciseDTO> getExercises(@PathVariable @NotBlank String courseId){
 

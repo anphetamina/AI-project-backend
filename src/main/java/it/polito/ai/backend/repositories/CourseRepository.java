@@ -11,6 +11,7 @@ import java.util.List;
 
 @Repository
 public interface CourseRepository extends JpaRepository<Course, String> {
+    // todo return students by looking at the team status?
     @Query("SELECT s FROM Student s INNER JOIN s.teams t INNER JOIN t.course c WHERE c.id=:courseId")
     List<Student> getStudentsInTeams(String courseId);
     @Query("SELECT s FROM Student s INNER JOIN s.courses c WHERE c.id=:courseId AND s NOT IN (SELECT s FROM Student s INNER JOIN s.teams t INNER JOIN t.course c WHERE c.id=:courseId)")

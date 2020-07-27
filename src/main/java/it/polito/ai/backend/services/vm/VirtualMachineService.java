@@ -1,11 +1,8 @@
 package it.polito.ai.backend.services.vm;
 
 import it.polito.ai.backend.dtos.*;
-import it.polito.ai.backend.entities.SystemImage;
-import it.polito.ai.backend.entities.VirtualMachineModel;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface VirtualMachineService {
@@ -18,7 +15,7 @@ public interface VirtualMachineService {
     boolean deleteVirtualMachine(Long vmId);
     void turnOnVirtualMachine(Long vmId);
     void turnOffVirtualMachine(Long vmId);
-    boolean addOwnerToVirtualMachine(String studentId, Long vmId);
+    boolean addOwnerToVirtualMachine(/*@Valid @NotBlank*/ String studentId, Long vmId);
 
     /**
      * teacher
@@ -50,5 +47,5 @@ public interface VirtualMachineService {
     int getActiveRAMForTeam(Long teamId);
     int getCountActiveVirtualMachinesForTeam(Long teamId);
     int getCountVirtualMachinesForTeam(Long teamId);
-    Map<String, Integer> getResourcesByTeam(Long teamId);
+    ResourcesResponse getResourcesByTeam(Long teamId);
 }

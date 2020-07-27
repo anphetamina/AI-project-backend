@@ -1,11 +1,11 @@
 package it.polito.ai.backend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.CourseDTO;
 import it.polito.ai.backend.dtos.TeacherDTO;
 import it.polito.ai.backend.dtos.VirtualMachineModelDTO;
 import it.polito.ai.backend.services.team.TeacherNotFoundException;
 import it.polito.ai.backend.services.team.TeamService;
-import it.polito.ai.backend.services.team.TeamServiceException;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
@@ -31,11 +31,13 @@ public class TeacherController {
     @Autowired
     VirtualMachineService virtualMachineService;
 
+    @Operation(summary = "get teacher")
     @GetMapping("/{id}")
     TeacherDTO getOne(@PathVariable @NotBlank String id) {
         return ModelHelper.enrich(teamService.getTeacher(id).orElseThrow(() -> new TeacherNotFoundException(id)));
     }
 
+    @Operation(summary = "get courses in which a teacher teaches")
     @GetMapping("/{id}/courses")
     CollectionModel<CourseDTO> getCourses(@PathVariable @NotBlank String id) {
         List<CourseDTO> courses = teamService.getCoursesForTeacher(id)
@@ -49,6 +51,7 @@ public class TeacherController {
         return CollectionModel.of(courses, selfLink);
     }
 
+    @Operation(summary = "create a new teacher")
     @PostMapping({"", "/"})
     TeacherDTO addTeacher(@RequestBody @Valid TeacherDTO teacherDTO) {
         if (!teamService.addTeacher(teacherDTO)) {

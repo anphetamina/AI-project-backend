@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ValidationException;
 import java.io.IOException;
 
 @RestControllerAdvice
@@ -43,7 +44,8 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
             TeamServiceBadRequestException.class,
             IllegalArgumentException.class,
             ClassCastException.class,
-            MappingException.class/*, NullPointerException.class*/})
+            MappingException.class,
+            ValidationException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     ResponseEntity<String> handleArgumentException(HttpServletResponse response, Exception exception, RuntimeException runtimeException) throws IOException {
         // response.sendError(HttpStatus.BAD_REQUEST.value());

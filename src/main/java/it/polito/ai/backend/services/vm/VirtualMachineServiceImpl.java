@@ -10,16 +10,17 @@ import it.polito.ai.backend.services.team.TeamNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
 import javax.transaction.Transactional;
-import javax.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Transactional
+/**
+ * the validation of the arguments is done inside the controllers
+ */
+// @Validated
 public class VirtualMachineServiceImpl implements VirtualMachineService {
 
     @Autowired
@@ -671,7 +672,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    public Map<String, Integer> getResourcesByTeam(Long teamId) {
+    public ResourcesResponse getResourcesByTeam(Long teamId) {
         Team team = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
 
         Configuration configuration = team.getConfiguration();
@@ -679,8 +680,6 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         if (configuration == null) {
             throw new ConfigurationNotDefinedException(teamId.toString());
         }
-
-        Map<String, Integer> resources = new HashMap<>();
 
         List<VirtualMachine> activeVirtualMachines = teamRepository.getVirtualMachinesByTeamAndStatus(teamId, VirtualMachineStatus.ON);
         int activeNumVcpu = activeVirtualMachines
@@ -695,18 +694,20 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         int activeVMs = activeVirtualMachines.size();
         int tot = team.getVirtualMachines().size();
 
-        resources.put("activeNumVcpu", activeNumVcpu);
-        resources.put("activeDiskSpace", activeDiskSpace);
-        resources.put("activeRam", activeRam);
-        resources.put("activeVMs", activeVMs);
-        resources.put("tot", tot);
+        ResourcesResponse response = ResourcesResponse.builder()
+                .teamId(teamId)
+                .activeNumVcpu(activeNumVcpu)
+                .activeDiskSpace(activeDiskSpace)
+                .activeRam(activeRam)
+                .activeVMs(activeVMs)
+                .tot(tot)
+                .maxVcpu(configuration.getMax_vcpu())
+                .maxDiskSpace(configuration.getMax_disk_space())
+                .maxRam(configuration.getMax_ram())
+                .maxOn(configuration.getMax_on())
+                .maxTot(configuration.getTot())
+                .build();
 
-        resources.put("maxVcpu", configuration.getMax_vcpu());
-        resources.put("maxDiskSpace", configuration.getMax_disk_space());
-        resources.put("maxRam", configuration.getMax_ram());
-        resources.put("maxOn", configuration.getMax_on());
-        resources.put("maxTot", configuration.getTot());
-
-        return resources;
+        return response;
     }
 }

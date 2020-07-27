@@ -1,11 +1,8 @@
 package it.polito.ai.backend.controllers;
 
 import it.polito.ai.backend.dtos.*;
-import it.polito.ai.backend.services.team.TeamService;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
-
-import java.util.List;
 
 
 public class ModelHelper {

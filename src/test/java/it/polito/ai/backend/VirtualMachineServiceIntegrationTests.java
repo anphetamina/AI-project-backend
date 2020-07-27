@@ -71,7 +71,6 @@ public class VirtualMachineServiceIntegrationTests {
                 .andExpect(jsonPath("$.num_vcpu").value(numVcpu))
                 .andExpect(jsonPath("$.disk_space").value(diskSpace))
                 .andExpect(jsonPath("$.ram").value(ram))
-                .andExpect(jsonPath("$.status").value(VirtualMachineStatus.OFF))
                 .andExpect(jsonPath("$._links.self.href").value("http://localhost/API/virtual-machines/"+vmId))
                 .andExpect(jsonPath("$._links.model.href").value("http://localhost/API/virtual-machine-models/"+modelId))
                 .andExpect(jsonPath("$._links.usedBy.href").value("http://localhost/API/teams/"+teamId))

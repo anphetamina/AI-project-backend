@@ -1,18 +1,13 @@
 package it.polito.ai.backend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
 import it.polito.ai.backend.services.exercise.ExerciseService;
-import it.polito.ai.backend.dtos.CourseDTO;
-import it.polito.ai.backend.dtos.StudentDTO;
-import it.polito.ai.backend.dtos.TeamDTO;
-import it.polito.ai.backend.dtos.VirtualMachineDTO;
-import it.polito.ai.backend.services.exercise.ExerciseServiceException;
 import it.polito.ai.backend.services.notification.NotificationService;
-import it.polito.ai.backend.services.team.*;
-import it.polito.ai.backend.services.vm.VirtualMachineNotFoundException;
+import it.polito.ai.backend.services.team.StudentNotFoundException;
+import it.polito.ai.backend.services.team.TeamService;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
-import it.polito.ai.backend.services.vm.VirtualMachineServiceConflictException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
@@ -26,7 +21,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -43,6 +37,7 @@ public class StudentController {
     @Autowired
     VirtualMachineService virtualMachineService;
 
+    @Operation(summary = "get all students")
     @GetMapping({"", "/"})
     CollectionModel<StudentDTO> all() {
         List<StudentDTO> students = teamService.getAllStudents().stream().map(ModelHelper::enrich).collect(Collectors.toList());
@@ -50,11 +45,13 @@ public class StudentController {
         return CollectionModel.of(students, selfLink);
     }
 
+    @Operation(summary = "get student")
     @GetMapping("/{studentId}")
     StudentDTO getOne(@PathVariable @NotBlank String studentId) {
         return ModelHelper.enrich(teamService.getStudent(studentId).orElseThrow(() -> new StudentNotFoundException(studentId)));
     }
 
+    @Operation(summary = "get courses to which a student is enrolled")
     @GetMapping("/{studentId}/courses")
     CollectionModel<CourseDTO> getCourses(@PathVariable @NotBlank String studentId) {
         List<CourseDTO> courses = teamService.getCourses(studentId)
@@ -68,6 +65,7 @@ public class StudentController {
         return CollectionModel.of(courses, selfLink);
     }
 
+    @Operation(summary = "get teams of which a student is part of")
     @GetMapping("/{studentId}/teams")
     CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String studentId) {
         List<TeamDTO> teams = teamService.getTeamsForStudent(studentId).stream()
@@ -81,6 +79,7 @@ public class StudentController {
         return CollectionModel.of(teams, selfLink);
     }
 
+    @Operation(summary = "create a new student")
     @PostMapping({"", "/"})
     StudentDTO addStudent(@RequestBody @Valid StudentDTO studentDTO) {
         if (!teamService.addStudent(studentDTO)) {
@@ -89,6 +88,7 @@ public class StudentController {
         return ModelHelper.enrich(studentDTO);
     }
 
+    @Operation(summary = "get the assignments of a student")
     @GetMapping("/{studentId}/assignments")
     List<AssignmentDTO> getAssignments(@PathVariable @NotBlank String studentId){
         // todo collection model
@@ -108,6 +108,7 @@ public class StudentController {
 
     }
 
+    @Operation(summary = "get the owned virtual machines by a student")
     @GetMapping("/{studentId}/virtual-machines")
     CollectionModel<VirtualMachineDTO> getVirtualMachines(@PathVariable @NotBlank String studentId) {
         List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForStudent(studentId)

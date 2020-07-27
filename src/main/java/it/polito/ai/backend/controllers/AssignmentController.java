@@ -1,5 +1,6 @@
 package it.polito.ai.backend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.AssignmentDTO;
 import it.polito.ai.backend.dtos.ExerciseDTO;
 import it.polito.ai.backend.dtos.StudentDTO;
@@ -27,7 +28,7 @@ public class AssignmentController {
     @Autowired
     ExerciseService exerciseService;
 
-
+    @Operation(summary = "get assignment")
     @GetMapping("/{assignmentId}")
     AssignmentDTO getOne(@PathVariable @NotNull Long assignmentId) {
         AssignmentDTO assignmentDTO = exerciseService.getAssignment(assignmentId).orElseThrow(() -> new AssignmentNotFoundException(assignmentId.toString()));

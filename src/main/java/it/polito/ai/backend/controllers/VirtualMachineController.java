@@ -1,10 +1,7 @@
 package it.polito.ai.backend.controllers;
 
-import io.swagger.v3.oas.annotations.Parameter;
-import it.polito.ai.backend.dtos.StudentDTO;
-import it.polito.ai.backend.dtos.TeamDTO;
-import it.polito.ai.backend.dtos.VirtualMachineDTO;
-import it.polito.ai.backend.dtos.VirtualMachineModelDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.services.vm.VirtualMachineNotFoundException;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,6 +26,7 @@ public class VirtualMachineController {
     @Autowired
     VirtualMachineService virtualMachineService;
 
+    @Operation(summary = "get virtual machine")
     @GetMapping("/{vmId}")
     VirtualMachineDTO getOne(@PathVariable @NotNull Long vmId) {
         VirtualMachineDTO virtualMachineDTO = virtualMachineService.getVirtualMachine(vmId)
@@ -40,6 +36,7 @@ public class VirtualMachineController {
         return ModelHelper.enrich(virtualMachineDTO, teamId, modelId);
     }
 
+    @Operation(summary = "get owners of a virtual machine")
     @GetMapping("/{vmId}/owners")
     CollectionModel<StudentDTO> getOwners(@PathVariable @NotNull Long vmId) {
         List<StudentDTO> studentDTOList = virtualMachineService.getOwnersForVirtualMachine(vmId)
@@ -50,6 +47,7 @@ public class VirtualMachineController {
         return CollectionModel.of(studentDTOList, selfLink);
     }
 
+    @Operation(summary = "create a new virtual machine")
     @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
     VirtualMachineDTO addVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO) {
@@ -60,6 +58,7 @@ public class VirtualMachineController {
         return ModelHelper.enrich(virtualMachine, teamId, modelId);
     }
 
+    @Operation(summary = "delete an existing virtual machine")
     @DeleteMapping("/{vmId}")
     void deleteVirtualMachine(@PathVariable @NotNull Long vmId) {
         if (!virtualMachineService.deleteVirtualMachine(vmId)) {
@@ -68,38 +67,32 @@ public class VirtualMachineController {
 
     }
 
+    @Operation(summary = "update an existing virtual machine")
     @PutMapping("/{vmId}")
     VirtualMachineDTO setVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO, @PathVariable @NotNull Long vmId) {
         VirtualMachineDTO virtualMachineDTO1 = virtualMachineService.updateVirtualMachine(vmId, virtualMachineDTO);
-        Long teamId = virtualMachineService.getTeamForVirtualMachine(vmId).map(TeamDTO::getId).orElse(null);
-        Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vmId).map(VirtualMachineModelDTO::getId).orElse(null);
-        return ModelHelper.enrich(virtualMachineDTO1, teamId, modelId);
+        // Long teamId = virtualMachineService.getTeamForVirtualMachine(vmId).map(TeamDTO::getId).orElse(null);
+        // Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vmId).map(VirtualMachineModelDTO::getId).orElse(null);
+        return ModelHelper.enrich(virtualMachineDTO1, virtualMachineDTO.getTeamId(), virtualMachineDTO.getModelId());
     }
 
+    @Operation(summary = "turn on a virtual machine")
     @PostMapping("/{vmId}/on")
     void turnOn(@PathVariable @NotNull Long vmId) {
         virtualMachineService.turnOnVirtualMachine(vmId);
     }
 
+    @Operation(summary = "turn off a virtual machine")
     @PostMapping("/{vmId}/off")
     void turnOff(@PathVariable @NotNull Long vmId) {
         virtualMachineService.turnOffVirtualMachine(vmId);
     }
 
+    @Operation(summary = "add an existing student to the owners of a virtual machine")
     @PostMapping("/{vmId}/owners")
-    void shareOwnership(@PathVariable @NotNull Long vmId, @Parameter(example = "studentId") @RequestBody HashMap<String, String> map) {
-        if (!map.containsKey("studentId")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
+    void shareOwnership(@PathVariable @NotNull Long vmId, @RequestBody @Valid OwnershipRequest request) {
 
-        String studentId = map.get("studentId");
-
-        /**
-         * if studentId is null, the service will throw a StudentNotFoundException but it should be a bad request
-         */
-        if (studentId == null || studentId.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
+        String studentId = request.getStudentId();
 
         if (!virtualMachineService.addOwnerToVirtualMachine(studentId, vmId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "cannot share ownership with "+studentId);
