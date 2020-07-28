@@ -94,7 +94,7 @@ public class ExerciseController {
 
     }
 
-    @Operation(summary = "set an assignment as null")
+    @Operation(summary = "set an  assignment as null for all students enrolled at the courses ")
     @PostMapping("/{exerciseId}/assignmentNull")
     void setNullAssignment(@PathVariable @NotNull Long exerciseId){
         /*No duplicati*/
@@ -183,7 +183,7 @@ public class ExerciseController {
 
     }
 
-    @Operation(summary = "todo")
+    @Operation(summary = "add a review for an assignment by the teacher")
     @PostMapping("/{exerciseId}/assignmentReview")
     void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotNull Long exerciseId){
         /*Se il falg=false allora c'è anche il voto
