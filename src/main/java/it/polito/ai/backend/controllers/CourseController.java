@@ -3,8 +3,6 @@ package it.polito.ai.backend.controllers;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import it.polito.ai.backend.dtos.*;
-import it.polito.ai.backend.entities.Course;
-import it.polito.ai.backend.entities.Exercise;
 import it.polito.ai.backend.entities.SystemImage;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.exercise.*;
@@ -443,17 +441,15 @@ public class CourseController {
                 //todo verifica che chi fa la proposta di team di essere loggato e che il suo studentId conincida
                 SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
                 Timestamp timeout = new Timestamp(format.parse(map.get("timeout").toString()).getTime());
+                if(timeout.before(Utils.getNow()))
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid timeout");
+
                 String teamName = modelMapper.map(map.get("teamName"), String.class);
-                System.out.println(teamName+" "+timeout);
-                //team must have name unique in a course
-                List<String> teamsName = teamService.getTeamsForCourse(courseId).stream().map(TeamDTO::getName).collect(Collectors.toList());
-                for (String name:teamsName) {
-                    if(name.equals(teamName))
-                        throw  new TeamServiceConflictException(teamName);
-                }
+
                 Optional<StudentDTO> proponent = teamService.getStudent(map.get("studentId").toString());
                 if(!proponent.isPresent())
                     throw new StudentNotFoundException(map.get("studentId").toString());
+
                 if (!teamName.isEmpty() && teamName.matches("[a-zA-Z0-9]+")) {
                     Type listType = new TypeToken<List<String>>() {}.getType();
                     List<String> memberIds = modelMapper.map(map.get("memberIds"), listType);
@@ -463,7 +459,6 @@ public class CourseController {
                         TeamDTO team = teamService.proposeTeam(courseId, teamName, memberIds);
                         //remove the student proposing team because no where to confirm
                         memberIds.remove(proponent.get().getId());
-
                         notificationService.notifyTeam(team, memberIds,timeout,proponent.get());
 
                     } else {
@@ -475,8 +470,6 @@ public class CourseController {
             }/* catch (AccessDeniedException exception) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
             }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
-                System.out.println(exception.getMessage());
-                System.out.println(exception.getCause());
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
             } catch (InvalidRequestException | IllegalArgumentException | MappingException | ConfigurationException exception) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());

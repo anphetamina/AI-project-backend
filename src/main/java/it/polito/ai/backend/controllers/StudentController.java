@@ -148,7 +148,6 @@ public class StudentController {
     boolean confirmToken(@PathVariable String token, @PathVariable String studentId) {
         try {
             return notificationService.confirm(token,studentId);
-           //todo più eccezioni
         } catch (Exception exception) {
             System.out.println(exception.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -159,7 +158,6 @@ public class StudentController {
     boolean rejectToken(@PathVariable String token, @PathVariable String studentId) {
         try {
             return  notificationService.reject(token);
-            //todo più eccezioni
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }

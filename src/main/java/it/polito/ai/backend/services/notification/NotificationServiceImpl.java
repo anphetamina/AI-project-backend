@@ -9,17 +9,20 @@ import it.polito.ai.backend.repositories.CourseRepository;
 import it.polito.ai.backend.repositories.StudentRepository;
 import it.polito.ai.backend.repositories.TeamRepository;
 import it.polito.ai.backend.repositories.TokenRepository;
+import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.team.StudentNotEnrolledException;
 import it.polito.ai.backend.services.team.StudentNotFoundException;
 import it.polito.ai.backend.services.team.TeamNotFoundException;
 import it.polito.ai.backend.services.team.TeamService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
 import java.sql.Timestamp;
@@ -93,15 +96,19 @@ public class NotificationServiceImpl implements NotificationService {
 
         List<Token> teamTokens = tokenRepository.findAllByTeamId(teamId);
         boolean isLastToken = teamTokens.size() == 1;
+        Course courseTeam =  team.get().getCourse();
+        List<Team> teamsStudent = student.get().getTeams();
+        for (Team teamStudent:teamsStudent) {
+            if(teamStudent.getCourse().equals(courseTeam) && teamStudent.getStatus().equals(TeamStatus.ACTIVE)){
+                //elimina tutti i token relativi a questo gruppo e la proposta del gruppo
+                teamTokens.forEach(t ->tokenRepository.delete(t));
+                //todo decidere se eliminare tutte la proposto o no quando c'è un rifiuto
+                teamService.evictTeam(team.get().getId());
+                return false;
+            }
 
-        if(student.get().getTeams().stream().anyMatch(t ->
-                t.getCourse().getStudents().stream().anyMatch(s -> s.getId().equals(studentId)) &&
-                        t.getStatus().equals(TeamStatus.ACTIVE))){
-            //elimina tutti i token relativi a questo gruppo e la proposta del gruppo
-            teamTokens.forEach(t ->tokenRepository.delete(t));
-            teamRepository.deleteById(teamId);
-            return false;
         }
+
 
 
         if (isLastToken) {

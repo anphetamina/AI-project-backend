@@ -241,11 +241,14 @@ public class TeamServiceImpl implements TeamService {
         } else if (!course.get().isEnabled()) {
             throw new CourseNotEnabledException(courseId);
         }
-        if (memberIds.size()+1 < course.get().getMin()) {
+        if (memberIds.size() < course.get().getMin()) {
             throw new TeamSizeMinException(name);
         } else if (memberIds.size() > course.get().getMax()) {
             throw new TeamSizeMaxException(name);
         }
+        if( course.get().getTeams().stream().anyMatch(team -> team.getName().equals(name)))
+            throw new TeamServiceConflictException("Exist name: "+name+" for team in course: "+courseId);
+
 
         HashSet<String> uniqueIds = new HashSet<String>();
         Team team = new Team();
@@ -283,6 +286,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public List<TeamDTO> getTeamsForCourse(String courseId) {
+
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new CourseNotFoundException(courseId))
                 .getTeams()
@@ -349,11 +353,15 @@ public class TeamServiceImpl implements TeamService {
     @Override
     public void evictTeam(Long teamId) {
         Optional<Team> team = teamRepository.findById(teamId);
-
         if (!team.isPresent()) {
             throw new TeamNotFoundException(teamId.toString());
         }
-
+        if (team.get().getMembers().size() > 0) {
+            for (Student s : team.get().getMembers()) {
+                s.getTeams().remove(team.get());
+            }
+            team.get().getMembers().clear();
+        }
         teamRepository.delete(team.get());
     }
 
