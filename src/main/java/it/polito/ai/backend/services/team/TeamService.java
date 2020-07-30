@@ -40,6 +40,10 @@ public interface TeamService {
     List<StudentDTO> getMembers(Long teamId);
 
     TeamDTO proposeTeam(String courseId, String name, List<String> memberIds);
+    List<TeamDTO> getProposeTeamsForStudentAndCourse(String studentId, String courseId);
+
+
+    Optional<TeamDTO> getTeamForStudentAndCourse(String studentId, String courseId);
 
     List<TeamDTO> getTeamsForCourse(String courseId);
     List<TeacherDTO> getTeachersForCourse(String courseId);

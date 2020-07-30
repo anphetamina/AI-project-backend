@@ -4,9 +4,11 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.entities.SystemImage;
+import it.polito.ai.backend.entities.Token;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.exercise.*;
 import it.polito.ai.backend.services.notification.NotificationService;
+import it.polito.ai.backend.services.notification.TokenNotFoundException;
 import it.polito.ai.backend.services.team.*;
 import it.polito.ai.backend.services.vm.*;
 import org.apache.tika.config.TikaConfig;
@@ -112,6 +114,7 @@ public class CourseController {
     @GetMapping("/{courseId}/teams/{teamId}/members")
     CollectionModel<StudentDTO> getMembers(@PathVariable String courseId, @PathVariable Long teamId) {
         try {
+
             List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembers(courseId, teamId)).withSelfRel();
             return CollectionModel.of(students, selfLink);
@@ -123,6 +126,40 @@ public class CourseController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }
     }
+
+    @GetMapping("/{courseId}/teams/{teamId}/members-status")
+    //todo da rivedere perchè courseId non è usato
+    //todo da sposatre in teamController
+    CollectionModel<Map.Entry<StudentDTO,String>> getMembersStatus(@PathVariable String courseId, @PathVariable Long teamId) {
+        try {
+
+            Map<StudentDTO,String> statusMembers = new HashMap<>();
+            List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+            List<TokenDTO>  tokenDTOS = notificationService.getTokenTeam(teamId);
+            if(tokenDTOS.isEmpty())
+                throw new TeamNotFoundException("Non exist propose for team: "+teamId);
+
+            students.forEach(studentDTO -> {
+                for (TokenDTO tokenDTO:tokenDTOS) {
+                    if(tokenDTO.getStudentId().equals(studentDTO.getId()))
+                        statusMembers.put(studentDTO,tokenDTO.getStatus().toString());
+                }
+               if(tokenDTOS.stream().noneMatch(tokenDTO -> tokenDTO.getStudentId().equals(studentDTO.getId())))
+                   statusMembers.put(studentDTO,"PROPONENT");
+            });
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembersStatus(courseId, teamId)).withSelfRel();
+            return CollectionModel.of(statusMembers.entrySet(),selfLink);
+
+        }/* catch (AccessDeniedException exception) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
+        }*/ catch (TeamServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
+
 
     @GetMapping("/{courseId}/teams")
     CollectionModel<TeamDTO> getTeams(@PathVariable String courseId) {
@@ -138,6 +175,8 @@ public class CourseController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }
     }
+
+
 
     @GetMapping("/{courseId}/teachers")
     CollectionModel<TeacherDTO> getTeachers(@PathVariable String courseId) {

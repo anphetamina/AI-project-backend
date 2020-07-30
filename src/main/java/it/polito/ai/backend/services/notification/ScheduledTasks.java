@@ -33,16 +33,21 @@ public class ScheduledTasks {
     ExerciseRepository exerciseRepository;
     @Autowired
     CourseRepository courseRepository;
+    @Autowired
+    TeamService teamService;
 
     /*
     * every day at 4am
     * */
     @Scheduled(cron = "0 0 4 * * ?")
-    public void cleanTokens() {
+    public void cleanTokensAndProposeTeam() {
         List<Token> tokens = tokenRepository.findAllByExpiryDateBefore(Utils.getNow());
         System.out.println("Found "+tokens.size()+" tokens to be removed");
+        tokens.forEach(token -> {
+                    if(!token.getStatus().equals(TokenStatus.ACCEPT))
+                        teamService.evictTeam(token.getTeamId()); });
         tokenRepository.deleteAll(tokens);
-        System.out.println("Token repository cleaned");
+        System.out.println("Token repository cleaned and alla proposes team");
     }
 
     /*

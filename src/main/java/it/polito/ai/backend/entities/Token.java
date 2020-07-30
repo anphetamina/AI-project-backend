@@ -19,5 +19,7 @@ public class Token {
     @EqualsAndHashCode.Include
     String id;
     Long teamId;
+    String studentId;
+    TokenStatus status;
     Timestamp expiryDate;
 }

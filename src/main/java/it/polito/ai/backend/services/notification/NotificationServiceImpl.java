@@ -31,6 +31,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -65,8 +66,8 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public boolean confirm(String tokenId, String studentId) {
-        //todo studentId è quello loggato
+    public boolean confirm(String tokenId) {
+
         Optional<Token> tokenOptional = tokenRepository.findById(tokenId);
 
         if (!tokenOptional.isPresent()) {
@@ -80,6 +81,11 @@ public class NotificationServiceImpl implements NotificationService {
         if (isTokenExpired) {
             throw new TokenExpiredException(tokenId);
         }
+        //posso solo una volta accettare
+        if(!tokenOptional.get().getStatus().equals(TokenStatus.UNDEFINED))
+            throw new TokenExpiredException(tokenId);
+
+        String studentId = tokenOptional.get().getStudentId();
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
             throw new StudentNotFoundException(studentId);
@@ -88,36 +94,44 @@ public class NotificationServiceImpl implements NotificationService {
         Optional<Team> team = teamRepository.findById(teamId);
         if(!team.isPresent())
             throw new TeamNotFoundException(teamId.toString());
+
         if(student.get().getCourses().stream().noneMatch(c -> c.getName().equals(team.get().getCourse().getName())))
             throw new StudentNotEnrolledException(studentId);
+
         if(team.get().getMembers().stream().noneMatch(m -> m.getId().equals(studentId)))
             throw new StudentNotFoundException(studentId);
 
 
         List<Token> teamTokens = tokenRepository.findAllByTeamId(teamId);
-        boolean isLastToken = teamTokens.size() == 1;
+        //diabilito la richiesta
+        if(teamTokens.stream().anyMatch(token -> token.getStatus().equals(TokenStatus.REJECT)))
+            return false;
+
+        //devo sapere se gli altri hanno accettato perciò elimino quello su cui sto lavaorando
+        teamTokens.remove(tokenOptional.get());
+
+        boolean isLastToken = teamTokens.stream().allMatch(token -> token.getStatus().equals(TokenStatus.ACCEPT));
         Course courseTeam =  team.get().getCourse();
         List<Team> teamsStudent = student.get().getTeams();
         for (Team teamStudent:teamsStudent) {
             if(teamStudent.getCourse().equals(courseTeam) && teamStudent.getStatus().equals(TeamStatus.ACTIVE)){
-                //elimina tutti i token relativi a questo gruppo e la proposta del gruppo
-                teamTokens.forEach(t ->tokenRepository.delete(t));
-                //todo decidere se eliminare tutte la proposto o no quando c'è un rifiuto
-                teamService.evictTeam(team.get().getId());
+                //non posso accettare una proposta per un gruppo dello stesso corso se ho già un gruppo
+                tokenOptional.get().setStatus(TokenStatus.REJECT);
+                tokenRepository.save(tokenOptional.get());
                 return false;
             }
 
         }
 
-
-
         if (isLastToken) {
             teamService.confirmTeam(teamId);
-            tokenRepository.delete(tokenOptional.get());
+            tokenOptional.get().setStatus(TokenStatus.ACCEPT);
+            tokenRepository.save(tokenOptional.get());
             return true;
         }
 
-        tokenRepository.delete(tokenOptional.get());
+        tokenOptional.get().setStatus(TokenStatus.ACCEPT);
+        tokenRepository.save(tokenOptional.get());
         return false;
     }
 
@@ -136,12 +150,18 @@ public class NotificationServiceImpl implements NotificationService {
         if (isTokenExpired) {
             throw new TokenExpiredException(tokenId);
         }
+        //posso solo una volta rifiutare
+        if(!tokenOptional.get().getStatus().equals(TokenStatus.UNDEFINED))
+            throw new TokenExpiredException(tokenId);
 
         Long teamId = tokenOptional.get().getTeamId();
         List<Token> teamTokens = tokenRepository.findAllByTeamId(teamId);
+        if(teamTokens.stream().anyMatch(token -> token.getStatus().equals(TokenStatus.REJECT)))
+            //riciesta disabilitata
+            return false;
 
-        tokenRepository.deleteAll(teamTokens);
-        teamService.evictTeam(teamId);
+        tokenOptional.get().setStatus(TokenStatus.REJECT);
+        tokenRepository.save(tokenOptional.get());
         return true;
     }
 
@@ -156,6 +176,19 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    public List<TokenDTO> getTokenTeam(Long teamId) {
+        if(!teamRepository.findById(teamId).isPresent())
+            throw new TeamNotFoundException("Not exist team: "+teamId.toString());
+
+
+        return tokenRepository.findAllByTeamId(teamId)
+                .stream()
+                .map(t-> modelMapper.map(t,TokenDTO.class))
+                .collect(Collectors.toList());
+
+    }
+
+    @Override
     public void notifyTeam(TeamDTO teamDTO, List<String> memberIds, Timestamp timeout, StudentDTO studentDTO) {
         List<StudentDTO> members = teamService.getMembers(teamDTO.getId());
         if (!(members.size()-1 == memberIds.size())){
@@ -163,7 +196,7 @@ public class NotificationServiceImpl implements NotificationService {
         }
         memberIds.forEach(id -> {
             String tokenId = UUID.randomUUID().toString();
-            TokenDTO tokenDTO = new TokenDTO(tokenId, teamDTO.getId(), timeout);
+            TokenDTO tokenDTO = new TokenDTO(tokenId, teamDTO.getId(), id, TokenStatus.UNDEFINED, timeout);
             if (addToken(tokenDTO)) {
                 TokenDTO enrichedConfirmToken = ModelHelper.enrich(tokenDTO, "confirm",id);
                 TokenDTO enrichedRejectToken = ModelHelper.enrich(tokenDTO, "reject",id);

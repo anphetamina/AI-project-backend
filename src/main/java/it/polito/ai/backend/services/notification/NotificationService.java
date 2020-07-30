@@ -6,12 +6,14 @@ import it.polito.ai.backend.dtos.TokenDTO;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 public interface NotificationService {
     void sendMessage(String address, String subject, String body, String sender);
 
-    boolean confirm(String token, String studentId);
+    boolean confirm(String token);
     boolean reject(String token);
     void notifyTeam(TeamDTO dto, List<String> memberIds, Timestamp timeout, StudentDTO studentDTO);
     boolean addToken(TokenDTO token);
+    List<TokenDTO> getTokenTeam(Long teamId);
 }

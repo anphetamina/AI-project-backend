@@ -208,14 +208,14 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public List<TeamDTO> getTeamsForStudent(String studentId) {
+    public List<TeamDTO> getTeamsForStudent(String studentId) {//Solo team attivi
         Optional<Student> student = studentRepository.findById(studentId);
 
         if (!student.isPresent()) {
             throw new StudentNotFoundException(studentId);
         }
 
-        return student.get().getTeams().stream()
+        return student.get().getTeams().stream().filter(team -> team.getStatus().equals(TeamStatus.ACTIVE))
                 .map(t -> modelMapper.map(t, TeamDTO.class))
                 .collect(Collectors.toList());
     }
@@ -267,6 +267,52 @@ public class TeamServiceImpl implements TeamService {
         return modelMapper.map(team, TeamDTO.class);
     }
 
+    @Override
+    public List<TeamDTO> getProposeTeamsForStudentAndCourse(String studentId, String courseId) {
+        Optional<Student> student = studentRepository.findById(studentId);
+        if(!student.isPresent())
+            throw new StudentNotFoundException(studentId);
+
+        Optional<Course> course = courseRepository.findById(courseId);
+        if(!course.isPresent())
+            throw new CourseNotFoundException(courseId);
+
+        if(!student.get().getCourses().contains(course.get()))
+            throw new StudentNotEnrolledException("Student: "+studentId+" is non enrolled to the course: "+courseId);
+
+        return student.get()
+                .getTeams()
+                .stream()
+                .filter(team -> team.getStatus().equals(TeamStatus.UNCONFIRMED) && team.getCourse().getId().equals(courseId))
+                .map(t -> modelMapper.map(t, TeamDTO.class))
+                .collect(Collectors.toList());
+    }
+
+
+
+
+    @Override
+    public Optional<TeamDTO> getTeamForStudentAndCourse(String studentId, String courseId) {
+        Optional<Student> student = studentRepository.findById(studentId);
+        if(!student.isPresent())
+            throw new StudentNotFoundException(studentId);
+
+        Optional<Course> course = courseRepository.findById(courseId);
+        if(!course.isPresent())
+            throw new CourseNotFoundException(courseId);
+
+        if(!student.get().getCourses().contains(course.get()))
+            throw new StudentNotEnrolledException("Student: "+studentId+" is non enrolled to the course: "+courseId);
+
+       return student.get().getTeams()
+               .stream()
+               .filter(team -> team.getCourse().getId().equals(courseId) && team.getStatus().equals(TeamStatus.ACTIVE))
+               .findAny()
+               .map(t -> modelMapper.map(t,TeamDTO.class));
+    }
+
+
+
 
     private Student checkStudent(String id, Course course, HashSet<String> uniqueIds) {
         Student student = studentRepository.findById(id)
@@ -290,7 +336,7 @@ public class TeamServiceImpl implements TeamService {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new CourseNotFoundException(courseId))
                 .getTeams()
-                .stream()
+                .stream().filter(team -> team.getStatus().equals(TeamStatus.ACTIVE))
                 .map(t -> modelMapper.map(t, TeamDTO.class))
                 .collect(Collectors.toList());
     }

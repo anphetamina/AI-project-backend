@@ -32,6 +32,16 @@ public class ModelHelper {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeam(courseId, teamDTO.getId())).withSelfRel();
         Link courseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseId)).withRel("course");
         Link membersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembers(courseId, teamDTO.getId())).withRel("composedOf");
+        Link membersWithStatusLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembersStatus(courseId,teamDTO.getId())).withRel("statusAdhesion");
+        Link configurationLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getConfiguration(courseId, teamDTO.getId())).withRel("virtualMachineConfiguration");
+        Link virtualMachinesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getVirtualMachines(courseId, teamDTO.getId())).withRel("virtualMachines");
+        return teamDTO.add(selfLink).add(courseLink).add(membersLink).add(membersWithStatusLink).add(configurationLink).add(virtualMachinesLink);
+    }
+
+    public static TeamDTO enrichPropose(TeamDTO teamDTO, String courseId) {
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeam(courseId, teamDTO.getId())).withSelfRel();
+        Link courseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseId)).withRel("course");
+        Link membersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembersStatus(courseId, teamDTO.getId())).withRel("composedOf");
         Link configurationLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getConfiguration(courseId, teamDTO.getId())).withRel("virtualMachineConfiguration");
         Link virtualMachinesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getVirtualMachines(courseId, teamDTO.getId())).withRel("virtualMachines");
         return teamDTO.add(selfLink).add(courseLink).add(membersLink).add(configurationLink).add(virtualMachinesLink);

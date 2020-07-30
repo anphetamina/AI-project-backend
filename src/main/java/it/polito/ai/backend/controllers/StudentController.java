@@ -1,6 +1,8 @@
 package it.polito.ai.backend.controllers;
 
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.entities.Team;
+import it.polito.ai.backend.entities.TeamStatus;
 import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
 import it.polito.ai.backend.services.exercise.ExerciseService;
 import it.polito.ai.backend.dtos.CourseDTO;
@@ -25,9 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -103,6 +103,39 @@ public class StudentController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }
     }
+    @GetMapping("/{studentId}/course/{courseId}/team")
+    TeamDTO getTeamForStudentAndCourse(@PathVariable String studentId, @PathVariable String courseId ){
+        try {
+                  return ModelHelper
+                          .enrich(teamService.getTeamForStudentAndCourse(studentId,courseId)
+                                  .orElseThrow(()-> new TeamNotFoundException("Not exist a team active for student "+studentId+" enrolld to course: "+courseId)),courseId);
+        }/* catch (AccessDeniedException exception) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
+        }*/ catch (TeamServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
+    @GetMapping("/{studentId}/course/{courseId}/propose-team")
+    CollectionModel<TeamDTO> getProposeTeamsForStudentAndCourse(@PathVariable String studentId,@PathVariable String courseId) {
+        try {
+            List<TeamDTO> teams = teamService.getProposeTeamsForStudentAndCourse(studentId,courseId)
+                    .stream()
+                    .map(t -> ModelHelper.enrichPropose(t, courseId))
+                    .collect(Collectors.toList());
+            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getProposeTeamsForStudentAndCourse(studentId,courseId)).withSelfRel();
+            return CollectionModel.of(teams, selfLink);
+        }/* catch (AccessDeniedException exception) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
+        }*/ catch (TeamServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
 
     @PostMapping({"", "/"})
     StudentDTO addStudent(@RequestBody @Valid StudentDTO studentDTO) {
@@ -146,8 +179,8 @@ public class StudentController {
 
     @GetMapping("{studentId}/teams/confirm/{token}")
     boolean confirmToken(@PathVariable String token, @PathVariable String studentId) {
-        try {
-            return notificationService.confirm(token,studentId);
+        try { //todo studentId è quello loggato
+            return notificationService.confirm(token);
         } catch (Exception exception) {
             System.out.println(exception.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
@@ -156,11 +189,13 @@ public class StudentController {
 
     @GetMapping("{studentId}/teams/reject/{token}")
     boolean rejectToken(@PathVariable String token, @PathVariable String studentId) {
-        try {
+        try { //todo studentId è quello loggato
             return  notificationService.reject(token);
         } catch (Exception exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         }
-
     }
+
+
+
 }
