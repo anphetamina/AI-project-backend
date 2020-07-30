@@ -49,7 +49,7 @@ public class ModelHelper {
     public static ExerciseDTO enrich(ExerciseDTO exerciseDTO, String courseId){
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getOne(exerciseDTO.getId())).withSelfRel();
         Link courseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseId)).withRel("course");
-        Link assignmentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getLastAssignments(exerciseDTO.getId())).withRel("assignments");
+        Link assignmentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getLastAssignments(exerciseDTO.getId())).withRel("lastAssignmentsForEachStudent");
         exerciseDTO.add(selfLink, assignmentsLink).addIf(courseId != null, () -> courseLink);
         return exerciseDTO;
     }
@@ -58,7 +58,8 @@ public class ModelHelper {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getOne(assignmentDTO.getId())).withSelfRel();
         Link exerciseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getOne(exerciseId)).withRel("exercise");
         Link studentLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getOne(studentId)).withRel("student");
-        assignmentDTO.add(selfLink).addIf(studentId != null, () -> studentLink).addIf(exerciseId != null, () -> exerciseLink);
+        Link history = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getHistoryAssignments(exerciseId,studentId)).withRel("history");
+        assignmentDTO.add(selfLink).addIf(studentId != null, () -> studentLink).addIf(exerciseId != null, () -> exerciseLink).add(history);
         return assignmentDTO;
     }
 

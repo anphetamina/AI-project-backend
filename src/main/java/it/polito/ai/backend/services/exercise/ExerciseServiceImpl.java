@@ -8,6 +8,7 @@ import it.polito.ai.backend.entities.*;
 import it.polito.ai.backend.repositories.*;
 import it.polito.ai.backend.services.team.CourseNotEnabledException;
 import it.polito.ai.backend.services.team.CourseNotFoundException;
+import it.polito.ai.backend.services.team.StudentNotEnrolledException;
 import it.polito.ai.backend.services.team.StudentNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +18,13 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import it.polito.ai.backend.services.Utils;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -49,6 +52,8 @@ public class ExerciseServiceImpl implements ExerciseService {
             } else if (!course.get().isEnabled()) {
                 throw new CourseNotEnabledException(courseId);
             }
+            if(expired.after(Utils.getNow()))
+                throw new ExerciseServiceException("Invalid expired time");
 
             Exercise exercise = new Exercise();
             exercise.setPublished(published);
@@ -115,13 +120,69 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public List<AssignmentDTO> getAssignmentsForExercise(Long exerciseId) {
+    public boolean setAssignmentsNullForExercise(Long exerciseId) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if(!exercise.isPresent())
             throw  new ExerciseNotFoundException(exerciseId.toString());
-        return exercise.get().getAssignments().stream()
-                .map(a -> modelMapper.map(a, AssignmentDTO.class))
-                .collect(Collectors.toList());
+         /* Non devono esistere altri assigment*/
+       List<Assignment> assignment = exercise.get().getAssignments();
+       if(!assignment.isEmpty())
+          return false;
+       // Per ogni studente iscritto al corso aggiungere un'elaborato con stato null
+       List<Student> students= exercise.get().getCourse().getStudents();
+        for (Student student:students) {
+            addAssignmentByte(
+                    Utils.getNow(),
+                    AssignmentStatus.NULL,
+                    true,null,exercise.get().getImage(),student.getId(),exerciseId);
+        }
+        return  true;
+    }
+
+    @Override
+    public boolean setAssignmentsReadForStudentAndExercise(Long exerciseId, String studentId) {
+        Optional<Student> student = studentRepository.findById(studentId);
+        if(!student.isPresent())
+            throw new StudentNotFoundException(studentId);
+        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
+        if(!exercise.isPresent())
+            throw new ExerciseNotFoundException(exerciseId.toString());
+        Assignment assignment = assignmentRepository.findByStudentAndAndExercise(student.get(),exercise.get())
+                .stream()
+                .sorted(Comparator.comparing(Assignment::getPublished,Timestamp::compareTo))
+                .reduce((a1,a2)-> a2).orElse(null);
+
+        if(assignment==null)
+            throw  new AssignmentNotFoundException(studentId);
+
+        Byte[] image = assignment.getImage();
+        if(assignment.getStatus()==AssignmentStatus.NULL ||
+                (assignment.getStatus()==AssignmentStatus.RIVSTO && assignment.isFlag())) {
+            addAssignmentByte(Utils.getNow(), AssignmentStatus.LETTO,true,null,image,studentId,exerciseId);
+            return  true;
+        }
+
+
+        else return false;
+    }
+
+    @Override
+    public boolean checkAssignment(Long exerciseId, String studentId){
+        /*Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo*/
+        Optional<Student> student = studentRepository.findById(studentId);
+        if(!student.isPresent())
+            throw new StudentNotFoundException(studentId);
+        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
+        if(!exercise.isPresent())
+            throw new ExerciseNotFoundException(exerciseId.toString());
+        Assignment assignment = assignmentRepository.findByStudentAndAndExercise(student.get(),exercise.get())
+                .stream()
+                .sorted(Comparator.comparing(Assignment::getPublished,Timestamp::compareTo))
+                .reduce((a1,a2)-> a2).orElse(null);
+        if(assignment==null)
+            throw  new AssignmentNotFoundException(studentId);
+        return exercise.get().getExpired().after(Utils.getNow()) && assignment.isFlag() && assignment.getStatus() == AssignmentStatus.LETTO;
+
     }
 
     @Override
@@ -131,14 +192,26 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public List<AssignmentDTO> getAssignmentsForStudent(String studentId) {
+    public List<AssignmentDTO> getLastAssignments(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
+        if(!exercise.isPresent())
+            throw  new ExerciseNotFoundException(exerciseId.toString());
+        Course course = exercise.get().getCourse();
+        List<Student> students = course.getStudents();
+        List<Assignment> lastAssignments = new ArrayList<Assignment>();
 
-        Optional<Student> student = studentRepository.findById(studentId);
-        if(!student.isPresent())
-            throw  new StudentNotFoundException(studentId);
-        return assignmentRepository.findByStudent(student.get())
-                .stream()
-                .sorted(Comparator.comparing(Assignment::getPublished,Timestamp::compareTo))
+        for (Student student:students) {
+            Assignment lastAssignment = assignmentRepository.findByStudent(student)
+                    .stream()
+                    .sorted(Comparator.comparing(Assignment::getPublished,Timestamp::compareTo))
+                    .reduce((a1,a2)-> a2).orElse(null);
+            if(lastAssignment==null)
+                throw  new AssignmentNotFoundException(student.getId());
+            lastAssignments.add(lastAssignment);
+        }
+
+
+        return lastAssignments.stream()
                 .map(a -> modelMapper.map(a, AssignmentDTO.class))
                 .collect(Collectors.toList());
 
@@ -154,6 +227,9 @@ public class ExerciseServiceImpl implements ExerciseService {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if(!exercise.isPresent())
             throw  new ExerciseNotFoundException(exerciseId.toString());
+
+        if(!student.get().getCourses().contains(exercise.get().getCourse()))
+            throw  new StudentNotEnrolledException(studentId);
 
         Assignment assignment = new Assignment();
         assignment.setScore(score);
