@@ -15,12 +15,9 @@ import javax.validation.constraints.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TeamDTO extends RepresentationModel<TeamDTO> {
-    @NotNull
     Long id;
     @NotBlank
     String name;
     @NotNull
-    @Min(0)
-    @Max(1)
     TeamStatus status;
 }

@@ -2,16 +2,16 @@ package it.polito.ai.backend.controllers;
 
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
-import it.polito.ai.backend.entities.SystemImage;
-import it.polito.ai.backend.entities.Token;
 import it.polito.ai.backend.services.Utils;
-import it.polito.ai.backend.services.exercise.*;
+import it.polito.ai.backend.services.exercise.ExerciseService;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.notification.TokenNotFoundException;
 import it.polito.ai.backend.services.team.*;
-import it.polito.ai.backend.services.vm.*;
+import it.polito.ai.backend.services.vm.VirtualMachineService;
 import org.apache.tika.config.TikaConfig;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -24,25 +24,27 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/API/courses")
-
+@Validated
 public class CourseController {
 
     @Autowired
@@ -56,320 +58,165 @@ public class CourseController {
     @Autowired
     ModelMapper modelMapper;
 
+    @Operation(summary = "get all courses")
     @GetMapping({"", "/"})
     CollectionModel<CourseDTO> all() {
-        try {
-            List<CourseDTO> courses = teamService.getAllCourses().stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).all()).withSelfRel();
-            return CollectionModel.of(courses, selfLink);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+        List<CourseDTO> courses = teamService.getAllCourses()
+                .stream()
+                .map(c -> {
+                    Long modelId = virtualMachineService.getVirtualMachineModelForCourse(c.getId()).map(VirtualMachineModelDTO::getId).orElse(null);
+                    return ModelHelper.enrich(c, modelId);
+                })
+                .collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).all()).withSelfRel();
+        return CollectionModel.of(courses, selfLink);
     }
 
+    @Operation(summary = "get course")
     @GetMapping("/{courseId}")
-    CourseDTO getOne(@PathVariable String courseId) {
-        try {
-            return ModelHelper.enrich(teamService.getCourse(courseId).orElseThrow(() -> new CourseNotFoundException(courseId)));
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+    CourseDTO getOne(@PathVariable @NotBlank String courseId) {
+        CourseDTO courseDTO = teamService.getCourse(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+        Long modelId = virtualMachineService.getVirtualMachineModelForCourse(courseDTO.getId()).map(VirtualMachineModelDTO::getId).orElse(null);
+        return ModelHelper.enrich(courseDTO, modelId);
     }
 
-    @GetMapping("/{courseId}/teams/{teamId}")
-    TeamDTO getTeam(@PathVariable String courseId, @PathVariable Long teamId) {
-        try {
-            TeamDTO teamDTO = teamService.getTeam(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
-            return ModelHelper.enrich(teamDTO, courseId);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
-    }
-
+    @Operation(summary = "get enrolled students")
     @GetMapping("/{courseId}/enrolled")
-    CollectionModel<StudentDTO> enrolledStudents(@PathVariable String courseId) {
-        try {
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(courseId)).withSelfRel();
-            List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            return CollectionModel.of(enrolledStudents, selfLink);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+    CollectionModel<StudentDTO> enrolledStudents(@PathVariable @NotBlank String courseId) {
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(courseId)).withSelfRel();
+        List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        return CollectionModel.of(enrolledStudents, selfLink);
     }
 
-    @GetMapping("/{courseId}/teams/{teamId}/members")
-    CollectionModel<StudentDTO> getMembers(@PathVariable String courseId, @PathVariable Long teamId) {
-        try {
-
-            List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembers(courseId, teamId)).withSelfRel();
-            return CollectionModel.of(students, selfLink);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
-    }
-
+    @Operation(summary = "get teams")
     @GetMapping("/{courseId}/teams/{teamId}/members-status")
     //todo da rivedere perchè courseId non è usato
     //todo da sposatre in teamController
     CollectionModel<Map.Entry<StudentDTO,String>> getMembersStatus(@PathVariable String courseId, @PathVariable Long teamId) {
-        try {
 
-            Map<StudentDTO,String> statusMembers = new HashMap<>();
-            List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            List<TokenDTO>  tokenDTOS = notificationService.getTokenTeam(teamId);
-            if(tokenDTOS.isEmpty())
-                throw new TeamNotFoundException("Non exist propose for team: "+teamId);
+        Map<StudentDTO,String> statusMembers = new HashMap<>();
+        List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<TokenDTO>  tokenDTOS = notificationService.getTokenTeam(teamId);
+        if(tokenDTOS.isEmpty())
+            throw new TeamNotFoundException("Non exist propose for team: "+teamId);
 
-            students.forEach(studentDTO -> {
-                for (TokenDTO tokenDTO:tokenDTOS) {
-                    if(tokenDTO.getStudentId().equals(studentDTO.getId()))
-                        statusMembers.put(studentDTO,tokenDTO.getStatus().toString());
-                }
-               if(tokenDTOS.stream().noneMatch(tokenDTO -> tokenDTO.getStudentId().equals(studentDTO.getId())))
-                   statusMembers.put(studentDTO,"PROPONENT");
-            });
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembersStatus(courseId, teamId)).withSelfRel();
-            return CollectionModel.of(statusMembers.entrySet(),selfLink);
+        students.forEach(studentDTO -> {
+            for (TokenDTO tokenDTO:tokenDTOS) {
+                if(tokenDTO.getStudentId().equals(studentDTO.getId()))
+                    statusMembers.put(studentDTO,tokenDTO.getStatus().toString());
+            }
+           if(tokenDTOS.stream().noneMatch(tokenDTO -> tokenDTO.getStudentId().equals(studentDTO.getId())))
+               statusMembers.put(studentDTO,"PROPONENT");
+        });
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembersStatus(courseId, teamId)).withSelfRel();
+        return CollectionModel.of(statusMembers.entrySet(),selfLink);
 
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
     }
 
 
 
     @GetMapping("/{courseId}/teams")
-    CollectionModel<TeamDTO> getTeams(@PathVariable String courseId) {
-        try {
-            List<TeamDTO> teams = teamService.getTeamsForCourse(courseId).stream().map(t -> ModelHelper.enrich(t, courseId)).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeams(courseId)).withSelfRel();
-            return CollectionModel.of(teams, selfLink);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+    CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String courseId) {
+        List<TeamDTO> teams = teamService.getTeamsForCourse(courseId)
+                .stream()
+                .map(t -> {
+                    Long configurationId = virtualMachineService.getConfigurationForTeam(t.getId()).map(ConfigurationDTO::getId).orElse(null);
+                    return ModelHelper.enrich(t, courseId, configurationId);
+                })
+                .collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeams(courseId)).withSelfRel();
+        return CollectionModel.of(teams, selfLink);
     }
 
-
-
+    @Operation(summary = "get teachers")
     @GetMapping("/{courseId}/teachers")
-    CollectionModel<TeacherDTO> getTeachers(@PathVariable String courseId) {
-        try {
-            List<TeacherDTO> teachers = teamService.getTeachersForCourse(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeachers(courseId)).withSelfRel();
-            return CollectionModel.of(teachers, selfLink);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+    CollectionModel<TeacherDTO> getTeachers(@PathVariable @NotBlank String courseId) {
+        List<TeacherDTO> teachers = teamService.getTeachersForCourse(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeachers(courseId)).withSelfRel();
+        return CollectionModel.of(teachers, selfLink);
     }
 
+    @Operation(summary = "delete course")
     @DeleteMapping({"/{courseId}"})
-    void deleteCourse(@PathVariable String courseId){
-        // todo
-        teamService.deleteCourse(courseId);
+    void deleteCourse(@PathVariable @NotBlank String courseId){
+        if (!teamService.deleteCourse(courseId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "course is enabled or is associated with one or more entities");
+        }
     }
 
+    @Operation(summary = "update course")
     @PutMapping("/{courseId}")
-    CourseDTO updateNameCourse(@RequestBody Map<String, String> map, @PathVariable String courseId){
-        if (map.containsKey("name")) {
-            String name = map.get("name");
-            try {
-                Optional<CourseDTO> courseDTOOptional = teamService.getCourse(courseId);
-                if (!courseDTOOptional.isPresent())
-                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, courseId);
-                courseDTOOptional.get().setName(name);
-                if (!teamService.update(courseDTOOptional.get()))
-                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, courseId);
-                return ModelHelper.enrich(courseDTOOptional.get());
-            } catch (TeamServiceException exception) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
-            } catch (ResponseStatusException exception) {
-                throw exception;
-            }
-        } else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-    }
-
-
-    @PutMapping("/{courseId}/setCourse")
-    CourseDTO updateCourse(@RequestBody Map<String, String> map, @PathVariable String courseId){
-        if (map.containsKey("name") && map.containsKey("min") && map.containsKey("max") && map.containsKey("enabled")) {
-            String name = map.get("name");
-            int min = Integer.parseInt(map.get("min"));
-            int max = Integer.parseInt(map.get("max"));
-            boolean enabled = Boolean.parseBoolean(map.get("enabled"));
-            try {
-                Optional<CourseDTO> courseDTOOptional = teamService.getCourse(courseId);
-                if (!courseDTOOptional.isPresent())
-                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, courseId);
-                courseDTOOptional.get().setName(name);
-                courseDTOOptional.get().setMin(min);
-                courseDTOOptional.get().setMax(max);
-                courseDTOOptional.get().setEnabled(enabled);
-                if (!teamService.update(courseDTOOptional.get()))
-                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, courseId);
-                return ModelHelper.enrich(courseDTOOptional.get());
-            } catch (TeamServiceException exception) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
-            } catch (ResponseStatusException exception) {
-                throw exception;
-            }
-        } else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
+    CourseDTO updateCourse(@RequestBody @Valid CourseDTO courseDTO, @PathVariable @NotBlank String courseId){
+        CourseDTO courseDTO1 = teamService.updateCourse(courseId, courseDTO);
+        Long modelId = virtualMachineService.getVirtualMachineModelForCourse(courseId).map(VirtualMachineModelDTO::getId).orElse(null);
+        return ModelHelper.enrich(courseDTO1, modelId);
 
     }
 
+    @Operation(summary = "create a new course")
     @PostMapping({"", "/"})
+    @ResponseStatus(HttpStatus.CREATED)
     CourseDTO addCourse(@RequestBody @Valid CourseDTO courseDTO) {
-        try {
-            if (!teamService.addCourse(courseDTO)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, courseDTO.getId());
-            }
-            return ModelHelper.enrich(courseDTO);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (ResponseStatusException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        if (!teamService.addCourse(courseDTO)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("course %s already exists", courseDTO.getId()));
         }
+        return ModelHelper.enrich(courseDTO, null);
     }
 
+    @Operation(summary = "get all students enrolled to the course that are part of an active team")
     @GetMapping("/{courseId}/teams/students")
-    CollectionModel<StudentDTO> getStudentsInTeams(@PathVariable String courseId) {
-        try {
-            List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getStudentsInTeams(courseId)).withSelfRel();
-            return CollectionModel.of(studentsInTeams, selfLink);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+    CollectionModel<StudentDTO> getStudentsInTeams(@PathVariable @NotBlank String courseId) {
+        List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getStudentsInTeams(courseId)).withSelfRel();
+        return CollectionModel.of(studentsInTeams, selfLink);
     }
 
+    @Operation(summary = "get all students enrolled to the course not being part of an active team")
     @GetMapping("/{courseId}/teams/available-students")
-    CollectionModel<StudentDTO> getAvailableStudents(@PathVariable String courseId) {
-        try {
-            List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAvailableStudents(courseId)).withSelfRel();
-            return CollectionModel.of(availableStudents, selfLink);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+    CollectionModel<StudentDTO> getAvailableStudents(@PathVariable @NotBlank String courseId) {
+        List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAvailableStudents(courseId)).withSelfRel();
+        return CollectionModel.of(availableStudents, selfLink);
     }
 
+    @Operation(summary = "enable a course")
     @PostMapping("/{courseId}/enable")
-    @ResponseStatus(HttpStatus.OK)
-    void enable(@PathVariable String courseId) {
-        try {
-            teamService.enableCourse(courseId);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+    void enable(@PathVariable @NotBlank String courseId) {
+        teamService.enableCourse(courseId);
     }
 
+    @Operation(summary = "disable a course")
     @PostMapping("/{courseId}/disable")
-    @ResponseStatus(HttpStatus.OK)
-    void disable(@PathVariable String courseId) {
-        try {
-            teamService.disableCourse(courseId);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+    void disable(@PathVariable @NotBlank String courseId) {
+        teamService.disableCourse(courseId);
     }
 
-
-    // http -v POST http://localhost:8080/API/courses/ai/enrollOne studentId=265000
+    @Operation(summary = "enroll an existing student to a course")
     @PostMapping("/{courseId}/enrollOne")
-    @ResponseStatus(HttpStatus.CREATED)
-    void addStudent(@RequestBody Map<String, String> map, @PathVariable String courseId) {
-        if (map.containsKey("studentId")) {
-            try {
-                if (!teamService.addStudentToCourse(map.get("studentId"), courseId)) {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, map.get("studentId"));
-                }
-            }/* catch (AccessDeniedException exception) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-            }*/ catch (TeamServiceException exception) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-            } catch (ResponseStatusException exception) {
-                throw exception;
-            } catch (Exception exception) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-            }
-        } else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    void addStudent(@RequestBody @Valid EnrollmentRequest request, @PathVariable @NotBlank String courseId) {
+
+        String studentId = request.getStudentId();
+
+        if (!teamService.addStudentToCourse(studentId, courseId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("student %s already inserted", studentId));
         }
     }
 
+    @Operation(summary = "remove an enrolled students from a course")
+    @DeleteMapping("/{courseId}/enrolled/{studentId}")
+    void removeStudent(@PathVariable @NotBlank String courseId, @PathVariable @NotBlank String studentId) {
+        if (!teamService.removeStudentFromCourse(studentId, courseId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "the student is part of a team");
+        }
+    }
+
+    @Operation(summary = "add an existing teacher to the course management")
     @PostMapping("/{courseId}/teachers")
-    @ResponseStatus(HttpStatus.CREATED)
-    void addTeacher(@RequestBody Map<String, String> map, @PathVariable String courseId) {
-        if (map.containsKey("teacherId")) {
-            try {
-                if (!teamService.addTeacherToCourse(map.get("teacherId"), courseId)) {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, map.get("teacherId"));
-                }
-            }/* catch (AccessDeniedException exception) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-            }*/ catch (TeamServiceException exception) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-            } catch (ResponseStatusException exception) {
-                throw exception;
-            } catch (Exception exception) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-            }
-        } else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    void addTeacher(@RequestBody @Valid ManagementRequest request, @PathVariable @NotBlank String courseId) {
+        String teacherId = request.getTeacherId();
+
+        if (!teamService.addTeacherToCourse(teacherId, courseId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("teacher %s already inserted", teacherId));
         }
     }
 
@@ -384,11 +231,12 @@ public class CourseController {
             "text/x-comma-separated-values",
             "text/tab-separated-values");*/
 
+    @Operation(summary = "add new students and enroll them to a course by uploading a csv file")
     @PostMapping("/{courseId}/enrollMany")
-    List<Boolean> enrollStudents(@RequestParam("file") MultipartFile file, @PathVariable String courseId) {
+    List<Boolean> enrollStudents(@RequestParam("file") MultipartFile file, @PathVariable @NotBlank String courseId) {
 
         if (file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "file empty");
         }
 
         try {
@@ -409,27 +257,20 @@ public class CourseController {
             }
 
             return addedAndEnrolledStudents;
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
-        } catch (ResponseStatusException exception) {
-            throw exception;
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        } catch (TikaException | IOException e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
         }
 
 
     }
 
-
+    @Operation(summary = "enroll existing students to a course by uploading a csv file")
     @PostMapping("/{courseId}/enrollAll")
-    List<Boolean> enrollAll(@RequestParam("file") MultipartFile file, @PathVariable String courseId) {
+    List<Boolean> enrollAll(@RequestParam("file") MultipartFile file, @PathVariable @NotBlank String courseId) {
 
         if (file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "file empty");
         }
 
         try {
@@ -456,24 +297,20 @@ public class CourseController {
             }
 
             return enrolledStudents;
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
-        } catch (ResponseStatusException exception) {
-            throw exception;
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        } catch (TikaException | IOException e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
         }
 
 
     }
 
     // http -v POST http://localhost:8080/API/courses/ase/createTeam teamName=aseTeam0 memberIds:=[\"264000\",\"264001\",\"264002\",\"264004\"]
-    @PostMapping("/{courseId}/teams")
-    void createTeam(@RequestBody Map<String, Object> map, @PathVariable String courseId) {
+        //todo
+        @Operation(summary = "create a new unconfirmed team in a course")
+    @PostMapping("/{courseId}/createTeam")
+    @ResponseStatus(HttpStatus.CREATED)
+        TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable String courseId) {
         if (map.containsKey("teamName") && map.containsKey("memberIds") && map.containsKey("timeout") &&
                 map.containsKey("studentId")) {
             try {
@@ -499,7 +336,7 @@ public class CourseController {
                         //remove the student proposing team because no where to confirm
                         memberIds.remove(proponent.get().getId());
                         notificationService.notifyTeam(team, memberIds,timeout,proponent.get());
-
+                        return ModelHelper.enrich(team, courseId, null);
                     } else {
                         throw new InvalidRequestException(memberIds.toString());
                     }
@@ -523,682 +360,37 @@ public class CourseController {
         }
     }
 
-
-    @PostMapping("/{courseId}/createExercise")
-    void createExercise(@RequestParam("image") MultipartFile file,@RequestParam Map<String, String> map, @PathVariable String courseId){
-        if (map.containsKey("expired")) {
-            try {
-
-                Utils.checkTypeImage(file);
-                System.out.println("Original Image Byte Size - " + file.getBytes().length);
-                SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                Timestamp expired = new Timestamp(format.parse(map.get("expired")).getTime());
-                Timestamp published = Utils.getNow();
-                exerciseService.addExerciseForCourse(courseId,published,expired,file);
-
-            } catch (ResponseStatusException exception) {
-                throw exception;
-            } catch (Exception exception) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-            }
-        } else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    @Operation(summary = "create a new exercise for a course")
+    @PostMapping("/{courseId}/exercises")
+    void createExercise(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId){
+        if (!map.containsKey("expired")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid request");
         }
-
+        try {
+            Utils.checkTypeImage(file);
+            System.out.println("Original Image Byte Size - " + file.getBytes().length);
+            SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+            Timestamp expired = new Timestamp(format.parse(map.get("expired")).getTime());
+            Timestamp published = Utils.getNow();
+            exerciseService.addExerciseForCourse(courseId,published,expired,file);
+        } catch (ParseException | IOException | TikaException e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
+        }
     }
 
+    @Operation(summary = "get all exercises of a course")
     @GetMapping("/{courseId}/exercises")
-    List<ExerciseDTO> getExercises(@PathVariable String courseId){
-        try {
-           List<ExerciseDTO> list = exerciseService.getExercisesForCourse(courseId);
-            List<ExerciseDTO> exerciseDTOS = new ArrayList<>();
-            for (ExerciseDTO exerciseDTO:list) {
-                exerciseDTOS.add(ModelHelper.enrich(exerciseDTO,courseId));
-            }
-            return exerciseDTOS;
-        } catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+    List<ExerciseDTO> getExercises(@PathVariable @NotBlank String courseId){
+
+        // todo collection model
+        List<ExerciseDTO> list = exerciseService.getExercisesForCourse(courseId);
+        List<ExerciseDTO> exerciseDTOS = new ArrayList<>();
+        for (ExerciseDTO exerciseDTO:list) {
+            exerciseDTOS.add(ModelHelper.enrich(exerciseDTO,courseId));
         }
+        return exerciseDTOS;
 
-    }
-
-    @PostMapping("/{courseId}/model")
-    @ResponseStatus(HttpStatus.CREATED)
-    VirtualMachineModelDTO addVirtualMachineModel(@PathVariable @NotBlank String courseId, @NotNull Map<String, Object> map) {
-
-        if (!map.containsKey("systemImage")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        } else {
-            try {
-                SystemImage os = modelMapper.map(map.get("systemImage"), SystemImage.class);
-                VirtualMachineModelDTO virtualMachineModel = virtualMachineService.createVirtualMachineModel(courseId, os);
-                return ModelHelper.enrich(virtualMachineModel, courseId);
-            } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-            } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-            } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        }
-
-    }
-
-    @DeleteMapping("/{courseId}/model")
-    void deleteVirtualMachineModel(@PathVariable @NotBlank String courseId) {
-        try {
-            if (!virtualMachineService.deleteVirtualMachineModel(courseId)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Please turn off all the virtual machines using this model");
-            }
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/model")
-    VirtualMachineModelDTO getVirtualMachineModel(@PathVariable @NotBlank String courseId) {
-        try {
-            return ModelHelper.enrich(virtualMachineService.getVirtualMachineModelForCourse(courseId).orElseThrow(() -> new VirtualMachineModelNotDefinedException(courseId)), courseId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}")
-    VirtualMachineDTO getVirtualMachine(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId) {
-        try {
-            VirtualMachineDTO virtualMachineDTO = virtualMachineService.getVirtualMachine(courseId, teamId, vmId).orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
-            return ModelHelper.enrich(virtualMachineDTO, courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}/owners")
-    CollectionModel<StudentDTO> getOwners(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId) {
-        try {
-            List<StudentDTO> studentDTOList = virtualMachineService.getOwnersForVirtualMachine(courseId, teamId, vmId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOwners(courseId, teamId, vmId)).withSelfRel();
-            return CollectionModel.of(studentDTOList, selfLink);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-
-    @PostMapping("/{courseId}/teams/{teamId}/virtual-machines")
-    @ResponseStatus(HttpStatus.CREATED)
-    VirtualMachineDTO addVirtualMachine(@RequestBody @NotNull Map<String, Object> map, @PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-
-        if (!(map.containsKey("studentId") && map.containsKey("numVcpu") && map.containsKey("diskSpace") && map.containsKey("ram"))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid number of parameters");
-        } else {
-
-            try {
-
-                String studentId = modelMapper.map(map.get("studentId"), String.class);
-                int numVcpu = modelMapper.map(map.get("numVcpu"), int.class);
-                int diskSpace = modelMapper.map(map.get("diskSpace"), int.class);
-                int ram = modelMapper.map(map.get("ram"), int.class);
-
-                /**
-                 * parameters validation
-                 */
-
-                if (studentId.isEmpty() || studentId.trim().isEmpty()) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid student id" + studentId);
-                }
-                if (teamId == null || teamId <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid team id" + teamId);
-                }
-                if (numVcpu <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid num vcpu" + numVcpu);
-                }
-                if (diskSpace <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid disk space" + diskSpace);
-                }
-                if (ram <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid ram" + ram);
-                }
-
-                VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(courseId, teamId, studentId, numVcpu, diskSpace, ram);
-                return ModelHelper.enrich(virtualMachine, courseId, teamId);
-            } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-            } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-            } catch (ResponseStatusException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        }
-
-
-    }
-
-    @DeleteMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}")
-    void deleteVirtualMachine(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId) {
-        try {
-            if (!virtualMachineService.deleteVirtualMachine(courseId, teamId, vmId)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT);
-            }
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-    }
-
-    @PutMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}")
-    VirtualMachineDTO setVirtualMachine(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId, @RequestBody @Valid VirtualMachineDTO virtualMachineDTO) {
-        try {
-            VirtualMachineDTO newVirtualMachine = virtualMachineService.updateVirtualMachine(courseId, teamId, vmId, virtualMachineDTO);
-            return ModelHelper.enrich(newVirtualMachine, courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PostMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}/on")
-    @ResponseStatus(HttpStatus.OK)
-    void turnOn(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId) {
-        try {
-            virtualMachineService.turnOnVirtualMachine(courseId, teamId, vmId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PostMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}/off")
-    @ResponseStatus(HttpStatus.OK)
-    void turnOff(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId) {
-        try {
-            virtualMachineService.turnOffVirtualMachine(courseId, teamId, vmId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/virtual-machines")
-    CollectionModel<VirtualMachineDTO> getVirtualMachines(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        try {
-            List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForTeam(courseId, teamId);
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getVirtualMachines(courseId, teamId)).withSelfRel();
-            return CollectionModel.of(virtualMachineDTOList, selfLink);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PostMapping("/{courseId}/teams/{teamId}/virtual-machines/{vmId}/owners")
-    @ResponseStatus(HttpStatus.OK)
-    void shareOwnership(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @PathVariable @NotNull Long vmId, @RequestBody @NotBlank String studentId) {
-        try {
-            if (!virtualMachineService.addOwnerToVirtualMachine(courseId, teamId, studentId, vmId)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot share ownership with "+studentId);
-            }
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PostMapping("/{courseId}/teams/{teamId}/configuration")
-    @ResponseStatus(HttpStatus.CREATED)
-    ConfigurationDTO addConfiguration(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @RequestBody @NotNull Map<String, Object> map) {
-        if (!(map.containsKey("min_vcpu") && map.containsKey("max_vcpu") && map.containsKey("min_disk_space") && map.containsKey("max_disk_space") && map.containsKey("min_ram") && map.containsKey("max_ram") && map.containsKey("max_on") && map.containsKey("tot"))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        } else {
-
-            try {
-
-                int min_vcpu = modelMapper.map(map.get("min_vcpu"), int.class);
-                int max_vcpu = modelMapper.map(map.get("max_vcpu"), int.class);
-                int min_disk_space = modelMapper.map(map.get("min_disk_space"), int.class);
-                int max_disk_space = modelMapper.map(map.get("max_disk_space"), int.class);
-                int min_ram = modelMapper.map(map.get("min_ram"), int.class);
-                int max_ram = modelMapper.map(map.get("max_ram"), int.class);
-                int max_on = modelMapper.map(map.get("max_on"), int.class);
-                int tot = modelMapper.map(map.get("tot"), int.class);
-
-                if (min_vcpu <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid min vcpu number " + min_vcpu);
-                }
-                if (max_vcpu <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid max vcpu number " + max_vcpu);
-                }
-                if (min_disk_space <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid min disk space number " + min_disk_space);
-                }
-                if (max_disk_space <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid max disk space number " + max_disk_space);
-                }
-                if (min_ram <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid min ram number " + min_ram);
-                }
-                if (max_ram <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid max ram number " + max_ram);
-                }
-                if (max_on <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid max on number " + max_on);
-                }
-                if (tot <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid tot number " + tot);
-                }
-
-                ConfigurationDTO configurationDTO = virtualMachineService.createConfiguration(courseId, teamId, min_vcpu, max_vcpu, min_disk_space, max_disk_space, min_ram, max_ram, max_on, tot);
-                return ModelHelper.enrich(configurationDTO, courseId, teamId);
-            } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-            } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-            } catch (ResponseStatusException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        }
-
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/configuration")
-    ConfigurationDTO getConfiguration(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        try {
-            return ModelHelper.enrich(virtualMachineService.getConfigurationForTeam(courseId, teamId).orElseThrow(() -> new ConfigurationNotDefinedException(teamId.toString())), courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PutMapping("/{courseId}/teams/{teamId}/configuration")
-    ConfigurationDTO setConfiguration(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId, @RequestBody @Valid ConfigurationDTO configurationDTO) {
-        try {
-            ConfigurationDTO newConfigurationDTO = virtualMachineService.updateConfiguration(courseId, teamId, configurationDTO);
-            return ModelHelper.enrich(newConfigurationDTO, courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/active-cpu")
-    int getActiveVcpu(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        try {
-            return virtualMachineService.getActiveVcpuForTeam(courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/active-disk-space")
-    int getActiveDiskSpace(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        try {
-            return virtualMachineService.getActiveDiskSpaceForTeam(courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/active-ram")
-    int getActiveRam(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        try {
-            return virtualMachineService.getActiveRAMForTeam(courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/tot")
-    int getCountVirtualMachines(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        try {
-            return virtualMachineService.getCountVirtualMachinesForTeam(courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/tot-on")
-    int getCountActiveVirtualMachines(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        try {
-            return virtualMachineService.getCountActiveVirtualMachinesForTeam(courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/teams/{teamId}/virtual-machines/resources")
-    Map<String, Integer> getResources(@PathVariable @NotBlank String courseId, @PathVariable @NotNull Long teamId) {
-        try {
-            return virtualMachineService.getResourcesByTeam(courseId, teamId);
-        } catch (VirtualMachineNotFoundException | TeamServiceNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (VirtualMachineServiceConflictException | TeamServiceConflictException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{courseId}/{exerciseId}")
-    ExerciseDTO getOne(@PathVariable String courseId, @PathVariable Long exerciseId) {
-        try {
-            ExerciseDTO exerciseDTO = exerciseService.getExercise(exerciseId)
-                    .orElseThrow(() -> new TeamNotFoundException(exerciseId.toString()));
-            Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
-            if(!courseDTO.isPresent())
-                throw new CourseNotFoundException(courseId);
-            String courseName = courseDTO.get().getName();
-            return ModelHelper.enrich(exerciseDTO, courseName);
-        }catch (TeamServiceException | ExerciseServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
-    }
-
-    @GetMapping("/{courseId}/{exerciseId}/assignments")
-    List<AssignmentDTO> getLastAssignments(@PathVariable String courseId, @PathVariable Long exerciseId ){
-        try {
-            Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
-            if(!courseDTO.isPresent())
-                throw new CourseNotFoundException(exerciseId.toString());
-            List<StudentDTO> students = teamService.getEnrolledStudents(courseDTO.get().getId());
-            List<AssignmentDTO> lastAssignments = new ArrayList<AssignmentDTO>();
-            for (StudentDTO student:students) {
-                AssignmentDTO lastAssignment = exerciseService.getAssignmentsForStudent(student.getId())
-                        .stream().reduce((a1,a2)-> a2).orElse(null);
-                if(lastAssignment==null)
-                    throw  new AssignmentNotFoundException(student.getId());
-                lastAssignments.add(lastAssignment);
-
-            }
-            List<AssignmentDTO> assignmentDTOS= new ArrayList<>();
-            for (AssignmentDTO a:lastAssignments) {
-                String studentId = exerciseService.getStudentForAssignment(a.getId()).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(a.getId().toString()));
-                assignmentDTOS.add(ModelHelper.enrich(a,studentId,exerciseId,courseId));
-
-            }
-
-            return  assignmentDTOS;
-
-
-        }catch (TeamServiceException | ExerciseServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
-    }
-
-    @GetMapping("/{courseId}/{exerciseId}/history")
-    List<AssignmentDTO> getHistoryAssignments(@PathVariable String courseId,
-            @PathVariable Long exerciseId,@RequestBody Map<String,String> map ){
-        if(map.containsKey("studentId")){
-            try{
-                Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
-                if(!courseDTO.isPresent())
-                    throw new CourseNotFoundException(courseId);
-                List<AssignmentDTO> assignmentDTOS =
-                        exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
-                System.out.println(assignmentDTOS.size());
-                List<AssignmentDTO> assignmentDTOList = new ArrayList<>();
-                for (AssignmentDTO a:assignmentDTOS) {
-                    String studentId = exerciseService.getStudentForAssignment(a.getId()).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(a.getId().toString()));
-                    assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId,courseId));
-
-                }
-                return  assignmentDTOList;
-
-            }catch (TeamServiceException | ExerciseServiceException exception) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-            } catch (Exception exception) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-            }
-
-        }else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-
-    }
-
-
-
-
-    @PostMapping("/{courseId}/{exerciseId}/assignmentNull")
-    void setNullAssignment(@PathVariable String courseId,@PathVariable Long exerciseId){
-        try{
-            /*No duplicati*/
-            List<AssignmentDTO> assignments = exerciseService.getAssignmentsForExercise(exerciseId);
-            if(!assignments.isEmpty())
-                throw new Exception(exerciseId.toString());
-            /*Per ogni studente iscritto al corso aggiungere un'elaborato con stato null*/
-            Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
-            if(!courseDTO.isPresent())
-                throw new CourseNotFoundException(courseId);
-            Optional<ExerciseDTO> exercise = exerciseService.getExercise(exerciseId);
-            if(!exercise.isPresent())
-                throw  new ExerciseNotFoundException(exerciseId.toString());
-            List<StudentDTO> students = teamService.getEnrolledStudents(courseDTO.get().getId());
-            for (StudentDTO student:students) {
-                exerciseService.addAssignmentByte(
-                        Utils.getNow(),
-                        AssignmentStatus.NULL,
-                        true,null,exercise.get().getImage(),student.getId(),exerciseId);
-            }
-
-        }catch (TeamNotFoundException | ExerciseServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception ) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
-    }
-
-    @PostMapping("/{courseId}/{exerciseId}/assignmentRead")
-    void setReadAssignment(@PathVariable String courseId,
-            @PathVariable Long exerciseId, @RequestBody Map<String,String> map){
-        if (map.containsKey("studentId")) {
-            try {
-                Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
-                if(!courseDTO.isPresent())
-                    throw new CourseNotFoundException(exerciseId.toString());
-                List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
-                AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
-
-                if(assignment==null)
-                    throw  new AssignmentNotFoundException(map.get("studentId"));
-
-                Byte[] image = assignment.getImage();
-                if(assignment.getStatus()==AssignmentStatus.NULL ||
-                        (assignment.getStatus()==AssignmentStatus.RIVSTO && assignment.isFlag()))
-                    exerciseService.addAssignmentByte(Utils.getNow(),
-                            AssignmentStatus.LETTO,true,null,image,map.get("studentId"),exerciseId);
-                else
-                    throw new Exception(HttpStatus.CONFLICT+" "+exerciseId.toString());
-
-
-            }catch (TeamServiceException | ExerciseServiceException exception) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-            } catch (Exception exception) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-            }
-        } else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-    }
-
-    @PostMapping("/{courseId}/{exerciseId}/assignmentSubmit")
-    void submitAssignment(
-            @RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable String courseId, @PathVariable Long exerciseId){
-        /*Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo*/
-        if (map.containsKey("studentId")){
-            try {
-                Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
-                if(!courseDTO.isPresent())
-                    throw new CourseNotFoundException(exerciseId.toString());
-                Utils.checkTypeImage(file);
-                Optional<ExerciseDTO> exercise = exerciseService.getExercise(exerciseId);
-                if(!exercise.isPresent())
-                    throw  new ExerciseNotFoundException(exerciseId.toString());
-
-                List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
-                AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
-                if(assignment==null)
-                    throw  new AssignmentNotFoundException(map.get("studentId"));
-
-                if(exercise.get().getExpired().after(Utils.getNow()) && assignment.isFlag() && assignment.getStatus()==AssignmentStatus.LETTO)
-                    exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.CONSEGNATO,false,null,Utils.getBytes(file),map.get("studentId"),exerciseId);
-                else
-                    throw new Exception(exerciseId.toString());
-
-            }catch (TeamServiceException | ExerciseServiceException exception) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-            } catch (ResponseStatusException exception) {
-                throw exception;
-            } catch (Exception exception) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-            }
-        } else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-
-    }
-
-    @PostMapping("/{courseId}/{exerciseId}/assignmentReview")
-    void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable String courseId, @PathVariable Long exerciseId){
-        /*Se il falg=false allora c'è anche il voto
-         * se è true allora non c'è il voto*/
-        if(map.containsKey("flag") && map.containsKey("studentId")){
-            try {
-                Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
-                if(!courseDTO.isPresent())
-                    throw new CourseNotFoundException(exerciseId.toString());
-                Utils.checkTypeImage(file);
-                List<AssignmentDTO> assignments = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId);
-                AssignmentDTO assignment = assignments.stream().reduce((a1,a2)-> a2).orElse(null);
-                if(assignment==null)
-                    throw  new AssignmentNotFoundException(map.get("studentId"));
-
-                boolean flag =  Boolean.parseBoolean(map.get("flag"));
-                if(assignment.getStatus()==AssignmentStatus.CONSEGNATO){
-                    if(flag)
-                        exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.RIVSTO,
-                                flag,null,Utils.getBytes(file),map.get("studentId"),exerciseId);
-                    else {
-                        if(map.containsKey("score")){
-
-                            Integer score = Integer.parseInt(map.get("score"));
-                            System.out.println(score);
-                            exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.RIVSTO,
-                                    flag,score,Utils.getBytes(file),map.get("studentId"),exerciseId);
-                        }else {
-                            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-                        }
-                    }
-                }
-
-            }catch (TeamServiceException | ExerciseServiceException exception) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-            } catch (ResponseStatusException exception) {
-                throw exception;
-            } catch (Exception exception) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-            }
-
-        }else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-    }
-
-    @GetMapping("/{courseId}/{exerciseId}/{assignmentId}")
-    AssignmentDTO getOne(@PathVariable Long assignmentId, @PathVariable String courseId, @PathVariable Long exerciseId) {
-        try {
-            Optional<CourseDTO> courseDTO = teamService.getCourse(courseId);
-            if(!courseDTO.isPresent())
-                throw  new CourseNotFoundException(courseId);
-            Optional<ExerciseDTO> exerciseDTO = exerciseService.getExercise(exerciseId);
-           if(!exerciseDTO.isPresent())
-               throw  new ExerciseNotFoundException(exerciseId.toString());
-            AssignmentDTO assignmentDTO = exerciseService.getAssignment(assignmentId).orElseThrow(() -> new AssignmentNotFoundException(assignmentId.toString()));
-            String studentId = exerciseService.getStudentForAssignment(assignmentId).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(assignmentId.toString()));
-            return ModelHelper.enrich(assignmentDTO,studentId,exerciseId,courseId);
-        } catch (ExerciseServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
     }
 
 }

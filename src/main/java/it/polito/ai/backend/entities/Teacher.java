@@ -42,4 +42,9 @@ public class Teacher {
         courses.add(course);
         course.teachers.add(this);
     }
+
+    public void removeCourse(Course course) {
+        courses.remove(course);
+        course.teachers.remove(this);
+    }
 }

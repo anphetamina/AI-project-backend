@@ -16,6 +16,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @Builder
 public class AssignmentDTO extends RepresentationModel<AssignmentDTO> {
+    // todo add descriptions
     @NotNull
     Long id;
     @NotNull

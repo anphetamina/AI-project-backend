@@ -131,6 +131,33 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    public boolean removeStudentFromCourse(String studentId, String courseId) {
+        /**
+         * check if the student is enrolled to the course
+         */
+
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+
+        Student student = course
+                .getStudents()
+                .stream()
+                .filter(s -> s.getId().equals(studentId))
+                .findFirst()
+                .orElseThrow(() -> new StudentNotFoundException(studentId));
+
+        /**
+         * the student can be removed from the course if he/she is not part of any team
+         */
+        if (student.getTeams().stream().anyMatch(t -> t.getCourse().getId().compareTo(courseId) == 0)) {
+            return false;
+        }
+
+        course.removeStudent(student);
+
+        return true;
+    }
+
+    @Override
     public void enableCourse(String courseId) {
         Optional<Course> course = courseRepository.findById(courseId);
 
@@ -222,13 +249,10 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public List<StudentDTO> getMembers(Long teamId) {
-        Optional<Team> team = teamRepository.findById(teamId);
-
-        if (!team.isPresent()) {
-            throw new TeamNotFoundException(teamId.toString());
-        }
-
-        return team.get().getMembers().stream()
+        return teamRepository.findById(teamId)
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getMembers()
+                .stream()
                 .map(s -> modelMapper.map(s, StudentDTO.class))
                 .collect(Collectors.toList());
     }
@@ -242,9 +266,9 @@ public class TeamServiceImpl implements TeamService {
             throw new CourseNotEnabledException(courseId);
         }
         if (memberIds.size() < course.get().getMin()) {
-            throw new TeamSizeMinException(name);
+            throw new TeamSizeMinException(courseId, String.valueOf(course.get().getMin()));
         } else if (memberIds.size() > course.get().getMax()) {
-            throw new TeamSizeMaxException(name);
+            throw new TeamSizeMaxException(courseId, String.valueOf(course.get().getMax()));
         }
         if( course.get().getTeams().stream().anyMatch(team -> team.getName().equals(name)))
             throw new TeamServiceConflictException("Exist name: "+name+" for team in course: "+courseId);
@@ -375,14 +399,15 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public Optional<TeamDTO> getTeam(Long teamId) {
-        return teamRepository.findById(teamId)
-                .map(t -> modelMapper.map(t, TeamDTO.class));
+        return teamRepository.findById(teamId).map(t -> modelMapper.map(t, TeamDTO.class));
     }
 
     @Override
-    public Optional<CourseDTO> getCourse(Long teamId) {
-        return teamRepository.findById(teamId)
-                .map(t -> modelMapper.map(t.getCourse(), CourseDTO.class));
+    public Optional<CourseDTO> getCourseForTeam(Long teamId) {
+        Course course = teamRepository.findById(teamId)
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
+                .getCourse();
+        return Optional.ofNullable(modelMapper.map(course, CourseDTO.class));
     }
 
     @Override
@@ -459,24 +484,68 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public void deleteCourse(String courseId) {
-        Optional<Course> course =  courseRepository.findById(courseId);
-        if(course.isPresent())
-            courseRepository.delete(course.get());
+    public boolean deleteCourse(String courseId) {
+        Course course =  courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
 
+        /**
+         * a course cannot be deleted if is enabled or there are enrolled students
+         * having enrolled students means possibly having more entities related to this course
+         */
+        if (!course.isEnabled() || course.getStudents().size() > 0 || course.getTeams().size() > 0 || course.getExercises().size() > 0) {
+            return false;
+        }
 
+        course.setVirtualMachineModel(null);
+        courseRepository.delete(course);
 
+        return true;
 
     }
 
     @Override
-    public boolean update(CourseDTO courseDTO) {
-        if (courseRepository.existsById(courseDTO.getId())) {
-            Course c = modelMapper.map(courseDTO, Course.class);
-            courseRepository.save(c);
-            return true;
+    public CourseDTO updateCourse(String courseId, CourseDTO courseDTO) {
+
+        if (!courseId.equals(courseDTO.getId())) {
+            throw new CourseIdNotCorrespondingException(courseDTO.getId(), courseId);
         }
-        return false;
+
+        Course course = courseRepository.findById(courseDTO.getId()).orElseThrow(() -> new CourseNotFoundException(courseDTO.getId()));
+
+        /**
+         * check if the course is enabled
+         */
+        if (course.isEnabled()) {
+            throw new CourseEnabledException(courseDTO.getId());
+        }
+
+        String name = courseDTO.getName();
+
+        /**
+         * check if the new name is unique
+         */
+        if (courseRepository.findAll().stream().anyMatch(c -> c.getName().equalsIgnoreCase(name))) {
+            throw new DuplicateCourseNameException(name);
+        }
+
+        int min = courseDTO.getMin();
+        int max = courseDTO.getMax();
+
+        /**
+         * check if there are no teams which size is lower than the new min and greater than the new max
+         */
+        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() < min)) {
+            throw new TeamSizeMinException(String.valueOf(min), String.valueOf(course.getMin()));
+        }
+        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() > max)) {
+            throw new TeamSizeMaxException(String.valueOf(max), String.valueOf(course.getMax()));
+        }
+
+        course.setName(name);
+        course.setMin(min);
+        course.setMax(max);
+
+        courseRepository.save(course);
+        return courseDTO;
     }
 
 

@@ -1,10 +1,10 @@
 package it.polito.ai.backend.services.exercise;
 
 import it.polito.ai.backend.dtos.*;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
@@ -25,14 +25,18 @@ public interface ExerciseService {
     Optional<ExerciseDTO> getExerciseForAssignment(Long assignmentId);
     List<ExerciseDTO> getExercisesForCourse(String courseId);
     Optional<CourseDTO> getCourse(Long exerciseId);
-    List<AssignmentDTO> getAssignmentsForExercise(Long exerciseId);
+    boolean setAssignmentsNullForExercise(Long exerciseId);
+    boolean setAssignmentsReadForStudentAndExercise(Long exerciseId, String studentId);
+
     Optional<StudentDTO> getStudentForAssignment(Long assignmentId);
-    List<AssignmentDTO> getAssignmentsForStudent(String studentId);
+    List<AssignmentDTO> getLastAssignments(Long exerciseId);
     AssignmentDTO addAssignmentByte(Timestamp published,
                        AssignmentStatus state,
                        boolean flag, Integer score,
                        Byte[] image,
                        String studentId, Long exerciseId);
+    /** student*/
+    boolean checkAssignment(Long exerciseId, String studentId) ;
 
 
 

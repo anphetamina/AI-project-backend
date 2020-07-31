@@ -1,7 +1,7 @@
 package it.polito.ai.backend.services.team;
 
-public class DuplicateIdException extends TeamServiceException {
-    public DuplicateIdException(String message) {
-        super(message);
+public class DuplicateIdException extends TeamServiceConflictException {
+    public DuplicateIdException(String id) {
+        super(String.format("duplicate id %s", id));
     }
 }
