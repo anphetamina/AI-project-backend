@@ -1,6 +1,7 @@
 package it.polito.ai.backend.configuration;
 
 
+
 import it.polito.ai.backend.security.JwtSecurityConfigurer;
 import it.polito.ai.backend.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
