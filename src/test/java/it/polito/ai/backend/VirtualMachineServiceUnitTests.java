@@ -99,6 +99,7 @@ class VirtualMachineServiceUnitTests {
                             .students(new ArrayList<>())
                             .teachers(new ArrayList<>())
                             .teams(new ArrayList<>())
+                            .exercises(new ArrayList<>())
                             .build();
                     courses.add(course);
 
