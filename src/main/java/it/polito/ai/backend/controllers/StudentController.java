@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,20 +108,12 @@ public class StudentController {
 
     @GetMapping("/{studentId}/courses/{courseId}/propose-team")
     CollectionModel<TeamDTO> getProposeTeamsForStudentAndCourse(@PathVariable String studentId, @PathVariable String courseId) {
-        try {
-            List<TeamDTO> teams = teamService.getProposeTeamsForStudentAndCourse(studentId, courseId)
+        List<TeamDTO> teams = teamService.getProposeTeamsForStudentAndCourse(studentId, courseId)
                     .stream()
                     .map(t -> ModelHelper.enrich(t, courseId,null))
                     .collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getProposeTeamsForStudentAndCourse(studentId, courseId)).withSelfRel();
             return CollectionModel.of(teams, selfLink);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
     }
 
 
@@ -134,57 +127,42 @@ public class StudentController {
     }
 
     @Operation(summary = "get the assignments of a student")
-    @GetMapping("/{studentId}/assignments")
-    List<AssignmentDTO> getAssignments(@PathVariable @NotBlank String studentId) {
-      /*  // todo collection model
-        List<AssignmentDTO> assignmentDTOS = exerciseService.getAssignmentsForStudent(studentId).stream()
-                .map(a -> {
-                    Long exerciseId = exerciseService.getExerciseForAssignment(a.getId()).map(ExerciseDTO::getId).orElseThrow( () -> new ExerciseNotFoundException(a.getId().toString()));
-                    return ModelHelper.enrich(a,studentId,exerciseId);
-                })
+    @GetMapping("/{studentId}/exercise/{exerciseId}/assignments")
+    CollectionModel<AssignmentDTO> getAssignments(@PathVariable @NotBlank String studentId,@PathVariable @NotNull Long exerciseId ) {
+        List<AssignmentDTO> assignmentDTOS =  exerciseService.getAssignmentByStudentAndExercise(studentId,exerciseId).stream()
+                .map(a -> ModelHelper.enrich(a,studentId,exerciseId))
                 .collect(Collectors.toList());
-        List<AssignmentDTO> assignmentDTOList = new ArrayList<>();
-        for (AssignmentDTO a:assignmentDTOS) {
-            Long exerciseId = exerciseService.getExerciseForAssignment(a.getId()).map(ExerciseDTO::getId).orElseThrow( () -> new ExerciseNotFoundException(a.getId().toString()));
-            assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId));
-
-        }
-        return assignmentDTOList;*/
-        return  new ArrayList<AssignmentDTO>();
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getAssignments(studentId,exerciseId)).withSelfRel();
+        return CollectionModel.of(assignmentDTOS, selfLink);
 
     }
 
     @GetMapping("{studentId}/teams/confirm/{token}")
     boolean confirmToken(@PathVariable String token, @PathVariable String studentId) {
-        try { //todo studentId è quello loggato
+        //todo studentId è quello loggato
             return notificationService.confirm(token);
-        } catch (Exception exception) {
-            System.out.println(exception.getMessage());
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+
     }
 
     @GetMapping("{studentId}/teams/reject/{token}")
     boolean rejectToken(@PathVariable String token, @PathVariable String studentId) {
-        try { //todo studentId è quello loggato
+        //todo studentId è quello loggato
             return notificationService.reject(token);
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
     }
-        @Operation(summary = "get the owned virtual machines by a student")
-        @GetMapping("/{studentId}/virtual-machines")
-        CollectionModel<VirtualMachineDTO> getVirtualMachines (@PathVariable @NotBlank String studentId){
-            List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForStudent(studentId)
-                    .stream()
-                    .map(vm -> {
-                        Long teamId = virtualMachineService.getTeamForVirtualMachine(vm.getId()).map(TeamDTO::getId).orElse(null);
-                        Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vm.getId()).map(VirtualMachineModelDTO::getId).orElse(null);
-                        return ModelHelper.enrich(vm, teamId, modelId);
-                    })
-                    .collect(Collectors.toList());
-            Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentId)).withSelfRel();
-            return CollectionModel.of(virtualMachineDTOList, selfLink);
-        }
+
+    @Operation(summary = "get the owned virtual machines by a student")
+    @GetMapping("/{studentId}/virtual-machines")
+    CollectionModel<VirtualMachineDTO> getVirtualMachines (@PathVariable @NotBlank String studentId){
+        List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForStudent(studentId)
+                .stream()
+                .map(vm -> {
+                    Long teamId = virtualMachineService.getTeamForVirtualMachine(vm.getId()).map(TeamDTO::getId).orElse(null);
+                    Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vm.getId()).map(VirtualMachineModelDTO::getId).orElse(null);
+                    return ModelHelper.enrich(vm, teamId, modelId);
+                })
+                .collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentId)).withSelfRel();
+        return CollectionModel.of(virtualMachineDTOList, selfLink);
+    }
 }
 

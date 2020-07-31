@@ -2,6 +2,7 @@ package it.polito.ai.backend.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.TeamNotFoundException;
 import it.polito.ai.backend.services.team.TeamService;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotNull;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,6 +31,8 @@ public class TeamController {
     TeamService teamService;
     @Autowired
     VirtualMachineService virtualMachineService;
+    @Autowired
+    NotificationService notificationService;
 
     @Operation(summary = "get team")
     @GetMapping("/{teamId}")
@@ -45,6 +49,29 @@ public class TeamController {
         List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getMembers(teamId)).withSelfRel();
         return CollectionModel.of(students, selfLink);
+    }
+
+
+
+    @GetMapping("/{teamId}/members/status-list")
+    Map<StudentDTO,String> getMembersStatus( @PathVariable Long teamId) {
+
+        Map<StudentDTO,String> statusMembers = new HashMap<>();
+        List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<TokenDTO>  tokenDTOS = notificationService.getTokenTeam(teamId);
+        if(tokenDTOS.isEmpty())
+            throw new TeamNotFoundException("Non exist propose for team: "+teamId);
+
+        students.forEach(studentDTO -> {
+            for (TokenDTO tokenDTO:tokenDTOS) {
+                if(tokenDTO.getStudentId().equals(studentDTO.getId()))
+                    statusMembers.put(studentDTO,tokenDTO.getStatus().toString());
+            }
+            if(tokenDTOS.stream().noneMatch(tokenDTO -> tokenDTO.getStudentId().equals(studentDTO.getId())))
+                statusMembers.put(studentDTO,"PROPONENT");
+        });
+        return statusMembers;
+
     }
 
     @Operation(summary = "get virtual machines for a team")
