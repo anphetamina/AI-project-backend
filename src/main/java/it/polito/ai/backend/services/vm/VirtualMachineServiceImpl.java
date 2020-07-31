@@ -9,6 +9,8 @@ import it.polito.ai.backend.services.team.StudentNotFoundException;
 import it.polito.ai.backend.services.team.TeamNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -39,6 +41,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     ModelMapper modelMapper;
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId)")
     public VirtualMachineDTO createVirtualMachine(String studentId, Long teamId, Long modelId, VirtualMachineDTO virtualMachineDTO) {
 
         Student student = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
@@ -143,6 +146,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isOwnerOf(#vmId)")
     public VirtualMachineDTO updateVirtualMachine(Long vmId, VirtualMachineDTO virtualMachineDTO) {
 
         if (!vmId.equals(virtualMachineDTO.getId())) {
@@ -238,6 +242,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isOwnerOf(#vmId)")
     public boolean deleteVirtualMachine(Long vmId) {
 
         VirtualMachine virtualMachine = virtualMachineRepository.findById(vmId).orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
@@ -269,6 +274,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canUse(#vmId)")
     public void turnOnVirtualMachine(Long vmId) {
 
         VirtualMachine virtualMachine = virtualMachineRepository.findById(vmId).orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
@@ -309,6 +315,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canUse(#vmId)")
     public void turnOffVirtualMachine(Long vmId) {
 
         VirtualMachine virtualMachine = virtualMachineRepository.findById(vmId).orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
@@ -329,6 +336,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isOwnerOf(#vmId)")
     public boolean addOwnerToVirtualMachine(String studentId, Long vmId) {
 
         VirtualMachine virtualMachine = virtualMachineRepository.findById(vmId).orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
@@ -355,6 +363,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)) or (hasRole('STUDENT') and @securityServiceImpl.isEnrolled(#courseId))")
     public Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseId) {
         Course course =  courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
 
@@ -362,6 +371,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)")
     public ConfigurationDTO createConfiguration(Long teamId, ConfigurationDTO configurationDTO) {
 
         Team team = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
@@ -405,6 +415,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.canManage(#configurationId)")
     public ConfigurationDTO updateConfiguration(Long configurationId, ConfigurationDTO configurationDTO) {
 
         if (!configurationId.equals(configurationDTO.getId())) {
@@ -505,6 +516,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
     public VirtualMachineModelDTO createVirtualMachineModel(String courseId, VirtualMachineModelDTO modelDTO) {
 
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
@@ -527,6 +539,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.hasDefined(#modelId)")
     public boolean deleteVirtualMachineModel(Long modelId) {
 
         VirtualMachineModel virtualMachineModel = virtualMachineModelRepository.findById(modelId).orElseThrow(() -> new VirtualMachineModelNotFoundException(modelId.toString()));
@@ -560,21 +573,25 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.canUse(#vmId)) or (hasRole('TEACHER') and @securityServiceImpl.canConnect(#vmId))")
     public Optional<VirtualMachineDTO> getVirtualMachine(Long vmId) {
         return virtualMachineRepository.findById(vmId).map(vm -> modelMapper.map(vm, VirtualMachineDTO.class));
     }
 
     @Override
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.canAccess(#modelId)) or (hasRole('TEACHER') and @securityServiceImpl.hasDefined(#modelId))")
     public Optional<VirtualMachineModelDTO> getVirtualMachineModel(Long modelId) {
         return virtualMachineModelRepository.findById(modelId).map(m -> modelMapper.map(m, VirtualMachineModelDTO.class));
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.canManage(#configurationId)")
     public Optional<ConfigurationDTO> getConfiguration(Long configurationId) {
         return configurationRepository.findById(configurationId).map(c -> modelMapper.map(c, ConfigurationDTO.class));
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canConnect(#vmId)) or (hasRole('STUDENT') and @securityServiceImpl.canUse(#vmId))")
     public List<StudentDTO> getOwnersForVirtualMachine(Long vmId) {
         return virtualMachineRepository.findById(vmId)
                 .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()))
@@ -585,6 +602,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public List<VirtualMachineDTO> getVirtualMachinesForTeam(Long teamId) {
         return teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
@@ -595,6 +613,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId)")
     public List<VirtualMachineDTO> getVirtualMachinesForStudent(String studentId) {
         return studentRepository.findById(studentId)
                 .orElseThrow(() -> new StudentNotFoundException(studentId))
@@ -605,6 +624,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public Optional<ConfigurationDTO> getConfigurationForTeam(Long teamId) {
         Configuration configuration = teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
@@ -614,6 +634,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canConnect(#vmId)) or (hasRole('STUDENT') and @securityServiceImpl.canUse(#vmId))")
     public Optional<TeamDTO> getTeamForVirtualMachine(Long vmId) {
         Team team = virtualMachineRepository.findById(vmId)
                 .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()))
@@ -623,6 +644,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canConnect(#vmId)) or (hasRole('STUDENT') and @securityServiceImpl.canUse(#vmId))")
     public Optional<VirtualMachineModelDTO> getVirtualMachineModelForVirtualMachine(Long vmId) {
         VirtualMachineModel virtualMachineModel = virtualMachineRepository.findById(vmId)
                 .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()))
@@ -631,6 +653,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.hasDefined(#modelId)")
     public Optional<CourseDTO> getCourseForVirtualMachineModel(Long modelId) {
         Course course = virtualMachineModelRepository.findById(modelId)
                 .orElseThrow(() -> new VirtualMachineModelNotFoundException(modelId.toString()))
@@ -639,6 +662,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.canManage(@configurationId)")
     public Optional<TeamDTO> getTeamForConfiguration(Long configurationId) {
         Team team = configurationRepository.findById(configurationId)
                 .orElseThrow(() -> new ConfigurationNotFoundException(configurationId.toString()))
@@ -647,31 +671,37 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public int getActiveVcpuForTeam(Long teamId) {
         return teamRepository.getActiveNumVcpuByTeam(teamId);
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public int getActiveDiskSpaceForTeam(Long teamId) {
         return teamRepository.getActiveDiskSpaceByTeam(teamId);
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public int getActiveRAMForTeam(Long teamId) {
         return teamRepository.getActiveRamByTeam(teamId);
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public int getCountActiveVirtualMachinesForTeam(Long teamId) {
         return teamRepository.countVirtualMachinesByTeamAndStatus(teamId, VirtualMachineStatus.ON);
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public int getCountVirtualMachinesForTeam(Long teamId) {
         return teamRepository.countVirtualMachinesByTeam(teamId);
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public ResourcesResponse getResourcesByTeam(Long teamId) {
         Team team = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
 

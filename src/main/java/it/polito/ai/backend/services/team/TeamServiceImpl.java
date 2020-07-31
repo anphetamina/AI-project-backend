@@ -14,6 +14,8 @@ import it.polito.ai.backend.repositories.TeamRepository;
 import it.polito.ai.backend.services.notification.NotificationService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -26,7 +28,6 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-// @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class TeamServiceImpl implements TeamService {
 
     @Autowired
@@ -222,6 +223,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId))")
     public List<CourseDTO> getCourses(String studentId) {
         Optional<Student> student = studentRepository.findById(studentId);
 
@@ -235,6 +237,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId))")
     public List<TeamDTO> getTeamsForStudent(String studentId) {//Solo team attivi
         Optional<Student> student = studentRepository.findById(studentId);
 
@@ -248,6 +251,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public List<StudentDTO> getMembers(Long teamId) {
         return teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
@@ -258,6 +262,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isEnrolled(#courseId))")
     public TeamDTO proposeTeam(String courseId, String name, List<String> memberIds) {
         Optional<Course> course = courseRepository.findById(courseId);
         if (!course.isPresent()) {
@@ -292,6 +297,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId)) and @securityServiceImpl.isEnrolled(#courseId)")
     public List<TeamDTO> getProposeTeamsForStudentAndCourse(String studentId, String courseId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
@@ -312,10 +318,8 @@ public class TeamServiceImpl implements TeamService {
                 .collect(Collectors.toList());
     }
 
-
-
-
     @Override
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId)) and @securityServiceImpl.isEnrolled(#courseId)")
     public Optional<TeamDTO> getTeamForStudentAndCourse(String studentId, String courseId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
@@ -335,9 +339,6 @@ public class TeamServiceImpl implements TeamService {
                .map(t -> modelMapper.map(t,TeamDTO.class));
     }
 
-
-
-
     private Student checkStudent(String id, Course course, HashSet<String> uniqueIds) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new StudentNotFoundException(id));
@@ -355,6 +356,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)) or (hasRole('STUDENT') and @securityServiceImpl.isEnrolled(#courseId))")
     public List<TeamDTO> getTeamsForCourse(String courseId) {
 
         return courseRepository.findById(courseId)
@@ -366,6 +368,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)) or (hasRole('STUDENT') and @securityServiceImpl.isEnrolled(#courseId))")
     public List<TeacherDTO> getTeachersForCourse(String courseId) {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new CourseNotFoundException(courseId))
@@ -376,6 +379,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isEnrolled(#courseId)")
     public List<StudentDTO> getStudentsInTeams(String courseId) {
         if (!courseRepository.existsById(courseId)) {
             throw new CourseNotFoundException(courseId);
@@ -387,6 +391,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isEnrolled(#courseId)")
     public List<StudentDTO> getAvailableStudents(String courseId) {
         if (!courseRepository.existsById(courseId)) {
             throw new CourseNotFoundException(courseId);
@@ -398,11 +403,13 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId)")
     public Optional<TeamDTO> getTeam(Long teamId) {
         return teamRepository.findById(teamId).map(t -> modelMapper.map(t, TeamDTO.class));
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId)")
     public Optional<CourseDTO> getCourseForTeam(Long teamId) {
         Course course = teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
@@ -437,6 +444,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    // todo preauthorize
     public boolean addTeacher(TeacherDTO teacher) {
         if (!teacherRepository.existsById(teacher.getId())) {
             Teacher t = modelMapper.map(teacher, Teacher.class);
@@ -447,6 +455,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
     public boolean addTeacherToCourse(String teacherId, String courseId) {
         Optional<Teacher> teacher = teacherRepository.findById(teacherId);
 
@@ -469,11 +478,13 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isAuthorized(#id)")
     public Optional<TeacherDTO> getTeacher(String id) {
         return teacherRepository.findById(id).map(t -> modelMapper.map(t, TeacherDTO.class));
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isAuthorized(#id)")
     public List<CourseDTO> getCoursesForTeacher(String id) {
         return teacherRepository.findById(id)
                 .orElseThrow(() -> new TeacherNotFoundException(id))
@@ -484,6 +495,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId))")
     public boolean deleteCourse(String courseId) {
         Course course =  courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
 
@@ -503,6 +515,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId))")
     public CourseDTO updateCourse(String courseId, CourseDTO courseDTO) {
 
         if (!courseId.equals(courseDTO.getId())) {

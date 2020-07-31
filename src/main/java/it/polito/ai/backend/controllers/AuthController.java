@@ -22,7 +22,7 @@ import java.util.Map;
 import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
-@RequestMapping("/API")
+@RequestMapping("/API/auth")
 public class AuthController {
     @Autowired
     AuthenticationManager authenticationManager;
@@ -46,7 +46,7 @@ public class AuthController {
             model.put("token",token);
             return ok(model);
         }catch (AuthenticationException e){
-            throw  new BadCredentialsException("Invalid username/password supplied");
+            throw new BadCredentialsException("Invalid username/password supplied");
         }
     }
 }
