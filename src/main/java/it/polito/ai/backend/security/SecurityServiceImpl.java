@@ -12,7 +12,7 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
-    public boolean isEnrolled(String courseName) {
+    public boolean isEnrolled(String courseId) {
         return false;
     }
 
@@ -22,7 +22,7 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
-    public boolean isTaught(String courseName) {
+    public boolean isTaught(String courseId) {
         return false;
     }
 
