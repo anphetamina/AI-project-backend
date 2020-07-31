@@ -89,32 +89,6 @@ public class CourseController {
     }
 
     @Operation(summary = "get teams")
-    @GetMapping("/{courseId}/teams/{teamId}/members-status")
-    //todo da rivedere perchè courseId non è usato
-    //todo da sposatre in teamController
-    CollectionModel<Map.Entry<StudentDTO,String>> getMembersStatus(@PathVariable String courseId, @PathVariable Long teamId) {
-
-        Map<StudentDTO,String> statusMembers = new HashMap<>();
-        List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
-        List<TokenDTO>  tokenDTOS = notificationService.getTokenTeam(teamId);
-        if(tokenDTOS.isEmpty())
-            throw new TeamNotFoundException("Non exist propose for team: "+teamId);
-
-        students.forEach(studentDTO -> {
-            for (TokenDTO tokenDTO:tokenDTOS) {
-                if(tokenDTO.getStudentId().equals(studentDTO.getId()))
-                    statusMembers.put(studentDTO,tokenDTO.getStatus().toString());
-            }
-           if(tokenDTOS.stream().noneMatch(tokenDTO -> tokenDTO.getStudentId().equals(studentDTO.getId())))
-               statusMembers.put(studentDTO,"PROPONENT");
-        });
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getMembersStatus(courseId, teamId)).withSelfRel();
-        return CollectionModel.of(statusMembers.entrySet(),selfLink);
-
-    }
-
-
-
     @GetMapping("/{courseId}/teams")
     CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String courseId) {
         List<TeamDTO> teams = teamService.getTeamsForCourse(courseId)
@@ -306,71 +280,52 @@ public class CourseController {
     }
 
     // http -v POST http://localhost:8080/API/courses/ase/createTeam teamName=aseTeam0 memberIds:=[\"264000\",\"264001\",\"264002\",\"264004\"]
-        //todo
-        @Operation(summary = "create a new unconfirmed team in a course")
+   
+    @Operation(summary = "create a new unconfirmed team in a course")
     @PostMapping("/{courseId}/createTeam")
     @ResponseStatus(HttpStatus.CREATED)
-        TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable String courseId) {
-        if (map.containsKey("teamName") && map.containsKey("memberIds") && map.containsKey("timeout") &&
-                map.containsKey("studentId")) {
-            try {
+        TeamDTO createTeam(@RequestBody @Valid TeamCreationRequest teamCreationRequest, @PathVariable String courseId) {
+        try {
                 //todo verifica che chi fa la proposta di team di essere loggato e che il suo studentId conincida
                 SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                Timestamp timeout = new Timestamp(format.parse(map.get("timeout").toString()).getTime());
+                Timestamp timeout = new Timestamp(format.parse(teamCreationRequest.getTimeout()).getTime());
                 if(timeout.before(Utils.getNow()))
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid timeout");
+                String teamName = teamCreationRequest.getTeamName();
 
-                String teamName = modelMapper.map(map.get("teamName"), String.class);
-
-                Optional<StudentDTO> proponent = teamService.getStudent(map.get("studentId").toString());
+                Optional<StudentDTO> proponent = teamService.getStudent(teamCreationRequest.getStudentId());
                 if(!proponent.isPresent())
-                    throw new StudentNotFoundException(map.get("studentId").toString());
-
-                if (!teamName.isEmpty() && teamName.matches("[a-zA-Z0-9]+")) {
-                    Type listType = new TypeToken<List<String>>() {}.getType();
-                    List<String> memberIds = modelMapper.map(map.get("memberIds"), listType);
-                    //add the student proposing team for control
-                    memberIds.add(proponent.get().getId());
-                    if (memberIds.stream().noneMatch(id -> id == null) && memberIds.stream().allMatch(id -> id.matches("[0-9]+"))) {
-                        TeamDTO team = teamService.proposeTeam(courseId, teamName, memberIds);
-                        //remove the student proposing team because no where to confirm
-                        memberIds.remove(proponent.get().getId());
-                        notificationService.notifyTeam(team, memberIds,timeout,proponent.get());
-                        return ModelHelper.enrich(team, courseId, null);
-                    } else {
-                        throw new InvalidRequestException(memberIds.toString());
-                    }
+                    throw new StudentNotFoundException(teamCreationRequest.getStudentId());
+                
+                List<String> memberIds = teamCreationRequest.getMemberIds();
+                //add the student proposing team for control
+                memberIds.add(proponent.get().getId());
+                
+                if (memberIds.stream().noneMatch(id -> id == null) && memberIds.stream().allMatch(id -> id.matches("s[0-9]{6}"))) {
+                    TeamDTO team = teamService.proposeTeam(courseId, teamName, memberIds);
+                    //remove the student proposing team because no where to confirm
+                    memberIds.remove(proponent.get().getId());
+                    notificationService.notifyTeam(team, memberIds,timeout,proponent.get());
+                    return ModelHelper.enrich(team, courseId, null);
                 } else {
-                    throw new InvalidRequestException(teamName);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
-            }/* catch (AccessDeniedException exception) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-            }*/ catch (CourseNotFoundException | StudentNotFoundException exception) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-            } catch (InvalidRequestException | IllegalArgumentException | MappingException | ConfigurationException exception) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
-            } catch (TeamServiceException exception) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage());
-            } catch (Exception exception) {
-                System.out.println(exception.getMessage());
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+                
+            } catch (ParseException  e) {
+                e.printStackTrace();
+                throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
             }
-        } else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
+
     }
 
     @Operation(summary = "create a new exercise for a course")
     @PostMapping("/{courseId}/exercises")
-    void createExercise(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotBlank String courseId){
-        if (!map.containsKey("expired")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid request");
-        }
+    void createExercise(@RequestParam("image") MultipartFile file, @RequestParam ExerciseCreationRequest exercise, @PathVariable @NotBlank String courseId){
         try {
             Utils.checkTypeImage(file);
             System.out.println("Original Image Byte Size - " + file.getBytes().length);
             SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-            Timestamp expired = new Timestamp(format.parse(map.get("expired")).getTime());
+            Timestamp expired = new Timestamp(format.parse(exercise.getExpired()).getTime());
             Timestamp published = Utils.getNow();
             exerciseService.addExerciseForCourse(courseId,published,expired,file);
         } catch (ParseException | IOException | TikaException e) {
@@ -381,15 +336,12 @@ public class CourseController {
 
     @Operation(summary = "get all exercises of a course")
     @GetMapping("/{courseId}/exercises")
-    List<ExerciseDTO> getExercises(@PathVariable @NotBlank String courseId){
+    CollectionModel<ExerciseDTO> getExercises(@PathVariable @NotBlank String courseId){
+        List<ExerciseDTO> exerciseDTOS = exerciseService.getExercisesForCourse(courseId).stream()
+                .map(e -> ModelHelper.enrich(e,courseId)).collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getExercises(courseId)).withSelfRel();
+        return CollectionModel.of(exerciseDTOS, selfLink);
 
-        // todo collection model
-        List<ExerciseDTO> list = exerciseService.getExercisesForCourse(courseId);
-        List<ExerciseDTO> exerciseDTOS = new ArrayList<>();
-        for (ExerciseDTO exerciseDTO:list) {
-            exerciseDTOS.add(ModelHelper.enrich(exerciseDTO,courseId));
-        }
-        return exerciseDTOS;
 
     }
 
