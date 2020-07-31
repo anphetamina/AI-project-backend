@@ -91,7 +91,7 @@ public class StudentController {
     @Operation(summary = "get the assignments of a student")
     @GetMapping("/{studentId}/assignments")
     List<AssignmentDTO> getAssignments(@PathVariable @NotBlank String studentId){
-        // todo collection model
+      /*  // todo collection model
         List<AssignmentDTO> assignmentDTOS = exerciseService.getAssignmentsForStudent(studentId).stream()
                 .map(a -> {
                     Long exerciseId = exerciseService.getExerciseForAssignment(a.getId()).map(ExerciseDTO::getId).orElseThrow( () -> new ExerciseNotFoundException(a.getId().toString()));
@@ -104,7 +104,8 @@ public class StudentController {
             assignmentDTOList.add(ModelHelper.enrich(a,studentId,exerciseId));
 
         }
-        return assignmentDTOList;
+        return assignmentDTOList;*/
+         return null;
 
     }
 
