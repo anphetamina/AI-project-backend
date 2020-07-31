@@ -127,7 +127,7 @@ public class StudentController {
     }
 
     @Operation(summary = "get the assignments of a student")
-    @GetMapping("/{studentId}/exercise/{exerciseId}/assignments")
+    @GetMapping("/{studentId}/exercises/{exerciseId}/assignments")
     CollectionModel<AssignmentDTO> getAssignments(@PathVariable @NotBlank String studentId,@PathVariable @NotNull Long exerciseId ) {
         List<AssignmentDTO> assignmentDTOS =  exerciseService.getAssignmentByStudentAndExercise(studentId,exerciseId).stream()
                 .map(a -> ModelHelper.enrich(a,studentId,exerciseId))

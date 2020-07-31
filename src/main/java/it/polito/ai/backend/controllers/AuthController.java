@@ -33,7 +33,7 @@ public class AuthController {
     @Autowired
     UserRepository users;
 
-    @PostMapping("/signin")
+    @PostMapping("/sign-in")
     public ResponseEntity signin(@RequestBody AuthenticationRequest data){
         try {
             String username = data.getUsername();
