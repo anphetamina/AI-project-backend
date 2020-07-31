@@ -25,8 +25,6 @@ import java.util.stream.Collectors;
 @Validated
 public class TeamController {
 
-    // todo move createTeam from course controller
-
     @Autowired
     TeamService teamService;
     @Autowired

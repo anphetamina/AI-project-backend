@@ -307,7 +307,7 @@ public class CourseController {
 
     // http -v POST http://localhost:8080/API/courses/ase/createTeam teamName=aseTeam0 memberIds:=[\"264000\",\"264001\",\"264002\",\"264004\"]
         //todo
-        @Operation(summary = "create a new unconfirmed team in a course")
+    @Operation(summary = "create a new unconfirmed team in a course")
     @PostMapping("/{courseId}/createTeam")
     @ResponseStatus(HttpStatus.CREATED)
         TeamDTO createTeam(@RequestBody Map<String, Object> map, @PathVariable String courseId) {
