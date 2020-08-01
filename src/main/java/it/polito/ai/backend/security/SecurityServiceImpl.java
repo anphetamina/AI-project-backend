@@ -1,9 +1,10 @@
 package it.polito.ai.backend.security;
 
-import it.polito.ai.backend.entities.User;
 import it.polito.ai.backend.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -33,10 +34,7 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean isAuthorized(String id) {
         String userId = this.getId();
-        if (userId != null) {
-            return userId.equalsIgnoreCase(id);
-        }
-        return false;
+        return userId.equalsIgnoreCase(id);
     }
 
     /**
@@ -47,14 +45,11 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean isEnrolled(String courseId) {
         String userId = this.getId();
-        if (userId != null) {
-            return courseRepository.findById(courseId)
-                    .map(c -> c.getStudents()
-                            .stream()
-                            .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-        return false;
+        return courseRepository.findById(courseId)
+                .map(c -> c.getStudents()
+                        .stream()
+                        .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -65,14 +60,11 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean isPartOf(Long teamId) {
         String userId = this.getId();
-        if (userId != null) {
-            return teamRepository.findById(teamId)
-                    .map(t -> t.getMembers()
-                            .stream()
-                            .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-        return false;
+        return teamRepository.findById(teamId)
+                .map(t -> t.getMembers()
+                        .stream()
+                        .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -83,14 +75,11 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean isTaught(String courseId) {
         String userId = this.getId();
-        if (userId != null) {
-            return courseRepository.findById(courseId)
-                    .map(c -> c.getTeachers()
-                            .stream()
-                            .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-        return false;
+        return courseRepository.findById(courseId)
+                .map(c -> c.getTeachers()
+                        .stream()
+                        .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -102,17 +91,13 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean canManage(Long configurationId) {
         String userId = this.getId();
-        if (userId != null) {
-            return configurationRepository.findById(configurationId)
-                    .filter(c1 -> c1.getTeam() != null)
-                    .filter(c2 -> c2.getTeam().getCourse() != null)
-                    .map(c -> c.getTeam().getCourse().getTeachers()
-                            .stream()
-                            .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-
-        return false;
+        return configurationRepository.findById(configurationId)
+                .filter(c1 -> c1.getTeam() != null)
+                .filter(c2 -> c2.getTeam().getCourse() != null)
+                .map(c -> c.getTeam().getCourse().getTeachers()
+                        .stream()
+                        .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -123,14 +108,11 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean isOwnerOf(Long vmId) {
         String userId = this.getId();
-        if (userId != null) {
-            return virtualMachineRepository.findById(vmId)
-                    .map(vm -> vm.getOwners()
-                            .stream()
-                            .anyMatch(o -> o.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-        return false;
+        return virtualMachineRepository.findById(vmId)
+                .map(vm -> vm.getOwners()
+                        .stream()
+                        .anyMatch(o -> o.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -141,15 +123,12 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean canUse(Long vmId) {
         String userId = this.getId();
-        if (userId != null) {
-            return virtualMachineRepository.findById(vmId)
-                    .filter(vm -> vm.getTeam() != null)
-                    .map(vm -> vm.getTeam().getMembers()
-                            .stream()
-                            .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-        return false;
+        return virtualMachineRepository.findById(vmId)
+                .filter(vm -> vm.getTeam() != null)
+                .map(vm -> vm.getTeam().getMembers()
+                        .stream()
+                        .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -160,16 +139,13 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean canConnect(Long vmId) {
         String userId = this.getId();
-        if (userId != null) {
-            return virtualMachineRepository.findById(vmId)
-                    .filter(vm1 -> vm1.getTeam() != null)
-                    .filter(vm2 -> vm2.getTeam().getCourse() != null)
-                    .map(virtualMachine -> virtualMachine.getTeam().getCourse().getTeachers()
-                            .stream()
-                            .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-        return false;
+        return virtualMachineRepository.findById(vmId)
+                .filter(vm1 -> vm1.getTeam() != null)
+                .filter(vm2 -> vm2.getTeam().getCourse() != null)
+                .map(virtualMachine -> virtualMachine.getTeam().getCourse().getTeachers()
+                        .stream()
+                        .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -180,15 +156,12 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean isHelping(Long teamId) {
         String userId = this.getId();
-        if (userId != null) {
-            return teamRepository.findById(teamId)
-                    .filter(t -> t.getCourse() != null)
-                    .map(t -> t.getCourse().getTeachers()
-                            .stream()
-                            .anyMatch(teacher -> teacher.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-        return false;
+        return teamRepository.findById(teamId)
+                .filter(t -> t.getCourse() != null)
+                .map(t -> t.getCourse().getTeachers()
+                        .stream()
+                        .anyMatch(teacher -> teacher.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -199,15 +172,12 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean hasDefined(Long modelId) {
         String userId = this.getId();
-        if (userId != null) {
-            return virtualMachineModelRepository.findById(modelId)
-                    .filter(m1 -> m1.getCourse() != null)
-                    .map(m -> m.getCourse().getTeachers()
-                            .stream()
-                            .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-        return false;
+        return virtualMachineModelRepository.findById(modelId)
+                .filter(m1 -> m1.getCourse() != null)
+                .map(m -> m.getCourse().getTeachers()
+                        .stream()
+                        .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -218,15 +188,12 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public boolean canAccess(Long modelId) {
         String userId = this.getId();
-        if (userId != null) {
-            return virtualMachineModelRepository.findById(modelId)
-                    .filter(m1 -> m1.getCourse() != null)
-                    .map(m -> m.getCourse().getStudents()
-                            .stream()
-                            .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
-                    .orElse(false);
-        }
-        return false;
+        return virtualMachineModelRepository.findById(modelId)
+                .filter(m1 -> m1.getCourse() != null)
+                .map(m -> m.getCourse().getStudents()
+                        .stream()
+                        .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**
@@ -236,10 +203,13 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public String getId() {
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
-            String username = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+            String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
             int index = username.indexOf('@');
+            if (index == -1) {
+                throw new AccessDeniedException("invalid username");
+            }
             return username.substring(0, index);
         }
-        return null;
+        throw new AccessDeniedException("user not authenticated");
     }
 }
