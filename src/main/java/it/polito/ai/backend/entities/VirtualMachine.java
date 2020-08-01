@@ -46,7 +46,7 @@ public class VirtualMachine {
     }
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "vm_model")
+    @JoinColumn(name = "model_id")
     VirtualMachineModel virtualMachineModel;
 
     public void setVirtualMachineModel(VirtualMachineModel virtualMachineModel) {
