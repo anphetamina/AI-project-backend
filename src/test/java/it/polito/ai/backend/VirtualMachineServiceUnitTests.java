@@ -12,8 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
 import org.opentest4j.TestAbortedException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 import javax.transaction.Transactional;
 import javax.validation.ConstraintViolationException;
@@ -26,7 +29,6 @@ import java.util.stream.IntStream;
 
 @SpringBootTest
 @Transactional
-@AutoConfigureMockMvc(addFilters = false)
 class VirtualMachineServiceUnitTests {
 
     static List<Team> teams;
@@ -91,7 +93,7 @@ class VirtualMachineServiceUnitTests {
         IntStream.range(0, nCourses)
                 .forEach(i -> {
                     Course course = Course.builder()
-                            .id("c-"+i)
+                            .id("c"+i)
                             .name("course-" + i)
                             .min(4)
                             .max(6)
@@ -109,20 +111,33 @@ class VirtualMachineServiceUnitTests {
                             .build();
                     models.add(model);
 
+                    String id = "d"+i;
+
+                    Teacher teacher = Teacher.builder()
+                            .id(id)
+                            .email(String.format("%s@polito.it", id))
+                            .name("name-" + id)
+                            .firstName("first_name-" + id)
+                            .courses(new ArrayList<>())
+                            .build();
+
+                    course.addTeacher(teacher);
                     course.setVirtualMachineModel(model);
 
                 });
 
         IntStream.range(0, nStudents)
                 .forEach(i -> {
-                    String id = "s-"+i;
+                    String id = "s"+i;
                     Student student = Student.builder()
                             .id(id)
                             .name("name-" + id)
                             .firstName("first_name-" + id)
+                            .email(String.format("%s@studenti.polito.it", id))
                             .courses(new ArrayList<>())
                             .teams(new ArrayList<>())
                             .virtual_machines(new ArrayList<>())
+                            .assignments(new ArrayList<>())
                             .build();
                     students.add(student);
 
