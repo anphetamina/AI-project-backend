@@ -13,6 +13,13 @@ public interface SecurityService {
     boolean hasDefined(Long modelId);
     boolean canAccess(Long modelId);
 
+    boolean canView(Long exerciseId);
+    boolean canOpen(Long exerciseId);
+    boolean isDone(Long exerciseId);
+
+    boolean isAuthor(Long assignmentId);
+    boolean isReview(Long assignmentId);
+
 
     String getId();
 }

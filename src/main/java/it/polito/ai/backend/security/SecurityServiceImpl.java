@@ -25,6 +25,10 @@ public class SecurityServiceImpl implements SecurityService {
     VirtualMachineModelRepository virtualMachineModelRepository;
     @Autowired
     ConfigurationRepository configurationRepository;
+    @Autowired
+    ExerciseRepository exerciseRepository;
+    @Autowired
+    AssignmentRepository assignmentRepository;
 
     /**
      *
@@ -195,6 +199,62 @@ public class SecurityServiceImpl implements SecurityService {
                 .map(m -> m.getCourse().getStudents()
                         .stream()
                         .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
+    }
+
+    /**
+     *
+     * @return true if the authenticated user is enrolled to the course of the exerciseId
+     */
+    @Override
+    public boolean canView(Long exerciseId) {
+        String userId = this.getId();
+        return exerciseRepository.findById(exerciseId)
+                .map(exercise -> exercise.getCourse().getStudents()
+                    .stream()
+                    .anyMatch(s -> s.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
+    }
+    /**
+     *
+     * @return true if the course of the exerciseId is taught by the authenticated teacher
+     */
+    @Override
+    public boolean canOpen(Long exerciseId) {
+        String userId = this.getId();
+        return exerciseRepository.findById(exerciseId)
+                .map(exercise -> exercise.getCourse().getTeachers()
+                        .stream()
+                        .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
+                .orElse(false);
+    }
+
+    /**
+     *
+     * @return true if the assignments of the exercise is done by the authenticated user
+     */
+    public boolean isDone(Long exerciseId) {
+        String userId = this.getId();
+        return exerciseRepository.findById(exerciseId).map(
+                e -> e.getAssignments()
+        .stream().anyMatch(assignment -> assignment.getStudent().getId().equalsIgnoreCase(userId)))
+        .orElse(false);
+    }
+
+    @Override
+    public boolean isAuthor(Long assignmentId) {
+        String userId = this.getId();
+        return assignmentRepository.findById(assignmentId)
+                .map(a -> a.getStudent().getId().equalsIgnoreCase(userId))
+                .orElse(false);
+    }
+
+    @Override
+    public boolean isReview(Long assignmentId) {
+        String userId = this.getId();
+        return assignmentRepository.findById(assignmentId)
+                .map(a -> a.getExercise().getCourse().getTeachers()
+                .stream().anyMatch(teacher -> teacher.getId().equalsIgnoreCase(userId)))
                 .orElse(false);
     }
 

@@ -16,6 +16,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -88,10 +89,7 @@ public class ExerciseController {
     @Operation(summary = "set an assignment as read")
     @PostMapping("/{exerciseId}/students/{studentId}/assignmentRead")
     boolean setReadAssignment(@PathVariable @NotNull Long exerciseId, @PathVariable @NotBlank String studentId){
-        //todo studente loggato con la sua matricola
         return exerciseService.setAssignmentsReadForStudentAndExercise(exerciseId,studentId);
-
-
     }
 
     @Operation(summary = "create a new assignment for an exercise")

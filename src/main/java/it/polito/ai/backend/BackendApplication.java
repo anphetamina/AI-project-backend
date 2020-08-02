@@ -67,6 +67,10 @@ public class BackendApplication {
                             .username("s123459@polito.it")
                             .password(passwordEncoder.encode("studente"))
                             .roles(Arrays.asList("ROLE_STUDENT")).build());
+                    users.save(User.builder()
+                            .username("s123461@polito.it")
+                            .password(passwordEncoder.encode("studente"))
+                            .roles(Arrays.asList("ROLE_STUDENT")).build());
 
                     System.out.println("printing all users...");
                     users.findAll().

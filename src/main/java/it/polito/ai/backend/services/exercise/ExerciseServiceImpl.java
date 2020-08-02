@@ -55,9 +55,8 @@ public class ExerciseServiceImpl implements ExerciseService {
             } else if (!course.get().isEnabled()) {
                 throw new CourseNotEnabledException(courseId);
             }
-            System.out.println(expired);
-            if(expired.before(Utils.getNow())){
-                throw new ExerciseServiceException("Invalid expired time");}
+            if(expired.before(Utils.getNow()))
+                throw new ExerciseServiceException("Invalid expired time");
 
             Exercise exercise = new Exercise();
             exercise.setPublished(published);
@@ -69,6 +68,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canOpen(#exerciseId)) or (hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(@studentId))")
     public List<AssignmentDTO> getAssignmentByStudentAndExercise(String studentId, Long exerciseId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
@@ -86,12 +86,14 @@ public class ExerciseServiceImpl implements ExerciseService {
 
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canOpen(#exerciseId)) or (hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId))")
     public Optional<ExerciseDTO> getExercise(Long id) {
         return exerciseRepository.findById(id)
                 .map(e -> modelMapper.map(e, ExerciseDTO.class));
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isReview(#assignmentId)) or (hasRole('STUDENT') and @securityServiceImpl.isAuthor(#assignmentId))")
     public Optional<AssignmentDTO> getAssignment(Long assignmentId) {
         return assignmentRepository.findById(assignmentId)
                 .map(a -> modelMapper.map(a, AssignmentDTO.class));
@@ -99,6 +101,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isReview(#assignmentId)) or (hasRole('STUDENT') and @securityServiceImpl.isAuthor(#assignmentId))")
     public Optional<ExerciseDTO> getExerciseForAssignment(Long assignmentId) {
         return assignmentRepository.findById(assignmentId)
                 .map(a -> modelMapper.map(a.getExercise(), ExerciseDTO.class));
@@ -107,8 +110,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
 
     @Override
-    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId) ) or " +
-            "(hasRole('STUDENT') and @securityServiceImpl.isEnrolled(#courseId))")
+    @PreAuthorize ("(hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)) or (hasRole('STUDENT') and @securityServiceImpl.isEnrolled(#courseId))")
     public List<ExerciseDTO> getExercisesForCourse(String courseId) {
         Optional<Course> course = courseRepository.findById(courseId);
         if(!course.isPresent()){
@@ -120,12 +122,15 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId)")
     public Optional<CourseDTO> getCourse(Long exerciseId) {
         return exerciseRepository.findById(exerciseId)
                 .map(e -> modelMapper.map(e.getCourse(), CourseDTO.class));
     }
 
+
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.canOpen(#exerciseId)")
     public boolean setAssignmentsNullForExercise(Long exerciseId) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if(!exercise.isPresent())
@@ -146,6 +151,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(@studentId)")
     public boolean setAssignmentsReadForStudentAndExercise(Long exerciseId, String studentId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
@@ -173,6 +179,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(@studentId)")
     public boolean checkAssignment(Long exerciseId, String studentId){
         /*Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo*/
         Optional<Student> student = studentRepository.findById(studentId);
@@ -198,6 +205,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.canOpen(#exerciseId)")
     public List<AssignmentDTO> getLastAssignments(Long exerciseId) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if(!exercise.isPresent())
@@ -226,6 +234,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(@studentId)")
     public AssignmentDTO addAssignmentByte(Timestamp published, AssignmentStatus state, boolean flag, Integer score, Byte[] image, String studentId, Long exerciseId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
