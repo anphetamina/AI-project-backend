@@ -49,8 +49,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Autowired
     StudentRepository studentRepository;
     @Autowired
-    CourseRepository courseRepository;
-    @Autowired
     TeamRepository teamRepository;
 
     @Async
@@ -198,8 +196,8 @@ public class NotificationServiceImpl implements NotificationService {
             String tokenId = UUID.randomUUID().toString();
             TokenDTO tokenDTO = new TokenDTO(tokenId, teamDTO.getId(), id, TokenStatus.UNDEFINED, timeout);
             if (addToken(tokenDTO)) {
-                TokenDTO enrichedConfirmToken = ModelHelper.enrich(tokenDTO, "confirm",id);
-                TokenDTO enrichedRejectToken = ModelHelper.enrich(tokenDTO, "reject",id);
+                TokenDTO enrichedConfirmToken = ModelHelper.enrich(tokenDTO, "confirm");
+                TokenDTO enrichedRejectToken = ModelHelper.enrich(tokenDTO, "reject");
                 StudentDTO currentStudent = teamService.getStudent(id).orElseThrow(() -> new StudentNotFoundException(id));
                 String address = currentStudent.getEmail();
                 String subject = "Request for team creation";

@@ -80,7 +80,9 @@ public class SecurityServiceImpl implements SecurityService {
                         .stream()
                         .anyMatch(t -> t.getId().equalsIgnoreCase(userId)))
                 .orElse(false);
+
     }
+
 
     /**
      *

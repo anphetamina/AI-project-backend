@@ -1,6 +1,7 @@
 package it.polito.ai.backend.controllers;
 
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.services.notification.NotificationService;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 
@@ -21,9 +22,8 @@ public class ModelHelper {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getOne(studentDTO.getId())).withSelfRel();
         Link coursesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getCourses(studentDTO.getId())).withRel("enrolledTo");
         Link teamsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentDTO.getId())).withRel("partOf");
-        Link assignmentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getAssignments(studentDTO.getId(), null)).withRel("assignments");
         Link virtualMachinesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentDTO.getId())).withRel("owns");
-        return studentDTO.add(selfLink).add(coursesLink).add(teamsLink).add(assignmentsLink).add(virtualMachinesLink);
+        return studentDTO.add(selfLink).add(coursesLink).add(teamsLink).add(virtualMachinesLink);
     }
 
     public static TeamDTO enrich(TeamDTO teamDTO, String courseId, Long configurationId) {
@@ -37,8 +37,8 @@ public class ModelHelper {
 
 
 
-    public static TokenDTO enrich(TokenDTO tokenDTO, String op, String studentId) {
-        Link opLink = WebMvcLinkBuilder.linkTo(StudentController.class).slash("/"+studentId+"/teams/"+op+"/"+tokenDTO.getId()).withRel(op);
+    public static TokenDTO enrich(TokenDTO tokenDTO, String op) {
+        Link opLink = WebMvcLinkBuilder.linkTo(NotificationController.class).slash("/teams/"+op+"/"+tokenDTO.getId()).withRel(op);
         return tokenDTO.add(opLink);
     }
 

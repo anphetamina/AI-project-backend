@@ -137,18 +137,7 @@ public class StudentController {
 
     }
 
-    @GetMapping("{studentId}/teams/confirm/{token}")
-    boolean confirmToken(@PathVariable String token, @PathVariable String studentId) {
-        //todo studentId è quello loggato
-            return notificationService.confirm(token);
 
-    }
-
-    @GetMapping("{studentId}/teams/reject/{token}")
-    boolean rejectToken(@PathVariable String token, @PathVariable String studentId) {
-        //todo studentId è quello loggato
-            return notificationService.reject(token);
-    }
 
     @Operation(summary = "get the owned virtual machines by a student")
     @GetMapping("/{studentId}/virtual-machines")

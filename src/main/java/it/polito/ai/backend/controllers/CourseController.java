@@ -320,12 +320,12 @@ public class CourseController {
 
     @Operation(summary = "create a new exercise for a course")
     @PostMapping("/{courseId}/exercises")
-    void createExercise(@RequestParam("image") MultipartFile file, @RequestParam ExerciseCreationRequest exercise, @PathVariable @NotBlank String courseId){
+    void createExercise(@RequestParam("image") MultipartFile file, @RequestParam String date, @PathVariable @NotBlank String courseId){
         try {
             Utils.checkTypeImage(file);
             System.out.println("Original Image Byte Size - " + file.getBytes().length);
             SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-            Timestamp expired = new Timestamp(format.parse(exercise.getExpired()).getTime());
+            Timestamp expired = new Timestamp(format.parse(date).getTime());
             Timestamp published = Utils.getNow();
             exerciseService.addExerciseForCourse(courseId,published,expired,file);
         } catch (ParseException | IOException | TikaException e) {

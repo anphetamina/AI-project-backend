@@ -12,5 +12,7 @@ public interface SecurityService {
     boolean isHelping(Long teamId);
     boolean hasDefined(Long modelId);
     boolean canAccess(Long modelId);
+
+
     String getId();
 }

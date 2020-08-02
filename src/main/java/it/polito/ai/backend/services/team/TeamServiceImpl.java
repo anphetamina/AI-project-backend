@@ -266,9 +266,9 @@ public class TeamServiceImpl implements TeamService {
     public TeamDTO proposeTeam(String courseId, String name, List<String> memberIds) {
         Optional<Course> course = courseRepository.findById(courseId);
         if (!course.isPresent()) {
-            throw new CourseNotFoundException(courseId);
+            throw new CourseNotFoundException("Not exist course with id: "+courseId);
         } else if (!course.get().isEnabled()) {
-            throw new CourseNotEnabledException(courseId);
+            throw new CourseNotEnabledException("The course is disable"+ courseId);
         }
         if (memberIds.size() < course.get().getMin()) {
             throw new TeamSizeMinException(courseId, String.valueOf(course.get().getMin()));
