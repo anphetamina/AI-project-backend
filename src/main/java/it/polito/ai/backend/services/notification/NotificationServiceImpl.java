@@ -21,6 +21,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -64,6 +65,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.hasToken(#tokenId)")
     public boolean confirm(String tokenId) {
 
         Optional<Token> tokenOptional = tokenRepository.findById(tokenId);
@@ -134,6 +136,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.hasToken(#tokenId)")
     public boolean reject(String tokenId) {
         Optional<Token> tokenOptional = tokenRepository.findById(tokenId);
 
@@ -174,6 +177,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId)")
     public List<TokenDTO> getTokenTeam(Long teamId) {
         if(!teamRepository.findById(teamId).isPresent())
             throw new TeamNotFoundException("Not exist team: "+teamId.toString());
@@ -187,6 +191,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentDTO.id())")
     public void notifyTeam(TeamDTO teamDTO, List<String> memberIds, Timestamp timeout, StudentDTO studentDTO) {
         List<StudentDTO> members = teamService.getMembers(teamDTO.getId());
         if (!(members.size()-1 == memberIds.size())){

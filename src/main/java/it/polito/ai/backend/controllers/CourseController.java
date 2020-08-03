@@ -286,7 +286,7 @@ public class CourseController {
     @ResponseStatus(HttpStatus.CREATED)
         TeamDTO createTeam(@RequestBody @Valid TeamCreationRequest teamCreationRequest, @PathVariable String courseId) {
         try {
-                //todo verifica che chi fa la proposta di team di essere loggato e che il suo studentId conincida
+
                 SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
                 Timestamp timeout = new Timestamp(format.parse(teamCreationRequest.getTimeout()).getTime());
                 if(timeout.before(Utils.getNow()))

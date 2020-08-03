@@ -1,5 +1,7 @@
 package it.polito.ai.backend.security;
 
+import it.polito.ai.backend.entities.Student;
+import it.polito.ai.backend.entities.Teacher;
 import it.polito.ai.backend.repositories.*;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.security.sasl.AuthenticationException;
 import javax.transaction.Transactional;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -33,6 +36,11 @@ public class SecurityServiceImpl implements SecurityService {
     ExerciseRepository exerciseRepository;
     @Autowired
     AssignmentRepository assignmentRepository;
+    @Autowired
+    TokenRepository tokenRepository;
+    @Autowired
+    StudentRepository studentRepository;
+
 
     /**
      *
@@ -44,6 +52,7 @@ public class SecurityServiceImpl implements SecurityService {
         String userId = this.getId();
         return userId.equalsIgnoreCase(id);
     }
+
 
     /**
      *
@@ -246,6 +255,10 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
+    /**
+     *
+     * @return true if the assignment is done by the authenticated user
+     */
     public boolean isAuthor(Long assignmentId) {
         String userId = this.getId();
         return assignmentRepository.findById(assignmentId)
@@ -254,12 +267,27 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
+    /**
+     *
+     * @return true if the assignments can be review by the teacher
+     */
     public boolean isReview(Long assignmentId) {
         String userId = this.getId();
         return assignmentRepository.findById(assignmentId)
                 .map(a -> a.getExercise().getCourse().getTeachers()
                 .stream().anyMatch(teacher -> teacher.getId().equalsIgnoreCase(userId)))
                 .orElse(false);
+    }
+
+    @Override
+    /**
+     *
+     * @return true if the authenticated user owns the token
+     */
+    public boolean hasToken(String tokenId) {
+        String userId = this.getId();
+        return tokenRepository.findById(tokenId)
+                .map(t -> t.getStudentId().equalsIgnoreCase(userId)).orElse(false);
     }
 
     /**
@@ -270,11 +298,19 @@ public class SecurityServiceImpl implements SecurityService {
     public String getId() {
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
-            int index = username.indexOf('@');
-            if (index == -1) {
-                throw new InvalidUsernameException();
+            if(username.contains("@studenti.polito.it")){
+                Optional<Student> s = studentRepository.findByEmail(username);
+                if(!s.isPresent())
+                    throw new InvalidUsernameException();
+                return s.get().getId();
             }
-            return username.substring(0, index);
+            if(username.contains("@polito.it")){
+                Optional<Teacher> t = teacherRepository.findByEmail(username);
+                if(!t.isPresent())
+                    throw  new InvalidUsernameException();
+                return t.get().getId();
+            }
+
         }
         throw new PrincipalNotFoundException();
     }

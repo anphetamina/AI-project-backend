@@ -64,11 +64,11 @@ public class BackendApplication {
                             .password(passwordEncoder.encode("password"))
                             .roles(Arrays.asList("ROLE_TEACHER")).build());
                     users.save(User.builder()
-                            .username("s123459@polito.it")
+                            .username("s123459@studenti.polito.it")
                             .password(passwordEncoder.encode("studente"))
                             .roles(Arrays.asList("ROLE_STUDENT")).build());
                     users.save(User.builder()
-                            .username("s123461@polito.it")
+                            .username("s123461@studenti.polito.it")
                             .password(passwordEncoder.encode("studente"))
                             .roles(Arrays.asList("ROLE_STUDENT")).build());
 

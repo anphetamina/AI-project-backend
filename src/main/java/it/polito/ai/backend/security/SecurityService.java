@@ -22,6 +22,8 @@ public interface SecurityService {
     boolean isAuthor(Long assignmentId);
     boolean isReview(Long assignmentId);
 
+    boolean hasToken(String tokenId);
+
 
     String getId();
 }
