@@ -85,12 +85,12 @@ public class VirtualMachineServiceIntegrationAndSecurityTests {
         mockMvc.perform(post("/API/virtual-machines")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = "")
-    void createVirtualMachine_noUsernameAndNoRoles() throws Exception {
+    void createVirtualMachine_noRolesAndBlankUsername() throws Exception {
         String courseId = "c0";
         Long teamId = 1L;
         String studentId = "student";
@@ -138,7 +138,7 @@ public class VirtualMachineServiceIntegrationAndSecurityTests {
         mockMvc.perform(post("/API/virtual-machines")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

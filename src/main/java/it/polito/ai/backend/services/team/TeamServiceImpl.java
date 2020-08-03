@@ -444,7 +444,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    // todo preauthorize
+    // todo preauthorize when registration is complete
     public boolean addTeacher(TeacherDTO teacher) {
         if (!teacherRepository.existsById(teacher.getId())) {
             Teacher t = modelMapper.map(teacher, Teacher.class);

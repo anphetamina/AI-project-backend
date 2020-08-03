@@ -1,12 +1,16 @@
 package it.polito.ai.backend.security;
 
 import it.polito.ai.backend.repositories.*;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.security.sasl.AuthenticationException;
 import javax.transaction.Transactional;
 
 @Service
@@ -268,10 +272,10 @@ public class SecurityServiceImpl implements SecurityService {
             String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
             int index = username.indexOf('@');
             if (index == -1) {
-                throw new AccessDeniedException("invalid username");
+                throw new InvalidUsernameException();
             }
             return username.substring(0, index);
         }
-        throw new AccessDeniedException("user not authenticated");
+        throw new PrincipalNotFoundException();
     }
 }

@@ -1,5 +1,6 @@
 package it.polito.ai.backend.controllers;
 
+import it.polito.ai.backend.security.SecurityServiceException;
 import it.polito.ai.backend.services.exercise.AssignmentNotFoundException;
 import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
 import it.polito.ai.backend.services.team.TeamServiceBadRequestException;
@@ -16,9 +17,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.ValidationException;
-import java.io.IOException;
 
 @RestControllerAdvice
 public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
@@ -28,15 +27,13 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
             AssignmentNotFoundException.class,
             ExerciseNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    ResponseEntity<String> handleNotFoundException(HttpServletResponse response, Exception exception, RuntimeException runtimeException) throws IOException {
-        // response.sendError(HttpStatus.NOT_FOUND.value(), exception.getMessage());
+    ResponseEntity<String> handleNotFoundException(RuntimeException runtimeException) {
         return new ResponseEntity<>(runtimeException.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler({TeamServiceConflictException.class, VirtualMachineServiceConflictException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
-    ResponseEntity<String> handleConflictException(HttpServletResponse response, Exception exception, RuntimeException runtimeException) throws IOException {
-        // response.sendError(HttpStatus.CONFLICT.value(), exception.getMessage());
+    ResponseEntity<String> handleConflictException(RuntimeException runtimeException) {
         return new ResponseEntity<>(runtimeException.getMessage(), HttpStatus.CONFLICT);
     }
 
@@ -47,8 +44,13 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
             MappingException.class,
             ValidationException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    ResponseEntity<String> handleArgumentException(HttpServletResponse response, Exception exception, RuntimeException runtimeException) throws IOException {
-        // response.sendError(HttpStatus.BAD_REQUEST.value());
+    ResponseEntity<String> handleArgumentException(RuntimeException runtimeException) {
         return new ResponseEntity<>(runtimeException.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({SecurityServiceException.class})
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    ResponseEntity<String> handleAuthException(RuntimeException runtimeException) {
+        return new ResponseEntity<>(runtimeException.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 }

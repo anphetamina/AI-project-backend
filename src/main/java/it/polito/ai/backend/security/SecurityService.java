@@ -1,5 +1,7 @@
 package it.polito.ai.backend.security;
 
+import javax.security.sasl.AuthenticationException;
+
 public interface SecurityService {
     boolean isAuthorized(String id);
     boolean isEnrolled(String courseId);
