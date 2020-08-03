@@ -1,6 +1,7 @@
 package it.polito.ai.backend.services.vm;
 
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.entities.SystemImage;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,4 +49,5 @@ public interface VirtualMachineService {
     int getCountActiveVirtualMachinesForTeam(Long teamId);
     int getCountVirtualMachinesForTeam(Long teamId);
     ResourcesResponse getResourcesByTeam(Long teamId);
+    List<SystemImage> getImages();
 }

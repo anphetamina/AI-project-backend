@@ -740,4 +740,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
         return response;
     }
+
+    @Override
+    @PreAuthorize("hasRole('TEACHER') or hasRole('STUDENT')")
+    public List<SystemImage> getImages() {
+        return Arrays.asList(SystemImage.values());
+    }
 }

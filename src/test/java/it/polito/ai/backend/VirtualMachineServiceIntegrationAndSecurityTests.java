@@ -175,4 +175,11 @@ public class VirtualMachineServiceIntegrationAndSecurityTests {
         .andExpect(status().isOk())
         .andDo(print());
     }
+
+    @Test
+    @WithMockUser(roles = "TEACHER")
+    void getSystemImages() throws Exception {
+        mockMvc.perform(get("/API/virtual-machine-models"))
+                .andDo(print());
+    }
 }

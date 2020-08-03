@@ -3,6 +3,7 @@ package it.polito.ai.backend.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.CourseDTO;
 import it.polito.ai.backend.dtos.VirtualMachineModelDTO;
+import it.polito.ai.backend.entities.SystemImage;
 import it.polito.ai.backend.services.vm.VirtualMachineModelNotFoundException;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequestMapping("/API/virtual-machine-models")
@@ -46,5 +49,11 @@ public class VirtualMachineModelController {
         if (!virtualMachineService.deleteVirtualMachineModel(modelId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "please turn off all the virtual machines using this model");
         }
+    }
+
+    @Operation(summary = "get all system images")
+    @GetMapping({"", "/"})
+    List<SystemImage> all() {
+        return virtualMachineService.getImages();
     }
 }
