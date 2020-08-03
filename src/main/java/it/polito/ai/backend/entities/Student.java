@@ -19,8 +19,8 @@ public class Student {
     @Id
     @EqualsAndHashCode.Include
     String id;
-    @NotBlank(message = "The firstName is mandatory")
-    String name;
+    @NotBlank(message = "The lastName is mandatory")
+    String lastName;
     @NotBlank(message = "The firstName is mandatory")
     String firstName;
     @Email

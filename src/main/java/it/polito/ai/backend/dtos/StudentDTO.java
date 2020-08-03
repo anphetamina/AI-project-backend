@@ -19,9 +19,8 @@ public class StudentDTO extends RepresentationModel<StudentDTO> {
     @CsvBindByName
     @NotBlank
     String id;
-    @CsvBindByName
-    @NotBlank
-    String name;
+    @CsvBindByName(column = "last_name")    @NotBlank
+    String lastName;
     @CsvBindByName(column = "first_name")
     @NotBlank
     String firstName;

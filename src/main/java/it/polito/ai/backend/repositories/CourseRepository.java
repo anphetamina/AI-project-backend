@@ -19,7 +19,7 @@ public interface CourseRepository extends JpaRepository<Course, String> {
 
 
     /*
-    select s.id, s.name, s.first_name
+    select s.id, s.last_name, s.first_name
     from student s, course c, student_course sc
     where sc.student_id=s.id and sc.course_name=c.name and c.name='applicazioni internet' and s.id not in
       (

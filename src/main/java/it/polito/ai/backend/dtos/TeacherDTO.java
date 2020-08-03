@@ -16,7 +16,7 @@ public class TeacherDTO extends RepresentationModel<TeacherDTO> {
     @NotBlank
     String id;
     @NotBlank
-    String name;
+    String lastName;
     @NotBlank
     String firstName;
     @Email
