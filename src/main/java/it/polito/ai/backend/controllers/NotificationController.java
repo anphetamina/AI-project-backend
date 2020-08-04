@@ -16,14 +16,14 @@ public class NotificationController {
 
     @GetMapping("/teams/confirm/{token}")
     boolean confirmToken(@PathVariable String token) {
-        //todo studentId è quello loggato
+
         return notificationService.confirm(token);
 
     }
 
     @GetMapping("/teams/reject/{token}")
     boolean rejectToken(@PathVariable String token) {
-        //todo studentId è quello loggato
+
         return notificationService.reject(token);
     }
 

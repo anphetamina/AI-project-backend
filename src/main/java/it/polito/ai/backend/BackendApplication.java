@@ -44,47 +44,7 @@ public class BackendApplication {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    CommandLineRunner run(UserRepository users, PasswordEncoder passwordEncoder){
-        return  new CommandLineRunner() {
-            @Override
-            public void run(String... args) throws Exception {
-                try{
 
-                    users.save(User.builder()
-                            .username("d123456@polito.it")
-                            .password(passwordEncoder.encode("password"))
-                            .roles(Arrays.asList("ROLE_TEACHER")).build());
-                    users.save(User.builder()
-                            .username("d123457@polito.it")
-                            .password(passwordEncoder.encode("password"))
-                            .roles(Arrays.asList("ROLE_TEACHER")).build());
-                    users.save(User.builder()
-                            .username("d123458@polito.it")
-                            .password(passwordEncoder.encode("password"))
-                            .roles(Arrays.asList("ROLE_TEACHER")).build());
-                    users.save(User.builder()
-                            .username("s123459@studenti.polito.it")
-                            .password(passwordEncoder.encode("studente"))
-                            .roles(Arrays.asList("ROLE_STUDENT")).build());
-                    users.save(User.builder()
-                            .username("s123461@studenti.polito.it")
-                            .password(passwordEncoder.encode("studente"))
-                            .roles(Arrays.asList("ROLE_STUDENT")).build());
-
-                    System.out.println("printing all users...");
-                    users.findAll().
-                            forEach(v-> System.out.println("User "+ v.toString()));
-
-                }catch (Exception e){
-                    System.out.println(e.getMessage());
-                }
-
-
-
-            }
-        };
-    }
     public static void main(String[] args) {
         SpringApplication.run(BackendApplication.class, args);
     }

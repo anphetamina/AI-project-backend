@@ -41,7 +41,6 @@ public class Utils {
         metadata.set(Metadata.RESOURCE_NAME_KEY, file.getOriginalFilename());
         MediaType mimeType = tika.getDetector().detect(TikaInputStream.get(file.getBytes()), metadata);
         String type = mimeType.toString();
-        System.out.println(type);
         if (!type.equalsIgnoreCase("image/png") && !type.equalsIgnoreCase("image/jpg") && !type.equalsIgnoreCase("image/jpeg")) {
             throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, type);
         }

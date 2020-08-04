@@ -30,6 +30,8 @@ public class User implements UserDetails {
     @NotEmpty(message = "Please enter password")
     private  String password;
 
+    private boolean enable = false;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default
     private List<String> roles = new ArrayList<>();
@@ -66,6 +68,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enable;
     }
 }

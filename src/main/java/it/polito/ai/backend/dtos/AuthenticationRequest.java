@@ -1,4 +1,4 @@
-package it.polito.ai.backend.controllers;
+package it.polito.ai.backend.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

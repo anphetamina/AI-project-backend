@@ -1,9 +1,17 @@
 package it.polito.ai.backend.controllers;
 
+import it.polito.ai.backend.dtos.AuthenticationRequest;
+import it.polito.ai.backend.dtos.UserInformationRequest;
+import it.polito.ai.backend.entities.ConfirmationToken;
+import it.polito.ai.backend.security.CustomUserDetailsService;
 import it.polito.ai.backend.security.JwtTokenProvider;
 import it.polito.ai.backend.repositories.UserRepository;
 
+import it.polito.ai.backend.services.Utils;
+import org.apache.tika.exception.TikaException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,13 +19,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.springframework.http.ResponseEntity.ok;
 
@@ -33,8 +44,11 @@ public class AuthController {
     @Autowired
     UserRepository users;
 
+    @Autowired
+    CustomUserDetailsService customUserDetailsService;
+
     @PostMapping("/sign-in")
-    public ResponseEntity signin(@RequestBody AuthenticationRequest data){
+    public ResponseEntity signIn(@RequestBody @Valid AuthenticationRequest data){
         try {
             String username = data.getUsername();
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username,data.getPassword()));
@@ -49,4 +63,25 @@ public class AuthController {
             throw new BadCredentialsException("Invalid username/password supplied");
         }
     }
+
+    @PostMapping("/sign-up")
+    public ResponseEntity.BodyBuilder signUp(@RequestPart("user") UserInformationRequest user, @RequestPart("image")MultipartFile file) {
+        try {
+            Utils.checkTypeImage(file);
+            customUserDetailsService.signUpUser(user,Utils.getBytes(file));
+            return ResponseEntity.status(HttpStatus.OK);
+
+        } catch (AuthenticationException e) {
+            throw new BadCredentialsException("Invalid username/password supplied");
+        } catch (TikaException | IOException e) {
+            e.printStackTrace();
+            throw  new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
+        }
+    }
+
+    @GetMapping("/sign-up/confirm/{token}")
+    boolean confirmMail(@PathVariable String token) {
+        return customUserDetailsService.confirmUser(token);
+    }
+
 }

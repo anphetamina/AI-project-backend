@@ -41,6 +41,10 @@ public class ModelHelper {
         Link opLink = WebMvcLinkBuilder.linkTo(NotificationController.class).slash("/teams/"+op+"/"+tokenDTO.getId()).withRel(op);
         return tokenDTO.add(opLink);
     }
+    public static ConfirmationTokenDTO enrich(ConfirmationTokenDTO confirmationTokenDTO) {
+        Link opLink = WebMvcLinkBuilder.linkTo(AuthController.class).slash("/sign-up/confirm/"+confirmationTokenDTO.getId()).withRel("confirmation");
+        return confirmationTokenDTO.add(opLink);
+    }
 
     public static TeacherDTO enrich(TeacherDTO teacherDTO) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeacherController.class).getOne(teacherDTO.getId())).withSelfRel();
