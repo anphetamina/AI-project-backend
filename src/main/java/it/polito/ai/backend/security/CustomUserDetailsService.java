@@ -63,8 +63,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         ConfirmationTokenDTO enrichToken = ModelHelper.enrich(token);
         mailMessage.setTo(userMail);
-        //todo email segreteria
-        mailMessage.setFrom("ralucagabriela.tabacaru@studenti.polito.it");
+        mailMessage.setFrom("asant.lab3@gmail.com");
         mailMessage.setSubject("Mail Confirmation Link!");
         mailMessage.setText(
                 "Thank you for registering. Please click on the below link to activate your account. " + enrichToken.getLink("confirmation").get().getHref() );

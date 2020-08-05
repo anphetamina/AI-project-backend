@@ -105,8 +105,6 @@ public class ScheduledTasks {
         }
     }
 
-    //todo delite token scaduti
-    /*cerco confrimationToken scaduti, elimino user e i ruoli e poli elimino studenti/teacher e poi elimino token*/
     /*
      * every day at 4:00am
      * */

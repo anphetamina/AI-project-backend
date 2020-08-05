@@ -56,7 +56,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void sendMessage(String address, String subject, String body ,String sender) {
         SimpleMailMessage message = new SimpleMailMessage();
-        //todo in application.propretis bisogna loggarsi con un utente che detiene il domino di mittente
         message.setFrom(sender);
         message.setTo(address);
         message.setSubject(subject);
@@ -204,7 +203,7 @@ public class NotificationServiceImpl implements NotificationService {
                 TokenDTO enrichedConfirmToken = ModelHelper.enrich(tokenDTO, "confirm");
                 TokenDTO enrichedRejectToken = ModelHelper.enrich(tokenDTO, "reject");
                 StudentDTO currentStudent = teamService.getStudent(id).orElseThrow(() -> new StudentNotFoundException(id));
-                String address = currentStudent.getEmail();
+               // String address = currentStudent.getEmail();
                 String subject = "Request for team creation";
                 StringBuilder body = new StringBuilder(String.format("Hi %s %s,\n", currentStudent.getFirstName(), currentStudent.getLastName()));
                 body.append(String.format("you have been added to a team (%s).\n\n", teamDTO.getName()));
@@ -216,7 +215,7 @@ public class NotificationServiceImpl implements NotificationService {
                 body.append(String.format("Otherwise, if you want to refuse this invitation, please click the following link:\n%s\n\n", enrichedRejectToken.getLink("reject").get().getHref()));
                 body.append("\nRegards.");
 
-                sendMessage(address, subject, body.toString(),studentDTO.getEmail());
+                sendMessage("asant.lab3@gmail.com", subject, body.toString(),studentDTO.getEmail());
             } else {
                 throw new DuplicateTokenException(tokenId);
             }

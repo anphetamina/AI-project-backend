@@ -298,24 +298,7 @@ public class SecurityServiceImpl implements SecurityService {
     public String getId() {
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
-           //todo
-            System.out.println(username);
-            if(username==null)
-               throw new InvalidUsernameException();
-           return username;
-            /* if(username.contains("@studenti.polito.it")){
-                Optional<Student> s = studentRepository.findByEmail(username);
-                if(!s.isPresent())
-                    throw new InvalidUsernameException();
-                return s.get().getId();
-            }
-            if(username.contains("@polito.it")){
-                Optional<Teacher> t = teacherRepository.findByEmail(username);
-                if(!t.isPresent())
-                    throw  new InvalidUsernameException();
-                return t.get().getId();
-            }*/
-
+            return username;
         }
         throw new PrincipalNotFoundException();
     }
