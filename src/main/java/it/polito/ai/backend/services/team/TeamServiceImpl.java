@@ -15,7 +15,6 @@ import it.polito.ai.backend.services.notification.NotificationService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -23,7 +22,6 @@ import java.io.Reader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,6 +44,11 @@ public class TeamServiceImpl implements TeamService {
     @Override
     @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isAuthorized(#course.getTeacherId())")
     public boolean addCourse(CourseDTO course) {
+
+        if (course.getMin() > course.getMax()) {
+            throw new InvalidCourseException("min value cannot exceeds the max one");
+        }
+
         if (!courseRepository.existsById(course.getId())) {
             Course c = modelMapper.map(course, Course.class);
             c.addTeacher(teacherRepository.findById(course.getTeacherId())
@@ -430,6 +433,10 @@ public class TeamServiceImpl implements TeamService {
         Course course = teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
                 .getCourse();
+
+        if (course == null) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(modelMapper.map(course, CourseDTO.class));
     }
 

@@ -10,11 +10,13 @@ import it.polito.ai.backend.services.team.TeamNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -365,9 +367,14 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @Override
     @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)) or (hasRole('STUDENT') and @securityServiceImpl.isEnrolled(#courseId))")
     public Optional<VirtualMachineModelDTO> getVirtualMachineModelForCourse(String courseId) {
-        Course course =  courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
+        VirtualMachineModel virtualMachineModel =  courseRepository.findById(courseId)
+                .orElseThrow(() -> new CourseNotFoundException(courseId))
+                .getVirtualMachineModel();
 
-        return Optional.ofNullable(modelMapper.map(course.getVirtualMachineModel(), VirtualMachineModelDTO.class));
+        if (virtualMachineModel == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(modelMapper.map(virtualMachineModel, VirtualMachineModelDTO.class));
     }
 
     @Override
@@ -630,6 +637,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
                 .getConfiguration();
 
+        if (configuration == null) {
+            return Optional.empty();
+        }
+
         return Optional.ofNullable(modelMapper.map(configuration, ConfigurationDTO.class));
     }
 
@@ -640,6 +651,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
                 .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()))
                 .getTeam();
 
+        if (team == null) {
+            return Optional.empty();
+        }
+
         return Optional.ofNullable(modelMapper.map(team, TeamDTO.class));
     }
 
@@ -649,6 +664,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         VirtualMachineModel virtualMachineModel = virtualMachineRepository.findById(vmId)
                 .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()))
                 .getVirtualMachineModel();
+
+        if (virtualMachineModel == null) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(modelMapper.map(virtualMachineModel, VirtualMachineModelDTO.class));
     }
 
@@ -658,6 +677,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         Course course = virtualMachineModelRepository.findById(modelId)
                 .orElseThrow(() -> new VirtualMachineModelNotFoundException(modelId.toString()))
                 .getCourse();
+
+        if (course == null) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(modelMapper.map(course, CourseDTO.class));
     }
 
@@ -667,6 +690,10 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         Team team = configurationRepository.findById(configurationId)
                 .orElseThrow(() -> new ConfigurationNotFoundException(configurationId.toString()))
                 .getTeam();
+
+        if (team == null) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(modelMapper.map(team, TeamDTO.class));
     }
 
