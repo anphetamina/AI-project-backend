@@ -3,6 +3,7 @@ package it.polito.ai.backend;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import it.polito.ai.backend.entities.User;
 import it.polito.ai.backend.repositories.UserRepository;
@@ -35,8 +36,13 @@ public class BackendApplication {
                         .version(appVersion)
                         .description("API documentation for the AI project backend"))
                 .components(new Components().addSecuritySchemes("bearer-jwt",
-                        new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")
-                                .in(SecurityScheme.In.HEADER).name("Authorization")));
+                        new SecurityScheme()
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
+                                .in(SecurityScheme.In.HEADER)
+                                .name("Authorization")))
+                .addSecurityItem(new SecurityRequirement().addList("bearer-jwt", Arrays.asList("read", "write")));
     }
 
     @Bean
