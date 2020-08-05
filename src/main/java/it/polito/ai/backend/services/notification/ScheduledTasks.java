@@ -1,11 +1,10 @@
 package it.polito.ai.backend.services.notification;
 
+import io.jsonwebtoken.Jwt;
 import it.polito.ai.backend.dtos.StudentDTO;
 import it.polito.ai.backend.entities.*;
-import it.polito.ai.backend.repositories.AssignmentRepository;
-import it.polito.ai.backend.repositories.CourseRepository;
-import it.polito.ai.backend.repositories.ExerciseRepository;
-import it.polito.ai.backend.repositories.TokenRepository;
+import it.polito.ai.backend.repositories.*;
+import it.polito.ai.backend.security.CustomUserDetailsService;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.exercise.AssignmentStatus;
 import it.polito.ai.backend.services.exercise.ExerciseService;
@@ -35,6 +34,14 @@ public class ScheduledTasks {
     CourseRepository courseRepository;
     @Autowired
     TeamService teamService;
+    @Autowired
+    JwtBlackListRepository jwtBlackListRepository;
+    @Autowired
+    ConfirmationTokenRepository confirmationTokenRepository;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    CustomUserDetailsService userService;
 
     /*
     * every day at 4am
@@ -51,9 +58,9 @@ public class ScheduledTasks {
     }
 
     /*
-     * every day at 4:30am
+     * every day at 4:00am
      * */
-    @Scheduled(cron = "0 30 4 * * ?")
+    @Scheduled(cron = "0 00 4 * * ?")
     public void expiredAssignment() {
         System.out.println("Conrtollo la scadenza condegne");
         /*Consegne scaduta*/
@@ -100,4 +107,30 @@ public class ScheduledTasks {
 
     //todo delite token scaduti
     /*cerco confrimationToken scaduti, elimino user e i ruoli e poli elimino studenti/teacher e poi elimino token*/
+    /*
+     * every day at 4:00am
+     * */
+    @Scheduled(cron = "0 00 04 * * ?")
+    public void clearConfirmationToken() {
+        System.out.println("Remove all user not confirmed");
+        List<ConfirmationToken> listToken = confirmationTokenRepository.findAllByExpiryDateBefore(Utils.getNow());
+        System.out.println(listToken.size());
+        listToken.forEach(t -> {
+           userService.deleteUser(t.getUsername());
+        });
+        confirmationTokenRepository.deleteAll(listToken);
+
+    }
+
+    /*
+     * every day at 4:00am
+     * */
+    @Scheduled(cron = "0 00 04 * * ?")
+    public void clearBlackList() {
+        jwtBlackListRepository.deleteAll();
+        System.out.println("JwtTokenBlackList is clear");
+
+    }
+
+
 }

@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class User implements UserDetails {
     @Id
+    private String id;
     @Email
-    private String username;
-
+    private String email;
     @NotEmpty(message = "Please enter password")
     private  String password;
 
@@ -48,8 +48,9 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return this.username;
+        return this.id;
     }
+
 
     @Override
     public boolean isAccountNonExpired() {

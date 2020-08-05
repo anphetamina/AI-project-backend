@@ -8,5 +8,5 @@ import java.sql.Timestamp;
 import java.util.List;
 
 public interface ConfirmationTokenRepository extends JpaRepository<ConfirmationToken, String> {
-    List<ConfirmationToken> findByExpiryDate(Timestamp t);
+    List<ConfirmationToken> findAllByExpiryDateBefore(Timestamp t);
 }

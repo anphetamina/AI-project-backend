@@ -298,7 +298,12 @@ public class SecurityServiceImpl implements SecurityService {
     public String getId() {
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
-            if(username.contains("@studenti.polito.it")){
+           //todo
+            System.out.println(username);
+            if(username==null)
+               throw new InvalidUsernameException();
+           return username;
+            /* if(username.contains("@studenti.polito.it")){
                 Optional<Student> s = studentRepository.findByEmail(username);
                 if(!s.isPresent())
                     throw new InvalidUsernameException();
@@ -309,7 +314,7 @@ public class SecurityServiceImpl implements SecurityService {
                 if(!t.isPresent())
                     throw  new InvalidUsernameException();
                 return t.get().getId();
-            }
+            }*/
 
         }
         throw new PrincipalNotFoundException();

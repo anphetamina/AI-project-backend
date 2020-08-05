@@ -1,6 +1,9 @@
 package it.polito.ai.backend.security;
 
 import io.jsonwebtoken.*;
+import it.polito.ai.backend.entities.JwtBlackList;
+import it.polito.ai.backend.repositories.JwtBlackListRepository;
+import it.polito.ai.backend.services.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,13 +33,16 @@ public class JwtTokenProvider {
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Autowired
+    private JwtBlackListRepository jwtBlackListRepository;
+
     @PostConstruct
     protected void init(){
         secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
     }
 
-    public String createToken(String username, List<String> roles){
-        Claims claims = Jwts.claims().setSubject(username);
+    public String createToken(String userId, List<String> roles){
+        Claims claims = Jwts.claims().setSubject(userId);
         claims.put("roles",roles);
 
         Date now = new Date();
@@ -67,10 +73,24 @@ public class JwtTokenProvider {
         return null;
     }
 
+
+
+   public  boolean revokeToken(String token){
+        if(!jwtBlackListRepository.findById(token).isPresent()){
+            JwtBlackList jwt = new JwtBlackList(token);
+            jwtBlackListRepository.save(jwt);
+            return true;
+        }
+        else return false;
+
+
+
+   }
+
     public boolean validateToken(String token) throws InvalidJwtAuthenticationException {
         try {
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            if (claims.getBody().getExpiration().before(new Date())){
+            if (claims.getBody().getExpiration().before(new Date()) || jwtBlackListRepository.findById(token).isPresent()){
                 return false;
             }
             return true;

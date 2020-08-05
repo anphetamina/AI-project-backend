@@ -92,15 +92,17 @@ public class BackendApplication {
 
             if (userRepository.count() == 0) {
                 User studentUser = User.builder()
-                        .username("s1@studenti.polito.it")
-                        .password(passwordEncoder().encode("password"))
+                        .id("s1")
+                        .email("s1@studenti.polito.it")
+                        .password(passwordEncoder().encode("Password#01"))
                         .roles(Arrays.asList("ROLE_STUDENT"))
                         .enable(true)
                         .build();
 
                 User teacherUser = User.builder()
-                        .username("d1@polito.it")
-                        .password(passwordEncoder().encode("password"))
+                        .id("d1")
+                        .email("d1@polito.it")
+                        .password(passwordEncoder().encode("Password#02"))
                         .roles(Arrays.asList("ROLE_TEACHER"))
                         .enable(true)
                         .build();
