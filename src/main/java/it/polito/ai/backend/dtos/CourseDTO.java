@@ -17,14 +17,20 @@ import javax.validation.constraints.*;
 @Builder
 public class CourseDTO extends RepresentationModel<CourseDTO> {
     @NotBlank
+    @Schema(description = "course name abbreviation")
     String id;
     @NotBlank
+    @Schema(description = "course name")
     String name;
-    @Positive @Schema(description = "the min size of students per team")
+    @Positive
+    @Schema(description = "the min size of students per team")
     int min;
-    @Positive @Schema(description = "the max size of students per team")
+    @Positive
+    @Schema(description = "the max size of students per team")
     int max;
-
+    @NotNull
+    @Schema(description = "course status")
+    Boolean enabled;
     @NotBlank
     @Schema(description = "course creator")
     String teacherId;
