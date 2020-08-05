@@ -19,10 +19,10 @@ public class Student {
     @Id
     @EqualsAndHashCode.Include
     String id;
-    @NotBlank(message = "The lastName is mandatory")
-    String lastName;
     @NotBlank(message = "The firstName is mandatory")
     String firstName;
+    @NotBlank(message = "The lastName is mandatory")
+    String lastName;
     @Email
     private String email;
     @Lob

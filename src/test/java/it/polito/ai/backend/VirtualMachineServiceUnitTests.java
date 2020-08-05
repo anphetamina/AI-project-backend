@@ -116,8 +116,8 @@ class VirtualMachineServiceUnitTests {
                     Teacher teacher = Teacher.builder()
                             .id(id)
                             .email(String.format("%s@polito.it", id))
-                            .lastName("last_name-" + id)
                             .firstName("first_name-" + id)
+                            .lastName("last_name-" + id)
                             .courses(new ArrayList<>())
                             .build();
 
@@ -131,8 +131,8 @@ class VirtualMachineServiceUnitTests {
                     String id = "s"+i;
                     Student student = Student.builder()
                             .id(id)
-                            .lastName("last_name-" + id)
                             .firstName("first_name-" + id)
+                            .lastName("last_name-" + id)
                             .email(String.format("%s@studenti.polito.it", id))
                             .courses(new ArrayList<>())
                             .teams(new ArrayList<>())

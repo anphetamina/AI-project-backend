@@ -206,11 +206,11 @@ public class NotificationServiceImpl implements NotificationService {
                 StudentDTO currentStudent = teamService.getStudent(id).orElseThrow(() -> new StudentNotFoundException(id));
                 String address = currentStudent.getEmail();
                 String subject = "Request for team creation";
-                StringBuilder body = new StringBuilder(String.format("Hi %s %s,\n", currentStudent.getLastName(), currentStudent.getFirstName()));
+                StringBuilder body = new StringBuilder(String.format("Hi %s %s,\n", currentStudent.getFirstName(), currentStudent.getLastName()));
                 body.append(String.format("you have been added to a team (%s).\n\n", teamDTO.getName()));
                 body.append("Group attendees are:\n");
                 for (StudentDTO s : members) {
-                    body.append(String.format("- %s, %s %s\n", s.getId(), s.getLastName(), s.getFirstName()));
+                    body.append(String.format("- %s, %s %s\n", s.getId(), s.getFirstName(), s.getLastName()));
                 }
                 body.append(String.format("\nIf you want to confirm please click the following link:\n%s\n\n", enrichedConfirmToken.getLink("confirm").get().getHref()));
                 body.append(String.format("Otherwise, if you want to refuse this invitation, please click the following link:\n%s\n\n", enrichedRejectToken.getLink("reject").get().getHref()));

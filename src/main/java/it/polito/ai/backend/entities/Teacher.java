@@ -19,10 +19,10 @@ public class Teacher {
     @Id
     @EqualsAndHashCode.Include
     private String id;
-    @NotBlank(message = "The lastName is mandatory")
-    private String lastName;
     @NotBlank(message = "The firstName is mandatory")
     private String firstName;
+    @NotBlank(message = "The lastName is mandatory")
+    private String lastName;
     @Email
     private String email;
     //Storing the image (bytes) in the database

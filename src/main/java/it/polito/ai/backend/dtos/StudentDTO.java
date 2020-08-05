@@ -19,11 +19,12 @@ public class StudentDTO extends RepresentationModel<StudentDTO> {
     @CsvBindByName
     @NotBlank
     String id;
-    @CsvBindByName(column = "last_name")    @NotBlank
-    String lastName;
     @CsvBindByName(column = "first_name")
     @NotBlank
     String firstName;
+    @CsvBindByName(column = "last_name")
+    @NotBlank
+    String lastName;
     @Email
     private String email;
     private Byte[] image;
