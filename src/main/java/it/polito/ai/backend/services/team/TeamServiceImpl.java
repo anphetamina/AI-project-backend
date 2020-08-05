@@ -44,10 +44,12 @@ public class TeamServiceImpl implements TeamService {
     NotificationService notificationService;
 
     @Override
-    @PreAuthorize("hasRole('TEACHER')")
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isAuthorized(#course.getTeacherId())")
     public boolean addCourse(CourseDTO course) {
         if (!courseRepository.existsById(course.getId())) {
             Course c = modelMapper.map(course, Course.class);
+            c.addTeacher(teacherRepository.findById(course.getTeacherId())
+                    .orElseThrow(() -> new TeacherNotFoundException(course.getTeacherId())));
             courseRepository.save(c);
             return true;
         }
@@ -114,7 +116,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#id)")
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
     public boolean addStudentToCourse(String studentId, String courseId) {
         Optional<Student> student = studentRepository.findById(studentId);
 
@@ -140,7 +142,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#id)")
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
     public boolean removeStudentFromCourse(String studentId, String courseId) {
         /**
          * check if the student is enrolled to the course
@@ -168,7 +170,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#id)")
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
     public void enableCourse(String courseId) {
         Optional<Course> course = courseRepository.findById(courseId);
 
@@ -180,7 +182,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#id)")
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
     public void disableCourse(String courseId) {
         Optional<Course> course = courseRepository.findById(courseId);
 
@@ -192,6 +194,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    // todo preauthorize
     public List<Boolean> addAll(List<StudentDTO> students) {
         return students.stream()
                 .map(s -> addStudent(s))
@@ -199,6 +202,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    // todo preauthorize
     public List<Boolean> enrollAll(List<String> studentIds, String courseId) {
         return studentIds.stream()
                 .map(id -> addStudentToCourse(id, courseId))
@@ -206,6 +210,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    // todo preauthorize
     public List<Boolean> addAndEnroll(Reader r, String courseName) {
         CsvToBean<StudentDTO> csvToBean = new CsvToBeanBuilder(r)
                 .withType(StudentDTO.class)

@@ -2,6 +2,7 @@ package it.polito.ai.backend.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.security.SecurityService;
 import it.polito.ai.backend.services.vm.VirtualMachineNotFoundException;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
 import org.springframework.beans.factory.annotation.Autowired;

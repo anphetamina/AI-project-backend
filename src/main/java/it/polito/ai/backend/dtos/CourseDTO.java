@@ -24,4 +24,8 @@ public class CourseDTO extends RepresentationModel<CourseDTO> {
     int min;
     @Positive @Schema(description = "the max size of students per team")
     int max;
+
+    @NotBlank
+    @Schema(description = "course creator")
+    String teacherId;
 }

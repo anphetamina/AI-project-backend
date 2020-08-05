@@ -29,6 +29,9 @@ import java.util.stream.IntStream;
 
 @SpringBootTest
 @Transactional
+/**
+ * disable preAuthorize
+ */
 class VirtualMachineServiceUnitTests {
 
     static List<Team> teams;
@@ -121,7 +124,6 @@ class VirtualMachineServiceUnitTests {
                             .courses(new ArrayList<>())
                             .build();
 
-                    course.addTeacher(teacher);
                     course.setVirtualMachineModel(model);
 
                 });

@@ -41,7 +41,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     ModelMapper modelMapper;
 
     @Override
-    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId)")
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId) and @securityServiceImpl.isPartOf(#teamId)")
     public VirtualMachineDTO createVirtualMachine(String studentId, Long teamId, Long modelId, VirtualMachineDTO virtualMachineDTO) {
 
         Student student = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
