@@ -18,7 +18,7 @@ import java.sql.Timestamp;
 public class ConfirmationTokenDTO extends RepresentationModel<ConfirmationTokenDTO> {
     @NotBlank
     String id;
-    @NotNull
+    @NotBlank
     String username;
     @NotNull
     Timestamp expiryDate;
