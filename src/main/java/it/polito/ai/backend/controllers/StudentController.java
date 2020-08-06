@@ -73,19 +73,7 @@ public class StudentController {
         return CollectionModel.of(courses, selfLink);
     }
 
-   /* @Operation(summary = "get teams of which a student is part of")
-    @GetMapping("/{studentId}/teams")
-    CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String studentId) {
-        List<TeamDTO> teams = teamService.getTeamsForStudent(studentId).stream()
-                .map(t -> {
-                    String courseId = teamService.getCourseForTeam(t.getId()).map(CourseDTO::getId).orElse(null);
-                    Long configurationId = virtualMachineService.getConfigurationForTeam(t.getId()).map(ConfigurationDTO::getId).orElse(null);
-                    return ModelHelper.enrich(t, courseId, configurationId);
-                })
-                .collect(Collectors.toList());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentId)).withSelfRel();
-        return CollectionModel.of(teams, selfLink);
-    }*/
+
 
     @Operation(summary = "get team of which a student is part of in defined course")
     @GetMapping("/{studentId}/courses/{courseId}/team")
@@ -111,14 +99,14 @@ public class StudentController {
     }
 
 
-    @Operation(summary = "create a new student")
+    /*@Operation(summary = "create a new student")
     @PostMapping({"", "/"})
     StudentDTO addStudent(@RequestBody @Valid StudentDTO studentDTO) {
         if (!teamService.addStudent(studentDTO)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("student %s already exists", studentDTO.getId()));
         }
         return ModelHelper.enrich(studentDTO);
-    }
+    }*/
 
     @Operation(summary = "get the assignments of a student")
     @GetMapping("/{studentId}/exercises/{exerciseId}/assignments")

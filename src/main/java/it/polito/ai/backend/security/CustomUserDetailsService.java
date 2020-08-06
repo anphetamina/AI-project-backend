@@ -45,14 +45,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 
     @Override
-    public UserDetails loadUserByUsername(String userIdOrEmail) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
 
-        Optional<User> user = userRepository.findById(userIdOrEmail);
+        Optional<User> user = userRepository.findById(userId);
 
         if(!user.isPresent())
-            throw  new UsernameNotFoundException("Username: "+userIdOrEmail+" not found");
+            throw  new UsernameNotFoundException("Username: "+userId+" not found");
         if( !user.get().isEnable())
-            throw  new UsernameNotFoundException("Username: "+userIdOrEmail+" not found");
+            throw  new UsernameNotFoundException("Username: "+userId+" not found");
         return user.get();
 
     }
@@ -65,8 +65,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         mailMessage.setTo(userMail);
         mailMessage.setFrom("asant.lab3@gmail.com");
         mailMessage.setSubject("Mail Confirmation Link!");
-        mailMessage.setText(
-                "Thank you for registering. Please click on the below link to activate your account. " + enrichToken.getLink("confirmation").get().getHref() );
+        mailMessage.setText("Thank you for registering. Please click on the below link to activate your account.\n "
+                + enrichToken.getLink("confirmation").get().getHref() );
         emailSender.send(mailMessage);
     }
 
@@ -81,44 +81,51 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     public void signUpUser(UserInformationRequest data, Byte[] image)  {
+        /*check if there is an other user with the same email and if email is of polito.it<*/
         if(userRepository.findByEmail(data.getEmail()).isPresent()
                 || (!data.getEmail().contains("@polito.it") && !data.getEmail().contains("@studenti.polito.it")))
-            throw new SecurityServiceException("Username  not valid");
+            throw new SecurityServiceException("Email not valid");
+       /*check in passwords are the same */
         if(!data.getPassword().equals(data.getRepeatPassword()))
             throw new SecurityServiceException("Password not valid");
         String encryptedPassword = bCryptPasswordEncoder.encode(data.getPassword());
+
+
         User user = new User();
         user.setId(data.getId());
         user.setEmail(data.getEmail());
         user.setPassword(encryptedPassword);
+        /*if email contains @polito.it user is a teacher and add a new teacher to db*/
         if(data.getEmail().contains("@polito.it")) {
             user.setRoles(Arrays.asList("ROLE_TEACHER"));
             TeacherDTO teacherDTO = new TeacherDTO(data.getId(),data.getLastName(),
-                    data.getFirstName(),data.getEmail(),image);
+                        data.getFirstName(),data.getEmail(),image);
             teamService.addTeacher(teacherDTO);
-        }
 
-        else {
+
+        }
+        /*if email contains @studenti.polito.it user is a student and add a new student to db*/
+        else if(data.getEmail().contains("@studenti.polito.it")) {
             user.setRoles(Arrays.asList("ROLE_STUDENT"));
             StudentDTO studentDTO = new StudentDTO(data.getId(),data.getLastName(),
                     data.getFirstName(),data.getEmail(),image);
             teamService.addStudent(studentDTO);
         }
         userRepository.save(user);
-
+        /*create token to confirmation the account*/
         ConfirmationTokenDTO confirmationTokenDTO = new ConfirmationTokenDTO();
         confirmationTokenDTO.setUsername(user.getId());
         Timestamp expiredDate = new Timestamp(Utils.getNow().getTime() + (24*3600000));
-        System.out.println(expiredDate);
         confirmationTokenDTO.setExpiryDate(expiredDate);
         confirmationTokenDTO.setId(UUID.randomUUID().toString());
+
         if(!addConfirmationToken(confirmationTokenDTO))
             throw  new DuplicateConfirmationToken("Duplicate confirmation token");
 
         sendConfirmationMail(user.getEmail(), confirmationTokenDTO);
     }
 
-    public boolean confirmUser(String  confirmationTokenId) {
+    public String confirmUser(String  confirmationTokenId) {
         Optional<ConfirmationToken> tokenOptional = confirmationTokenRepository.findById(confirmationTokenId);
         if (!tokenOptional.isPresent()) {
             throw new SecurityServiceException("Expired session");
@@ -129,12 +136,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         Optional<User> user = userRepository.findById(tokenOptional.get().getUsername());
         if(!user.isPresent())
             throw new UsernameNotFoundException("User not found");
-        if(user.get().isEnable())
-            return false;
         user.get().setEnable(true);
         userRepository.save(user.get());
         confirmationTokenRepository.delete(tokenOptional.get());
-        return true;
+        return user.get().getId();
     }
 
     public String getId(String username){

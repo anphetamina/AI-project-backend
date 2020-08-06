@@ -79,12 +79,18 @@ public class AuthController {
 
     @Operation(summary = "confirm account ")
     @GetMapping("/sign-up/confirm/{token}")
-    boolean confirmMail(@PathVariable String token) {
-        return customUserDetailsService.confirmUser(token);
+    public ResponseEntity confirmMail(@PathVariable String token) {
+        String username = customUserDetailsService.confirmUser(token);
+        String tokenAuth = jwtTokenProvider.createToken(username,
+                    customUserDetailsService.getRoles(username));
+            Map<Object,Object> model = new HashMap<>();
+            model.put("username",username);
+            model.put("token",tokenAuth);
+            return ok(model);
     }
 
     @Operation(summary = "logout")
-    @GetMapping("/sing-out")
+    @GetMapping("/sign-out")
     boolean logout(HttpServletRequest request){
         String token =jwtTokenProvider.resolveToken(request);
         return jwtTokenProvider.revokeToken(token);
