@@ -32,13 +32,12 @@ public interface TeamService {
 
     void disableCourse(String courseId);
 
-    List<Boolean> addAll(List<StudentDTO> students);
+    //List<Boolean> addAll(List<StudentDTO> students);
     List<Boolean> enrollAll(List<String> studentIds, String courseId);
     List<Boolean> addAndEnroll(Reader r, String  courseId);
 
     List<CourseDTO> getCourses(String studentId);
 
-    List<TeamDTO> getTeamsForStudent(String studentId);
     List<StudentDTO> getMembers(Long teamId);
 
     TeamDTO proposeTeam(String courseId, String name, List<String> memberIds);

@@ -76,7 +76,6 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    // todo preauthorize when registration is complete
     public boolean addStudent(StudentDTO student) {
         if (!studentRepository.existsById(student.getId())) {
             Student s = modelMapper.map(student, Student.class);
@@ -196,16 +195,15 @@ public class TeamServiceImpl implements TeamService {
         course.get().setEnabled(false);
     }
 
-    @Override
-    // todo preauthorize
+    /*@Override
     public List<Boolean> addAll(List<StudentDTO> students) {
         return students.stream()
                 .map(s -> addStudent(s))
                 .collect(Collectors.toList());
-    }
+    }*/
 
     @Override
-    // todo preauthorize
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
     public List<Boolean> enrollAll(List<String> studentIds, String courseId) {
         return studentIds.stream()
                 .map(id -> addStudentToCourse(id, courseId))
@@ -213,7 +211,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    // todo preauthorize
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
     public List<Boolean> addAndEnroll(Reader r, String courseName) {
         CsvToBean<StudentDTO> csvToBean = new CsvToBeanBuilder(r)
                 .withType(StudentDTO.class)
@@ -255,19 +253,6 @@ public class TeamServiceImpl implements TeamService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId))")
-    public List<TeamDTO> getTeamsForStudent(String studentId) {//Solo team attivi
-        Optional<Student> student = studentRepository.findById(studentId);
-
-        if (!student.isPresent()) {
-            throw new StudentNotFoundException(studentId);
-        }
-
-        return student.get().getTeams().stream().filter(team -> team.getStatus().equals(TeamStatus.ACTIVE))
-                .map(t -> modelMapper.map(t, TeamDTO.class))
-                .collect(Collectors.toList());
-    }
 
     @Override
     @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
@@ -469,7 +454,6 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    // todo preauthorize when registration is complete
     public boolean addTeacher(TeacherDTO teacher) {
         if (!teacherRepository.existsById(teacher.getId())) {
             Teacher t = modelMapper.map(teacher, Teacher.class);
@@ -480,7 +464,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
+    @PreAuthorize("hasRole('TEACHER') and (@securityServiceImpl.isTaught(#courseId) || @securityServiceImpl.isAuthorized(#teacherId))")
     public boolean addTeacherToCourse(String teacherId, String courseId) {
         Optional<Teacher> teacher = teacherRepository.findById(teacherId);
 

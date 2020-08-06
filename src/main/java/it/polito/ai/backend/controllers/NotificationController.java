@@ -1,5 +1,6 @@
 package it.polito.ai.backend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.services.notification.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ public class NotificationController {
     NotificationService notificationService;
 
 
+    @Operation(summary = "confirm team return true if operation has successful else return false")
     @GetMapping("/teams/confirm/{token}")
     boolean confirmToken(@PathVariable String token) {
 
@@ -21,6 +23,7 @@ public class NotificationController {
 
     }
 
+    @Operation(summary = "reject team  return true if operation has successful else return false")
     @GetMapping("/teams/reject/{token}")
     boolean rejectToken(@PathVariable String token) {
 

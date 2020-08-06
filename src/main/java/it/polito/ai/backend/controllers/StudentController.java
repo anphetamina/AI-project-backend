@@ -73,7 +73,7 @@ public class StudentController {
         return CollectionModel.of(courses, selfLink);
     }
 
-    @Operation(summary = "get teams of which a student is part of")
+   /* @Operation(summary = "get teams of which a student is part of")
     @GetMapping("/{studentId}/teams")
     CollectionModel<TeamDTO> getTeams(@PathVariable @NotBlank String studentId) {
         List<TeamDTO> teams = teamService.getTeamsForStudent(studentId).stream()
@@ -85,28 +85,22 @@ public class StudentController {
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentId)).withSelfRel();
         return CollectionModel.of(teams, selfLink);
-    }
+    }*/
 
+    @Operation(summary = "get team of which a student is part of in defined course")
     @GetMapping("/{studentId}/courses/{courseId}/team")
     TeamDTO getTeamForStudentAndCourse(@PathVariable String studentId, @PathVariable String courseId) {
-        try {
-
-            TeamDTO teamDTO = teamService.getTeamForStudentAndCourse(studentId, courseId)
+        TeamDTO teamDTO = teamService.getTeamForStudentAndCourse(studentId, courseId)
                     .orElseThrow(() ->
                             new TeamNotFoundException("Not exist a team active for student " + studentId + " enrolld to course: " + courseId));
             Long configurationId = virtualMachineService.getConfigurationForTeam(teamDTO.getId()).map(ConfigurationDTO::getId).orElse(null);
             return ModelHelper
                     .enrich(teamDTO, courseId,configurationId);
-        }/* catch (AccessDeniedException exception) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, exception.getMessage());
-        }*/ catch (TeamServiceException exception) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        }
+
     }
 
-    @GetMapping("/{studentId}/courses/{courseId}/propose-team")
+    @Operation(summary = "get unconfirmed teams of which a student is part of in defined course")
+    @GetMapping("/{studentId}/courses/{courseId}/unconfirmed-team")
     CollectionModel<TeamDTO> getProposeTeamsForStudentAndCourse(@PathVariable String studentId, @PathVariable String courseId) {
         List<TeamDTO> teams = teamService.getProposeTeamsForStudentAndCourse(studentId, courseId)
                     .stream()

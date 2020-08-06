@@ -1,5 +1,6 @@
 package it.polito.ai.backend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.AuthenticationRequest;
 import it.polito.ai.backend.dtos.UserInformationRequest;
 import it.polito.ai.backend.security.CustomUserDetailsService;
@@ -42,6 +43,7 @@ public class AuthController {
     @Autowired
     CustomUserDetailsService customUserDetailsService;
 
+    @Operation(summary = "Login ")
     @PostMapping("/sign-in")
     public ResponseEntity signIn(@RequestBody @Valid AuthenticationRequest data){
         try {
@@ -59,6 +61,7 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "registration")
     @PostMapping("/sign-up")
     public ResponseEntity.BodyBuilder signUp(@RequestPart("user") @Valid UserInformationRequest user, @RequestPart("image")MultipartFile file) {
         try {
@@ -74,13 +77,15 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "confirm account ")
     @GetMapping("/sign-up/confirm/{token}")
     boolean confirmMail(@PathVariable String token) {
         return customUserDetailsService.confirmUser(token);
     }
 
+    @Operation(summary = "logout")
     @GetMapping("/sing-out")
-    boolean longOut(HttpServletRequest request){
+    boolean logout(HttpServletRequest request){
         String token =jwtTokenProvider.resolveToken(request);
         return jwtTokenProvider.revokeToken(token);
     }

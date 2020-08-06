@@ -21,9 +21,8 @@ public class ModelHelper {
     public static StudentDTO enrich(StudentDTO studentDTO) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getOne(studentDTO.getId())).withSelfRel();
         Link coursesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getCourses(studentDTO.getId())).withRel("enrolledTo");
-        Link teamsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentDTO.getId())).withRel("partOf");
         Link virtualMachinesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentDTO.getId())).withRel("owns");
-        return studentDTO.add(selfLink).add(coursesLink).add(teamsLink).add(virtualMachinesLink);
+        return studentDTO.add(selfLink).add(coursesLink).add(virtualMachinesLink);
     }
 
     public static TeamDTO enrich(TeamDTO teamDTO, String courseId, Long configurationId) {

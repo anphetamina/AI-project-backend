@@ -51,7 +51,7 @@ public class TeacherController {
         return CollectionModel.of(courses, selfLink);
     }
 
-    @Operation(summary = "create a new teacher")
+      @Operation(summary = "create a new teacher")
     @PostMapping({"", "/"})
     TeacherDTO addTeacher(@RequestBody @Valid TeacherDTO teacherDTO) {
         if (!teamService.addTeacher(teacherDTO)) {
