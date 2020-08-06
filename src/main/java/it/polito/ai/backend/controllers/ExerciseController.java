@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -112,43 +113,23 @@ public class ExerciseController {
 
     @Operation(summary = "add a review for an assignment by the teacher")
     @PostMapping("/{exerciseId}/assignmentReview")
-    void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam Map<String, String> map, @PathVariable @NotNull Long exerciseId){
+    void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam @Valid AssignmentRequest request, @PathVariable @NotNull Long exerciseId){
         /*Se il falg=false allora c'è anche il voto
          * se è true allora non c'è il voto*/
-        if(!map.containsKey("flag") && !map.containsKey("studentId")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-
-        String studentId = map.get("studentId");
-
-        if (studentId.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-
+        String studentId = request.getStudentId();
         try {
             Utils.checkTypeImage(file);
-            AssignmentDTO assignment = exerciseService.getAssignmentByStudentAndExercise(map.get("studentId"),exerciseId)
+            AssignmentDTO assignment = exerciseService.getAssignmentByStudentAndExercise(studentId,exerciseId)
                     .stream()
                     .reduce((a1,a2)-> a2).orElse(null);
             if(assignment==null)
-                throw  new AssignmentNotFoundException(map.get("studentId"));
+                throw  new AssignmentNotFoundException(studentId);
 
-            boolean flag =  Boolean.parseBoolean(map.get("flag"));
+            boolean flag =  request.isFlag();
             if(assignment.getStatus()==AssignmentStatus.CONSEGNATO){
-                if(flag)
-                    exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.RIVSTO,
-                            flag,null,Utils.getBytes(file),map.get("studentId"),exerciseId);
-                else {
-                    if(map.containsKey("score")){
+                exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.RIVSTO,
+                            flag,request.getScore(),Utils.getBytes(file),studentId,exerciseId);
 
-                        Integer score = Integer.parseInt(map.get("score"));
-                        System.out.println(score);
-                        exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.RIVSTO,
-                                flag,score,Utils.getBytes(file),map.get("studentId"),exerciseId);
-                    }else {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-                    }
-                }
             }
         } catch (TikaException | IOException e) {
             e.printStackTrace();

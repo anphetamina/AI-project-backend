@@ -1,5 +1,6 @@
 package it.polito.ai.backend.dtos;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,19 +17,8 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @Builder
 public class ExerciseDTO extends RepresentationModel<ExerciseDTO> {
-    /**
-     * id autogenrated
-     * published is the date when teacher uploaded the exercise
-     * expired is the date when exercise expierd and the students can not upload an assignemnat
-     * image is an array of bytes of the image uploaded
-     * */
-
-    @NotNull
     Long id;
-    @NotNull
-    Timestamp published;
-    @NotNull
-    Timestamp expired;
-
-    private Byte[] image;
+    @NotNull @Schema(description = "date(dd/mm/yyyy) when teacher uploaded the exercise") Timestamp published;
+    @NotNull @Schema(description = "date(dd/mm/yyyy) when exercise expired and the students can not upload an assignment") Timestamp expired;
+    @Schema(description = "an array of byte of the image uploaded") private Byte[] image;
 }

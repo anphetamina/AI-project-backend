@@ -320,7 +320,7 @@ public class CourseController {
 
     @Operation(summary = "create a new exercise for a course")
     @PostMapping("/{courseId}/exercises")
-    void createExercise(@RequestParam("image") MultipartFile file, @RequestParam String date, @PathVariable @NotBlank String courseId){
+    void createExercise(@RequestPart("image") MultipartFile file, @RequestPart("date") String date, @PathVariable @NotBlank String courseId){
         try {
             Utils.checkTypeImage(file);
             System.out.println("Original Image Byte Size - " + file.getBytes().length);
