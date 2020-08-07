@@ -54,12 +54,12 @@ public class Course {
         teacher.courses.remove(this);
     }
 
-    /*public void removeTeachers() {
+    public void removeTeachers() {
         for (Teacher t : teachers) {
             t.courses.remove(this);
         }
         teachers.clear();
-    }*/
+    }
 
     @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     List<Team> teams = new ArrayList<>();

@@ -516,6 +516,7 @@ public class TeamServiceImpl implements TeamService {
             return false;
         }
 
+        course.removeTeachers();
         course.setVirtualMachineModel(null);
         courseRepository.delete(course);
 

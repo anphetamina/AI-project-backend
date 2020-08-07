@@ -96,7 +96,7 @@ public class BackendApplication {
                         .email("s1@studenti.polito.it")
                         .password(passwordEncoder().encode("Password#01"))
                         .roles(Arrays.asList("ROLE_STUDENT"))
-                        .enable(true)
+                        .enabled(true)
                         .build();
 
                 User teacherUser = User.builder()
@@ -104,7 +104,7 @@ public class BackendApplication {
                         .email("d1@polito.it")
                         .password(passwordEncoder().encode("Password#02"))
                         .roles(Arrays.asList("ROLE_TEACHER"))
-                        .enable(true)
+                        .enabled(true)
                         .build();
 
                 userRepository.save(studentUser);

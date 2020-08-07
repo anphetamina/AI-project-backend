@@ -51,7 +51,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         if(!user.isPresent())
             throw  new UsernameNotFoundException("Username: "+userId+" not found");
-        if( !user.get().isEnable())
+        if( !user.get().isEnabled())
             throw  new UsernameNotFoundException("Username: "+userId+" not found");
         return user.get();
 
@@ -136,7 +136,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         Optional<User> user = userRepository.findById(tokenOptional.get().getUsername());
         if(!user.isPresent())
             throw new UsernameNotFoundException("User not found");
-        user.get().setEnable(true);
+        user.get().setEnabled(true);
         userRepository.save(user.get());
         confirmationTokenRepository.delete(tokenOptional.get());
         return user.get().getId();
