@@ -80,7 +80,7 @@ public class NotificationServiceImpl implements NotificationService {
         if (isTokenExpired) {
             throw new TokenExpiredException(tokenId);
         }
-        //posso solo una volta accettare
+        /*the student can accept only one time */
         if(!tokenOptional.get().getStatus().equals(TokenStatus.UNDEFINED))
             throw new TokenExpiredException(tokenId);
 
@@ -102,11 +102,11 @@ public class NotificationServiceImpl implements NotificationService {
 
 
         List<Token> teamTokens = tokenRepository.findAllByTeamId(teamId);
-        //diabilito la richiesta
+        //disable the request
         if(teamTokens.stream().anyMatch(token -> token.getStatus().equals(TokenStatus.REJECT)))
             return false;
 
-        //devo sapere se gli altri hanno accettato perciò elimino quello su cui sto lavaorando
+        //remove the current token from the list to check the other tokens
         teamTokens.remove(tokenOptional.get());
 
         boolean isLastToken = teamTokens.stream().allMatch(token -> token.getStatus().equals(TokenStatus.ACCEPT));
@@ -114,8 +114,7 @@ public class NotificationServiceImpl implements NotificationService {
         List<Team> teamsStudent = student.get().getTeams();
         for (Team teamStudent:teamsStudent) {
             if(teamStudent.getCourse().equals(courseTeam) && teamStudent.getStatus().equals(TeamStatus.ACTIVE)){
-                //non posso accettare una proposta per un gruppo dello stesso corso se ho già un gruppo
-                tokenOptional.get().setStatus(TokenStatus.REJECT);
+                // the student can not accept a propose for a team in the same course if he has a confirmed team
                 tokenRepository.save(tokenOptional.get());
                 return false;
             }
@@ -150,14 +149,14 @@ public class NotificationServiceImpl implements NotificationService {
         if (isTokenExpired) {
             throw new TokenExpiredException(tokenId);
         }
-        //posso solo una volta rifiutare
+        //the student can reject only one time
         if(!tokenOptional.get().getStatus().equals(TokenStatus.UNDEFINED))
             throw new TokenExpiredException(tokenId);
 
         Long teamId = tokenOptional.get().getTeamId();
         List<Token> teamTokens = tokenRepository.findAllByTeamId(teamId);
         if(teamTokens.stream().anyMatch(token -> token.getStatus().equals(TokenStatus.REJECT)))
-            //riciesta disabilitata
+            // request disabled
             return false;
 
         tokenOptional.get().setStatus(TokenStatus.REJECT);

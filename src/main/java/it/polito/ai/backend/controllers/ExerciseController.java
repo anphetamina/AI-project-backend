@@ -2,11 +2,13 @@ package it.polito.ai.backend.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.security.InvalidUsernameException;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.exercise.AssignmentNotFoundException;
-import it.polito.ai.backend.services.exercise.AssignmentStatus;
+import it.polito.ai.backend.dtos.AssignmentStatus;
 import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
 import it.polito.ai.backend.services.exercise.ExerciseService;
+import it.polito.ai.backend.services.exercise.InvalidScore;
 import it.polito.ai.backend.services.team.CourseNotFoundException;
 
 import it.polito.ai.backend.services.team.TeamService;
@@ -16,7 +18,6 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -113,19 +114,20 @@ public class ExerciseController {
 
     @Operation(summary = "add a review for an assignment by the teacher")
     @PostMapping("/{exerciseId}/assignmentReview")
-    void reviewAssignment(@RequestParam("image") MultipartFile file, @RequestParam @Valid AssignmentRequest request, @PathVariable @NotNull Long exerciseId){
-        /*Se il falg=false allora c'è anche il voto
-         * se è true allora non c'è il voto*/
-        String studentId = request.getStudentId();
+    void reviewAssignment(@RequestPart("image") MultipartFile file, @RequestPart @Valid AssignmentRequest request, @PathVariable @NotNull Long exerciseId){
         try {
             Utils.checkTypeImage(file);
+            String studentId = request.getStudentId();
             AssignmentDTO assignment = exerciseService.getAssignmentByStudentAndExercise(studentId,exerciseId)
                     .stream()
                     .reduce((a1,a2)-> a2).orElse(null);
             if(assignment==null)
-                throw  new AssignmentNotFoundException(studentId);
+                throw  new AssignmentNotFoundException("There are not any assignment for student: "+studentId);
 
             boolean flag =  request.isFlag();
+            if(!flag && (request.getScore()==null || request.getScore().equals("null")))
+                throw  new InvalidScore("The score do not be null");
+
             if(assignment.getStatus()==AssignmentStatus.CONSEGNATO){
                 exerciseService.addAssignmentByte(Utils.getNow(),AssignmentStatus.RIVSTO,
                             flag,request.getScore(),Utils.getBytes(file),studentId,exerciseId);

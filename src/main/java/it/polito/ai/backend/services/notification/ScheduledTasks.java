@@ -1,14 +1,10 @@
 package it.polito.ai.backend.services.notification;
 
-import io.jsonwebtoken.Jwt;
-import it.polito.ai.backend.dtos.StudentDTO;
 import it.polito.ai.backend.entities.*;
 import it.polito.ai.backend.repositories.*;
 import it.polito.ai.backend.security.CustomUserDetailsService;
 import it.polito.ai.backend.services.Utils;
-import it.polito.ai.backend.services.exercise.AssignmentStatus;
-import it.polito.ai.backend.services.exercise.ExerciseService;
-import it.polito.ai.backend.services.team.CourseNotFoundException;
+import it.polito.ai.backend.dtos.AssignmentStatus;
 import it.polito.ai.backend.services.team.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;

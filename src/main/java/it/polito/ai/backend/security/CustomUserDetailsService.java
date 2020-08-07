@@ -81,11 +81,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     public void signUpUser(UserInformationRequest data, Byte[] image)  {
-        /*check if there is an other user with the same email and if email is of polito.it<*/
+        /*check if there is an other user with the same email and if email is of polito.it*/
         if(userRepository.findByEmail(data.getEmail()).isPresent()
                 || (!data.getEmail().contains("@polito.it") && !data.getEmail().contains("@studenti.polito.it")))
             throw new SecurityServiceException("Email not valid");
-       /*check in passwords are the same */
+       /*check if passwords are the same */
         if(!data.getPassword().equals(data.getRepeatPassword()))
             throw new SecurityServiceException("Password not valid");
         String encryptedPassword = bCryptPasswordEncoder.encode(data.getPassword());

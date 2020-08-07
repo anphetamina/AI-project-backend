@@ -51,12 +51,5 @@ public class TeacherController {
         return CollectionModel.of(courses, selfLink);
     }
 
-    /* @Operation(summary = "create a new teacher")
-    @PostMapping({"", "/"})
-    TeacherDTO addTeacher(@RequestBody @Valid TeacherDTO teacherDTO) {
-        if (!teamService.addTeacher(teacherDTO)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("teacher %s already exists", teacherDTO.getId()));
-        }
-        return ModelHelper.enrich(teacherDTO);
-    }*/
+
 }

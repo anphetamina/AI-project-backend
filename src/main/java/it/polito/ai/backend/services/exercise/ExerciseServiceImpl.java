@@ -1,9 +1,6 @@
 package it.polito.ai.backend.services.exercise;
 
-import it.polito.ai.backend.dtos.AssignmentDTO;
-import it.polito.ai.backend.dtos.CourseDTO;
-import it.polito.ai.backend.dtos.ExerciseDTO;
-import it.polito.ai.backend.dtos.StudentDTO;
+import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.entities.*;
 import it.polito.ai.backend.repositories.*;
 import it.polito.ai.backend.services.team.CourseNotEnabledException;
@@ -50,10 +47,10 @@ public class ExerciseServiceImpl implements ExerciseService {
         Optional<Course> course = courseRepository.findById(courseId);
 
             if (!course.isPresent()) {
-                throw new CourseNotFoundException(courseId);
+                throw new CourseNotFoundException("Course not fount with id:"+courseId);
 
             } else if (!course.get().isEnabled()) {
-                throw new CourseNotEnabledException(courseId);
+                throw new CourseNotEnabledException("Course with id: "+courseId+" is not enable");
             }
             if(expired.before(Utils.getNow()))
                 throw new ExerciseServiceException("Invalid expired time");
@@ -68,14 +65,15 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canOpen(#exerciseId)) or (hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(@studentId))")
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canOpen(#exerciseId)) or (hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) " +
+            "and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(#studentId))")
     public List<AssignmentDTO> getAssignmentByStudentAndExercise(String studentId, Long exerciseId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
-            throw new StudentNotFoundException(studentId);
+            throw new StudentNotFoundException("Student not found with id: "+studentId);
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if(!exercise.isPresent())
-            throw new ExerciseNotFoundException(exerciseId.toString());
+            throw new ExerciseNotFoundException("Exercise not found for id : "+exerciseId.toString());
 
         return assignmentRepository.findByStudentAndAndExercise(student.get(),exercise.get())
                 .stream()
@@ -114,7 +112,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     public List<ExerciseDTO> getExercisesForCourse(String courseId) {
         Optional<Course> course = courseRepository.findById(courseId);
         if(!course.isPresent()){
-            throw new CourseNotFoundException(courseId);
+            throw new CourseNotFoundException("Course not found with id: "+courseId);
         }
         return course.get().getExercises().stream()
                 .map(e -> modelMapper.map(e,ExerciseDTO.class ))
@@ -135,11 +133,11 @@ public class ExerciseServiceImpl implements ExerciseService {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if(!exercise.isPresent())
             throw  new ExerciseNotFoundException(exerciseId.toString());
-         /* Non devono esistere altri assigment*/
+         /* There must be no others assigment*/
        List<Assignment> assignment = exercise.get().getAssignments();
        if(!assignment.isEmpty())
           return false;
-       // Per ogni studente iscritto al corso aggiungere un'elaborato con stato null
+       // For each student enrolled to the course add an assignment with state null
        List<Student> students= exercise.get().getCourse().getStudents();
         for (Student student:students) {
             addAssignmentByte(
@@ -151,14 +149,14 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(@studentId)")
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(#studentId)")
     public boolean setAssignmentsReadForStudentAndExercise(Long exerciseId, String studentId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
-            throw new StudentNotFoundException(studentId);
+            throw new StudentNotFoundException("Student not found with id:"+ studentId);
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if(!exercise.isPresent())
-            throw new ExerciseNotFoundException(exerciseId.toString());
+            throw new ExerciseNotFoundException("Exercise not found with id:"+exerciseId.toString());
         Assignment assignment = assignmentRepository.findByStudentAndAndExercise(student.get(),exercise.get())
                 .stream()
                 .sorted(Comparator.comparing(Assignment::getPublished,Timestamp::compareTo))
@@ -179,15 +177,15 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(@studentId)")
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(#studentId)")
     public boolean checkAssignment(Long exerciseId, String studentId){
-        /*Lo studente può caricare solo una soluzione prima che il docente gli dia il permesso per rifralo*/
+        /*The student can only upload a solution before the teacher gives him permission to do it again */
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
-            throw new StudentNotFoundException(studentId);
+            throw new StudentNotFoundException("Student not found with id:"+studentId);
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if(!exercise.isPresent())
-            throw new ExerciseNotFoundException(exerciseId.toString());
+            throw new ExerciseNotFoundException("Exercise not found with id:"+exerciseId.toString());
         Assignment assignment = assignmentRepository.findByStudentAndAndExercise(student.get(),exercise.get())
                 .stream()
                 .sorted(Comparator.comparing(Assignment::getPublished,Timestamp::compareTo))
@@ -234,8 +232,8 @@ public class ExerciseServiceImpl implements ExerciseService {
 
 
     @Override
-    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(@studentId)")
-    public AssignmentDTO addAssignmentByte(Timestamp published, AssignmentStatus state, boolean flag, Integer score, Byte[] image, String studentId, Long exerciseId) {
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canOpen(#exerciseId)) or (hasRole('STUDENT') and @securityServiceImpl.canView(#exerciseId) and @securityServiceImpl.isDone(#exerciseId) and @securityServiceImpl.isAuthorized(#studentId))")
+    public AssignmentDTO addAssignmentByte(Timestamp published, AssignmentStatus state, boolean flag, String score, Byte[] image, String studentId, Long exerciseId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
             throw  new StudentNotFoundException(studentId);

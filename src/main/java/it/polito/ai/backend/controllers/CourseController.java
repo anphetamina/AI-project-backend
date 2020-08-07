@@ -7,7 +7,6 @@ import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.exercise.ExerciseService;
 import it.polito.ai.backend.services.notification.NotificationService;
-import it.polito.ai.backend.services.notification.TokenNotFoundException;
 import it.polito.ai.backend.services.team.*;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
 import org.apache.tika.config.TikaConfig;
@@ -15,10 +14,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.modelmapper.ConfigurationException;
-import org.modelmapper.MappingException;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
@@ -35,7 +31,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -279,7 +274,6 @@ public class CourseController {
 
     }
 
-    // http -v POST http://localhost:8080/API/courses/ase/createTeam teamName=aseTeam0 memberIds:=[\"264000\",\"264001\",\"264002\",\"264004\"]
 
     @Operation(summary = "create a new unconfirmed team in a course")
     @PostMapping("/{courseId}/createTeam")
@@ -301,7 +295,7 @@ public class CourseController {
                 //add the student proposing team for control
                 memberIds.add(proponent.get().getId());
 
-                if (memberIds.stream().noneMatch(id -> id == null) && memberIds.stream().allMatch(id -> id.matches("s[0-9]{6}"))) {
+                if (memberIds.stream().noneMatch(Objects::isNull) && memberIds.stream().allMatch(id -> id.matches("s[0-9]{6}"))) {
                     TeamDTO team = teamService.proposeTeam(courseId, teamName, memberIds);
                     //remove the student proposing team because no where to confirm
                     memberIds.remove(proponent.get().getId());
@@ -320,12 +314,12 @@ public class CourseController {
 
     @Operation(summary = "create a new exercise for a course")
     @PostMapping("/{courseId}/exercises")
-    void createExercise(@RequestPart("image") MultipartFile file, @RequestPart("date") String date, @PathVariable @NotBlank String courseId){
+    void createExercise(@RequestPart("image") MultipartFile file, @RequestPart("date") String expiredDate, @PathVariable @NotBlank String courseId){
         try {
             Utils.checkTypeImage(file);
             System.out.println("Original Image Byte Size - " + file.getBytes().length);
             SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-            Timestamp expired = new Timestamp(format.parse(date).getTime());
+            Timestamp expired = new Timestamp(format.parse(expiredDate).getTime());
             Timestamp published = Utils.getNow();
             exerciseService.addExerciseForCourse(courseId,published,expired,file);
         } catch (ParseException | IOException | TikaException e) {

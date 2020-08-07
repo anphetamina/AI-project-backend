@@ -17,15 +17,11 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TokenDTO extends RepresentationModel<TokenDTO> {
-    @NotBlank
-    String id;
-    @NotNull
-    Long teamId;
+    @NotBlank String id;
+    @NotNull Long teamId;
     @NotBlank
     String studentId;
     @NotNull
-    @Min(0)
-    @Max(1)
     TokenStatus status;
     @NotNull
     Timestamp expiryDate;

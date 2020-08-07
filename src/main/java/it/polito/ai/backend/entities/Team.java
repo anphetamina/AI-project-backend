@@ -53,14 +53,7 @@ public class Team {
 
     public void setStatus(TeamStatus status) {
         this.status = status;
-        /*switch (status) {
-            case ACTIVE:
-                this.status = 1;
-                break;
-            case UNCONFIRMED:
-                this.status = 0;
-                break;
-        }*/
+
     }
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)

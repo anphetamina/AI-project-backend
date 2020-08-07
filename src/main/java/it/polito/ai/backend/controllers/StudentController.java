@@ -99,14 +99,7 @@ public class StudentController {
     }
 
 
-    /*@Operation(summary = "create a new student")
-    @PostMapping({"", "/"})
-    StudentDTO addStudent(@RequestBody @Valid StudentDTO studentDTO) {
-        if (!teamService.addStudent(studentDTO)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("student %s already exists", studentDTO.getId()));
-        }
-        return ModelHelper.enrich(studentDTO);
-    }*/
+
 
     @Operation(summary = "get the assignments of a student")
     @GetMapping("/{studentId}/exercises/{exerciseId}/assignments")

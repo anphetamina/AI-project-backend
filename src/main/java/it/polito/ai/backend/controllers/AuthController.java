@@ -81,6 +81,7 @@ public class AuthController {
     @GetMapping("/sign-up/confirm/{token}")
     public ResponseEntity confirmMail(@PathVariable String token) {
         String username = customUserDetailsService.confirmUser(token);
+        /*autologin*/
         String tokenAuth = jwtTokenProvider.createToken(username,
                     customUserDetailsService.getRoles(username));
             Map<Object,Object> model = new HashMap<>();

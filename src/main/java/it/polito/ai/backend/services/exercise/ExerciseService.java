@@ -31,10 +31,10 @@ public interface ExerciseService {
     Optional<StudentDTO> getStudentForAssignment(Long assignmentId);
     List<AssignmentDTO> getLastAssignments(Long exerciseId);
     AssignmentDTO addAssignmentByte(Timestamp published,
-                       AssignmentStatus state,
-                       boolean flag, Integer score,
-                       Byte[] image,
-                       String studentId, Long exerciseId);
+                                    AssignmentStatus state,
+                                    boolean flag, String score,
+                                    Byte[] image,
+                                    String studentId, Long exerciseId);
     /** student*/
     boolean checkAssignment(Long exerciseId, String studentId) ;
 

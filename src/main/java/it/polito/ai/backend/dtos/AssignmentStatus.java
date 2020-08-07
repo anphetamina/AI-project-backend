@@ -1,4 +1,4 @@
-package it.polito.ai.backend.services.exercise;
+package it.polito.ai.backend.dtos;
 
 public enum  AssignmentStatus {
     NULL,

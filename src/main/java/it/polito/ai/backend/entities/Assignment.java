@@ -1,6 +1,6 @@
 package it.polito.ai.backend.entities;
 
-import it.polito.ai.backend.services.exercise.AssignmentStatus;
+import it.polito.ai.backend.dtos.AssignmentStatus;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -16,11 +16,9 @@ public class Assignment {
     Long id;
     Timestamp published;
     AssignmentStatus status;
-    /*true lo studente può caricare un assignment
-      false lo studente non può carricare */
     boolean flag;
-    /* null oppure tra 18 e 30*/
-    Integer score;
+
+    String score;
     @Lob
     private Byte[] image;
     @ManyToOne
