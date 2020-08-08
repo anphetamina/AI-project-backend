@@ -287,6 +287,7 @@ public class CourseController {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid timeout");
                 String teamName = teamCreationRequest.getTeamName();
 
+
                 Optional<StudentDTO> proponent = teamService.getStudent(teamCreationRequest.getStudentId());
                 if(!proponent.isPresent())
                     throw new StudentNotFoundException(teamCreationRequest.getStudentId());
@@ -295,15 +296,14 @@ public class CourseController {
                 //add the student proposing team for control
                 memberIds.add(proponent.get().getId());
 
-                if (memberIds.stream().noneMatch(Objects::isNull) && memberIds.stream().allMatch(id -> id.matches("s[0-9]{6}"))) {
-                    TeamDTO team = teamService.proposeTeam(courseId, teamName, memberIds);
-                    //remove the student proposing team because no where to confirm
-                    memberIds.remove(proponent.get().getId());
-                    notificationService.notifyTeam(team, memberIds,timeout,proponent.get());
-                    return ModelHelper.enrich(team, courseId, null);
-                } else {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-                }
+                TeamDTO team = teamService.proposeTeam(courseId, teamName, memberIds);
+
+                //remove the student proposing team because no where to confirm
+                memberIds.remove(proponent.get().getId());
+                notificationService.notifyTeam(team, memberIds,timeout,proponent.get().getId());
+
+                return ModelHelper.enrich(team, courseId, null);
+
 
             } catch (ParseException  e) {
                 e.printStackTrace();
@@ -314,7 +314,7 @@ public class CourseController {
 
     @Operation(summary = "create a new exercise for a course")
     @PostMapping("/{courseId}/exercises")
-    void createExercise(@RequestPart("image") MultipartFile file, @RequestPart("date") String expiredDate, @PathVariable @NotBlank String courseId){
+    void createExercise(@RequestPart("image") MultipartFile file, @RequestPart("expiredDate") String expiredDate, @PathVariable @NotBlank String courseId){
         try {
             Utils.checkTypeImage(file);
             System.out.println("Original Image Byte Size - " + file.getBytes().length);

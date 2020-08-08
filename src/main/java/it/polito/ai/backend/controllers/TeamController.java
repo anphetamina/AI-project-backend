@@ -52,7 +52,7 @@ public class TeamController {
     }
 
 
-
+    @Operation(summary = "get team members status only if in db there are present tokens. The expired token are cancel automaticaly at 4am evry day")
     @GetMapping("/{teamId}/members/status-list")
     Map<StudentDTO,String> getMembersStatus( @PathVariable Long teamId) {
 

@@ -13,7 +13,7 @@ public interface NotificationService {
 
     boolean confirm(String token);
     boolean reject(String token);
-    void notifyTeam(TeamDTO dto, List<String> memberIds, Timestamp timeout, StudentDTO studentDTO);
+    void notifyTeam(TeamDTO dto, List<String> memberIds, Timestamp timeout, String proponent);
     boolean addToken(TokenDTO token);
     List<TokenDTO> getTokenTeam(Long teamId);
 }

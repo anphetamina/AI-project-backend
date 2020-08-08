@@ -64,7 +64,7 @@ public class BackendApplication {
     CommandLineRunner runner(StudentRepository studentRepository, TeacherRepository teacherRepository, UserRepository userRepository) {
         return args -> {
 
-            if (studentRepository.count() == 0) {
+           /* if (studentRepository.count() == 0) {
                 File mockStudent = new File("./mock/mock_student.csv");
                 if (mockStudent.exists() && mockStudent.length() > 0) {
                     Reader reader = new BufferedReader(new FileReader(mockStudent));
@@ -88,28 +88,38 @@ public class BackendApplication {
                     List<Teacher> teachers = csvToBean.parse();
                     teacherRepository.saveAll(teachers);
                 }
-            }
+            }*/
 
-            if (userRepository.count() == 0) {
-                User studentUser = User.builder()
-                        .id("s1")
-                        .email("s1@studenti.polito.it")
-                        .password(passwordEncoder().encode("Password#01"))
-                        .roles(Arrays.asList("ROLE_STUDENT"))
-                        .enabled(true)
-                        .build();
+           /* if (userRepository.count() == 0) {
+               studentRepository.findAll().stream().limit(15)
+                        .forEach(s -> {
+                            User studentUser = User.builder()
+                                    .id(s.getId())
+                                    .email(s.getEmail())
+                                    .password(passwordEncoder().encode("Password#01"))
+                                    .roles(Arrays.asList("ROLE_STUDENT"))
+                                    .enabled(true)
+                                    .build();
+                            userRepository.save(studentUser);
+                        });
+                teacherRepository.findAll().stream().forEach(
+                        t->{
+                            User teacherUser = User.builder()
+                                    .id(t.getId())
+                                    .email(t.getEmail())
+                                    .password(passwordEncoder().encode("Password#02"))
+                                    .roles(Arrays.asList("ROLE_TEACHER"))
+                                    .enabled(true)
+                                    .build();
 
-                User teacherUser = User.builder()
-                        .id("d1")
-                        .email("d1@polito.it")
-                        .password(passwordEncoder().encode("Password#02"))
-                        .roles(Arrays.asList("ROLE_TEACHER"))
-                        .enabled(true)
-                        .build();
 
-                userRepository.save(studentUser);
-                userRepository.save(teacherUser);
-            }
+                            userRepository.save(teacherUser);
+                        }
+
+                );
+
+
+            }*/
 
         };
     }

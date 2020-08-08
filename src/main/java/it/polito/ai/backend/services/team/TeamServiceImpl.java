@@ -87,7 +87,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @PreAuthorize("(hasRole('TEACHER')) or (hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId))")
+    @PreAuthorize("(hasRole('TEACHER')) or (hasRole('STUDENT'))")
     public Optional<StudentDTO> getStudent(String studentId) {
         return studentRepository.findById(studentId)
                 .map(s -> modelMapper.map(s, StudentDTO.class));

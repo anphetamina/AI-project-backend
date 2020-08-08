@@ -189,20 +189,23 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentDTO.id())")
-    public void notifyTeam(TeamDTO teamDTO, List<String> memberIds, Timestamp timeout, StudentDTO studentDTO) {
+    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#proponent)")
+    public void notifyTeam(TeamDTO teamDTO, List<String> memberIds, Timestamp timeout, String proponent) {
+
         List<StudentDTO> members = teamService.getMembers(teamDTO.getId());
         if (!(members.size()-1 == memberIds.size())){
             throw new StudentNotFoundException(members.toString());
         }
+
         memberIds.forEach(id -> {
             String tokenId = UUID.randomUUID().toString();
             TokenDTO tokenDTO = new TokenDTO(tokenId, teamDTO.getId(), id, TokenStatus.UNDEFINED, timeout);
             if (addToken(tokenDTO)) {
                 TokenDTO enrichedConfirmToken = ModelHelper.enrich(tokenDTO, "confirm");
                 TokenDTO enrichedRejectToken = ModelHelper.enrich(tokenDTO, "reject");
+
                 StudentDTO currentStudent = teamService.getStudent(id).orElseThrow(() -> new StudentNotFoundException(id));
-               // String address = currentStudent.getEmail();
+                String address = currentStudent.getEmail();
                 String subject = "Request for team creation";
                 StringBuilder body = new StringBuilder(String.format("Hi %s %s,\n", currentStudent.getFirstName(), currentStudent.getLastName()));
                 body.append(String.format("you have been added to a team (%s).\n\n", teamDTO.getName()));
@@ -214,7 +217,7 @@ public class NotificationServiceImpl implements NotificationService {
                 body.append(String.format("Otherwise, if you want to refuse this invitation, please click the following link:\n%s\n\n", enrichedRejectToken.getLink("reject").get().getHref()));
                 body.append("\nRegards.");
 
-                sendMessage("asant.lab3@gmail.com", subject, body.toString(),studentDTO.getEmail());
+                sendMessage(address, subject, body.toString(),"asant.lab3@gmail.com");
             } else {
                 throw new DuplicateTokenException(tokenId);
             }
