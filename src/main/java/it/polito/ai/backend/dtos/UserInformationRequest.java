@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.Email;
@@ -17,9 +18,9 @@ import javax.validation.constraints.Pattern;
 @NoArgsConstructor
 public class UserInformationRequest {
     @NotBlank @Schema(description = "id of user") String id;
-    @Email @Schema(description = "email of user") private String email;
+    @Email @Pattern(regexp = "polito.it") @Schema(description = "email of user must contains polito.it") private String email;
     @NotBlank @Schema(description = "last name of user") private String lastName;
-    @NotBlank @Schema(description = "firts name of user") private String firstName;
+    @NotBlank @Schema(description = "first name of user") private String firstName;
     @NotBlank
     @Pattern(regexp= "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$")
     @Schema(description = " Password must be:\n" +
