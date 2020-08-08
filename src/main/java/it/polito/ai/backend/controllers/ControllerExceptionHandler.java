@@ -56,8 +56,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({SecurityServiceException.class,
-            InvalidUsernameException.class,
-            InvalidJwtAuthenticationException.class})
+            InvalidUsernameException.class,})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     ResponseEntity<String> handleAuthException(RuntimeException runtimeException) {
         return new ResponseEntity<>(runtimeException.getMessage(), HttpStatus.UNAUTHORIZED);

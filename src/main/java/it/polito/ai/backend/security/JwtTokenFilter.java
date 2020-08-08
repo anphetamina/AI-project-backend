@@ -9,6 +9,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class JwtTokenFilter extends GenericFilterBean {
@@ -24,12 +25,19 @@ public class JwtTokenFilter extends GenericFilterBean {
                          ServletResponse servletResponse,
                          FilterChain filterChain)
             throws IOException, ServletException {
-        String token = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest);
-        if(token != null && jwtTokenProvider.validateToken(token)){
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            String token = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest);
+            if(token != null && jwtTokenProvider.validateToken(token)){
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+            filterChain.doFilter(servletRequest,servletResponse);
+        }catch (InvalidJwtAuthenticationException e){
+           HttpServletResponse httpServletResponse= (HttpServletResponse) servletResponse;
+           httpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED,"Please log-in again");
+
         }
-        filterChain.doFilter(servletRequest,servletResponse);
+
 
     }
 }
