@@ -2,10 +2,12 @@ package it.polito.ai.backend.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.entities.Student;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.TeamNotFoundException;
 import it.polito.ai.backend.services.team.TeamService;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
+import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotNull;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,23 +58,33 @@ public class TeamController {
 
     @Operation(summary = "get team members status only if in db there are present tokens. The expired token are cancel automaticaly at 4am evry day")
     @GetMapping("/{teamId}/members/status-list")
-    Map<StudentDTO,String> getMembersStatus( @PathVariable Long teamId) {
+    List<JSONObject> getMembersStatus(@PathVariable Long teamId) {
 
-        Map<StudentDTO,String> statusMembers = new HashMap<>();
+        List<JSONObject> listMembers = new ArrayList<>();
+        Map<StudentDTO,String> memberAndStatus = new HashMap<>();
         List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
         List<TokenDTO>  tokenDTOS = notificationService.getTokenTeam(teamId);
         if(tokenDTOS.isEmpty())
             throw new TeamNotFoundException("Non exist propose for team: "+teamId);
-
         students.forEach(studentDTO -> {
             for (TokenDTO tokenDTO:tokenDTOS) {
-                if(tokenDTO.getStudentId().equals(studentDTO.getId()))
-                    statusMembers.put(studentDTO,tokenDTO.getStatus().toString());
+                if(tokenDTO.getStudentId().equals(studentDTO.getId())) 
+                    memberAndStatus.put(studentDTO,tokenDTO.getStatus().toString());
             }
-            if(tokenDTOS.stream().noneMatch(tokenDTO -> tokenDTO.getStudentId().equals(studentDTO.getId())))
-                statusMembers.put(studentDTO,"PROPONENT");
+            if(tokenDTOS.stream().noneMatch(tokenDTO -> tokenDTO.getStudentId().equals(studentDTO.getId()))){
+                memberAndStatus.put(studentDTO,"PROPONENT");
+            }
+
+
         });
-        return statusMembers;
+
+        memberAndStatus.forEach( (k, v) ->{
+            JSONObject entity = new JSONObject();
+            entity.put(k.getId() , k);
+            entity.put("status",v);
+            listMembers.add(entity);
+        });
+        return listMembers;
 
     }
 
