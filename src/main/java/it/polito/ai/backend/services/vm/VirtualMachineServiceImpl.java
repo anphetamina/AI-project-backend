@@ -381,7 +381,8 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)")
     public ConfigurationDTO createConfiguration(Long teamId, ConfigurationDTO configurationDTO) {
 
-        Team team = teamRepository.findById(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
+        Team team = teamRepository.findById(teamId).filter(t -> t.getStatus().equals(TeamStatus.ACTIVE) )
+                .orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
 
         Course course = team.getCourse();
         if (course == null) {

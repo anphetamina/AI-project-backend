@@ -110,8 +110,10 @@ public class ScheduledTasks {
         List<ConfirmationToken> listToken = confirmationTokenRepository.findAllByExpiryDateBefore(Utils.getNow());
         System.out.println(listToken.size());
         listToken.forEach(t -> {
-           userService.deleteUser(t.getUsername());
+
+                userService.deleteUser(t.getUsername());
         });
+
         confirmationTokenRepository.deleteAll(listToken);
 
     }

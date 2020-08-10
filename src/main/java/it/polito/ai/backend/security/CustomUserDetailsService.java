@@ -3,7 +3,11 @@ package it.polito.ai.backend.security;
 import it.polito.ai.backend.controllers.ModelHelper;
 import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.entities.ConfirmationToken;
+import it.polito.ai.backend.entities.Student;
+import it.polito.ai.backend.entities.Teacher;
 import it.polito.ai.backend.entities.User;
+import it.polito.ai.backend.repositories.StudentRepository;
+import it.polito.ai.backend.repositories.TeacherRepository;
 import it.polito.ai.backend.repositories.UserRepository;
 import it.polito.ai.backend.repositories.ConfirmationTokenRepository;
 import it.polito.ai.backend.services.Utils;
@@ -39,6 +43,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     ModelMapper modelMapper;
     @Autowired
     TeamServiceImpl teamService;
+    @Autowired
+    TeacherRepository teacherRepository;
+    @Autowired
+    StudentRepository studentRepository;
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
@@ -156,12 +164,26 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     public void deleteUser(String userId){
         Optional<User> user = userRepository.findById(userId);
+
         if(!user.isPresent())
             throw new UsernameNotFoundException("Invalid user id");
+        String email = user.get().getEmail();
+        if(email.contains("@polito.it")){
+            Teacher t = teacherRepository.findByEmail(email).orElse(null);
+            if(t!=null)
+                teacherRepository.delete(t);
+        }else{
+            Student s = studentRepository.findByEmail(email).orElse(null);
+            if(s!=null)
+                studentRepository.delete(s);
+
+        }
+
         if(user.get().getAuthorities().size()>0){
             for(GrantedAuthority role : user.get().getAuthorities()){
                 user.get().getAuthorities().remove(role);
             }
+
         }
         userRepository.delete(user.get());
 
