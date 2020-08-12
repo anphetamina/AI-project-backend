@@ -80,7 +80,7 @@ public class TeamController {
 
         memberAndStatus.forEach( (k, v) ->{
             JSONObject entity = new JSONObject();
-            entity.put(k.getId() , k);
+            entity.put("student" , k);
             entity.put("status",v);
             listMembers.add(entity);
         });
