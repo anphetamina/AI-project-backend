@@ -512,7 +512,7 @@ public class TeamServiceImpl implements TeamService {
          * a course cannot be deleted if is enabled or there are enrolled students
          * having enrolled students means possibly having more entities related to this course
          */
-        if (course.isEnabled() || course.getStudents().size() > 0 || course.getTeams().size() > 0 || course.getExercises().size() > 0) {
+        if (!course.isEnabled() || course.getStudents().size() > 0 || course.getTeams().size() > 0 || course.getExercises().size() > 0) {
             return false;
         }
 
