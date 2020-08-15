@@ -1,12 +1,11 @@
 package it.polito.ai.backend.entities;
 
-import it.polito.ai.backend.dtos.AssignmentStatus;
 import lombok.Data;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
-
-
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -15,38 +14,33 @@ public class Assignment {
     @GeneratedValue
     Long id;
     Timestamp published;
-    AssignmentStatus status;
-    boolean flag;
-
-    String score;
+    Timestamp expired;
     @Lob
     private Byte[] image;
     @ManyToOne
-    @JoinColumn(name = "exercise_id")
-    Exercise exercise;
+    @JoinColumn(name = "course_id")
+    Course course;
 
-    public void setExercise(Exercise exercise) {
-        if (this.exercise != null) {
-            this.exercise.getAssignments().remove(this);
+    public void setCourse(Course course) {
+        if (this.course != null) {
+            this.course.getAssignments().remove(this);
         }
-        this.exercise = exercise;
-        if (exercise != null) {
-            exercise.getAssignments().add(this);
-
-        }
-    }
-    @ManyToOne
-    @JoinColumn(name = "student")
-    Student student;
-    public void setStudent(Student student) {
-        if (this.student != null) {
-            this.student.getAssignments().remove(this);
-        }
-        this.student=student;
-        if (student != null) {
-            student.getAssignments().add(this);
+        this.course = course;
+        if (course != null) {
+            course.getAssignments().add(this);
         }
     }
 
+    @OneToMany(mappedBy = "assignment")
+    private List<Paper> papers =new ArrayList<Paper>();
+    public void addPaper(Paper paper) {
+        paper.assignment =this;
+        papers.add(paper);
 
+    }
+
+    public void removePaper(Paper paper) {
+        papers.remove(paper);
+        paper.assignment = null;
+    }
 }

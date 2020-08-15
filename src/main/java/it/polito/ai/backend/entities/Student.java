@@ -76,14 +76,14 @@ public class Student {
     }
 
     @OneToMany(mappedBy = "student", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    List<Assignment> assignments = new ArrayList<Assignment>();
-    public void addAssignment(Assignment assignment) {
-        assignment.student = this;
-        assignments.add(assignment);
+    List<Paper> papers = new ArrayList<Paper>();
+    public void addPaper(Paper paper) {
+        paper.student = this;
+        papers.add(paper);
     }
 
-    public void removeAssignment(Assignment assignment) {
-        assignments.remove(assignment);
-        assignment.student = null;
+    public void removePaper(Paper paper) {
+        papers.remove(paper);
+        paper.student = null;
     }
 }

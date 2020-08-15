@@ -1,7 +1,6 @@
 package it.polito.ai.backend.controllers;
 
 import it.polito.ai.backend.dtos.*;
-import it.polito.ai.backend.services.notification.NotificationService;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 
@@ -13,9 +12,9 @@ public class ModelHelper {
         Link studentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(courseDTO.getId())).withRel("enrolled");
         Link teachersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeachers(courseDTO.getId())).withRel("taughtBy");
         Link teamsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeams(courseDTO.getId())).withRel("registers");
-        Link exerciseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getExercises(courseDTO.getId())).withRel("exercises");
+        Link assignmentLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAssignments(courseDTO.getId())).withRel("assignments");
         Link modelLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineController.class).getOne(modelId)).withRel("virtualMachineModel");
-        return courseDTO.add(selfLink, studentsLink, teachersLink, teamsLink, exerciseLink).addIf(modelId != null, () -> modelLink);
+        return courseDTO.add(selfLink, studentsLink, teachersLink, teamsLink, assignmentLink).addIf(modelId != null, () -> modelLink);
     }
 
     public static StudentDTO enrich(StudentDTO studentDTO) {
@@ -51,21 +50,21 @@ public class ModelHelper {
         return teacherDTO.add(selfLink, coursesLink);
     }
 
-    public static ExerciseDTO enrich(ExerciseDTO exerciseDTO, String courseId){
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getOne(exerciseDTO.getId())).withSelfRel();
+    public static AssignmentDTO enrich(AssignmentDTO assignmentDTO, String courseId){
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getOne(assignmentDTO.getId())).withSelfRel();
         Link courseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getOne(courseId)).withRel("course");
-        Link assignmentsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getLastAssignments(exerciseDTO.getId())).withRel("lastAssignmentsForEachStudent");
-        exerciseDTO.add(selfLink, assignmentsLink).addIf(courseId != null, () -> courseLink);
-        return exerciseDTO;
+        Link papersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getLastPapers(assignmentDTO.getId())).withRel("lastPapersForEachStudent");
+        assignmentDTO.add(selfLink, papersLink).addIf(courseId != null, () -> courseLink);
+        return assignmentDTO;
     }
 
-    public static AssignmentDTO enrich(AssignmentDTO assignmentDTO, String studentId, Long exerciseId){
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getOne(assignmentDTO.getId())).withSelfRel();
-        Link exerciseLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getOne(exerciseId)).withRel("exercise");
+    public static PaperDTO enrich(PaperDTO paperDTO, String studentId, Long assignmentId){
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(PaperController.class).getOne(paperDTO.getId())).withSelfRel();
+        Link assignmentLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getOne(assignmentId)).withRel("assignment");
         Link studentLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getOne(studentId)).withRel("student");
-        Link history = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ExerciseController.class).getHistoryAssignments(exerciseId,studentId)).withRel("history");
-        assignmentDTO.add(selfLink).addIf(studentId != null, () -> studentLink).addIf(exerciseId != null, () -> exerciseLink).add(history);
-        return assignmentDTO;
+        Link history = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getHistoryPapers(assignmentId,studentId)).withRel("history");
+        paperDTO.add(selfLink).addIf(studentId != null, () -> studentLink).addIf(assignmentId != null, () -> assignmentLink).add(history);
+        return paperDTO;
     }
 
     public static VirtualMachineDTO enrich(VirtualMachineDTO virtualMachineDTO, Long teamId, Long modelId) {

@@ -1,12 +1,11 @@
 package it.polito.ai.backend.controllers;
 
 import it.polito.ai.backend.security.DuplicateConfirmationToken;
-import it.polito.ai.backend.security.InvalidJwtAuthenticationException;
 import it.polito.ai.backend.security.InvalidUsernameException;
 import it.polito.ai.backend.security.SecurityServiceException;
-import it.polito.ai.backend.services.exercise.AssignmentNotFoundException;
-import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
-import it.polito.ai.backend.services.exercise.InvalidScore;
+import it.polito.ai.backend.services.assignment.PaperNotFoundException;
+import it.polito.ai.backend.services.assignment.AssignmentNotFoundException;
+import it.polito.ai.backend.services.assignment.InvalidScore;
 import it.polito.ai.backend.services.team.TeamServiceBadRequestException;
 import it.polito.ai.backend.services.team.TeamServiceConflictException;
 import it.polito.ai.backend.services.team.TeamServiceNotFoundException;
@@ -28,8 +27,8 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({TeamServiceNotFoundException.class,
             VirtualMachineServiceNotFoundException.class,
-            AssignmentNotFoundException.class,
-            ExerciseNotFoundException.class})
+            PaperNotFoundException.class,
+            AssignmentNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     ResponseEntity<String> handleNotFoundException(RuntimeException runtimeException) {
         return new ResponseEntity<>(runtimeException.getMessage(), HttpStatus.NOT_FOUND);

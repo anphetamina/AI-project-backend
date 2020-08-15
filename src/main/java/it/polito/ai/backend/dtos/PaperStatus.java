@@ -1,6 +1,6 @@
 package it.polito.ai.backend.dtos;
 
-public enum  AssignmentStatus {
+public enum PaperStatus {
     NULL,
     LETTO,
     CONSEGNATO,

@@ -2,14 +2,9 @@ package it.polito.ai.backend.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
-import it.polito.ai.backend.entities.Team;
-import it.polito.ai.backend.entities.TeamStatus;
-import it.polito.ai.backend.services.exercise.ExerciseNotFoundException;
-import it.polito.ai.backend.services.exercise.ExerciseService;
+import it.polito.ai.backend.services.assignment.AssignmentService;
 import it.polito.ai.backend.services.notification.NotificationService;
-import it.polito.ai.backend.services.notification.TokenExpiredException;
 import it.polito.ai.backend.services.team.*;
-import it.polito.ai.backend.services.vm.VirtualMachineNotFoundException;
 import it.polito.ai.backend.services.team.StudentNotFoundException;
 import it.polito.ai.backend.services.team.TeamService;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
@@ -17,17 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
-import org.springframework.http.HttpStatus;
-import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,7 +28,7 @@ public class StudentController {
     @Autowired
     TeamService teamService;
     @Autowired
-    ExerciseService exerciseService;
+    AssignmentService assignmentService;
     @Autowired
     NotificationService notificationService;
     @Autowired
@@ -101,14 +90,14 @@ public class StudentController {
 
 
 
-    @Operation(summary = "get the assignments of a student")
-    @GetMapping("/{studentId}/exercises/{exerciseId}/assignments")
-    CollectionModel<AssignmentDTO> getAssignments(@PathVariable @NotBlank String studentId,@PathVariable @NotNull Long exerciseId ) {
-        List<AssignmentDTO> assignmentDTOS =  exerciseService.getAssignmentByStudentAndExercise(studentId,exerciseId).stream()
-                .map(a -> ModelHelper.enrich(a,studentId,exerciseId))
+    @Operation(summary = "get the papers of a student")
+    @GetMapping("/{studentId}/assignments/{assignmentId}/papers")
+    CollectionModel<PaperDTO> getPapers(@PathVariable @NotBlank String studentId, @PathVariable @NotNull Long assignmentId ) {
+        List<PaperDTO> paperDTOS =  assignmentService.getPaperByStudentAndAssignment(studentId,assignmentId).stream()
+                .map(a -> ModelHelper.enrich(a,studentId,assignmentId))
                 .collect(Collectors.toList());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getAssignments(studentId,exerciseId)).withSelfRel();
-        return CollectionModel.of(assignmentDTOS, selfLink);
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getPapers(studentId,assignmentId)).withSelfRel();
+        return CollectionModel.of(paperDTOS, selfLink);
 
     }
 

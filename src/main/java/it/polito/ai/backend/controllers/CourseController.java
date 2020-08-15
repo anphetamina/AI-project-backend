@@ -5,7 +5,7 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
 import it.polito.ai.backend.services.Utils;
-import it.polito.ai.backend.services.exercise.ExerciseService;
+import it.polito.ai.backend.services.assignment.AssignmentService;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.*;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
@@ -47,7 +47,7 @@ public class CourseController {
     @Autowired
     NotificationService notificationService;
     @Autowired
-    ExerciseService exerciseService;
+    AssignmentService assignmentService;
     @Autowired
     VirtualMachineService virtualMachineService;
     @Autowired
@@ -312,29 +312,30 @@ public class CourseController {
 
     }
 
-    @Operation(summary = "create a new exercise for a course")
-    @PostMapping("/{courseId}/exercises")
-    void createExercise(@RequestPart("image") MultipartFile file, @RequestPart("expiredDate") String expiredDate, @PathVariable @NotBlank String courseId){
+    @Operation(summary = "create a new assignment for a course")
+    @PostMapping("/{courseId}/assignment")
+    void createAssignment(@RequestPart("image") MultipartFile file, @RequestPart("expiredDate") String expiredDate, @PathVariable @NotBlank String courseId){
         try {
             Utils.checkTypeImage(file);
             System.out.println("Original Image Byte Size - " + file.getBytes().length);
             SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
             Timestamp expired = new Timestamp(format.parse(expiredDate).getTime());
             Timestamp published = Utils.getNow();
-            exerciseService.addExerciseForCourse(courseId,published,expired,file);
+            AssignmentDTO a = assignmentService.addAssignmentForCourse(courseId,published,expired,file);
+            assignmentService.setPapersNullForAssignment(a.getId());
         } catch (ParseException | IOException | TikaException e) {
             e.printStackTrace();
             throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
         }
     }
 
-    @Operation(summary = "get all exercises of a course")
-    @GetMapping("/{courseId}/exercises")
-    CollectionModel<ExerciseDTO> getExercises(@PathVariable @NotBlank String courseId){
-        List<ExerciseDTO> exerciseDTOS = exerciseService.getExercisesForCourse(courseId).stream()
+    @Operation(summary = "get all assignments of a course")
+    @GetMapping("/{courseId}/assignments")
+    CollectionModel<AssignmentDTO> getAssignments(@PathVariable @NotBlank String courseId){
+        List<AssignmentDTO> assignmentDTOS = assignmentService.getAssignmentsForCourse(courseId).stream()
                 .map(e -> ModelHelper.enrich(e,courseId)).collect(Collectors.toList());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getExercises(courseId)).withSelfRel();
-        return CollectionModel.of(exerciseDTOS, selfLink);
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAssignments(courseId)).withSelfRel();
+        return CollectionModel.of(assignmentDTOS, selfLink);
 
 
     }

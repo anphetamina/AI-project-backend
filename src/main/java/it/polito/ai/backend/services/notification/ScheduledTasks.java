@@ -4,7 +4,7 @@ import it.polito.ai.backend.entities.*;
 import it.polito.ai.backend.repositories.*;
 import it.polito.ai.backend.security.CustomUserDetailsService;
 import it.polito.ai.backend.services.Utils;
-import it.polito.ai.backend.dtos.AssignmentStatus;
+import it.polito.ai.backend.dtos.PaperStatus;
 import it.polito.ai.backend.services.team.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -23,9 +23,9 @@ public class ScheduledTasks {
     @Autowired
     TokenRepository tokenRepository;
     @Autowired
-    AssignmentRepository assignmentRepository;
+    PaperRepository paperRepository;
     @Autowired
-    ExerciseRepository exerciseRepository;
+    AssignmentRepository exerciseRepository;
     @Autowired
     CourseRepository courseRepository;
     @Autowired
@@ -60,13 +60,13 @@ public class ScheduledTasks {
     public void expiredAssignment() {
         System.out.println("Conrtollo la scadenza condegne");
         /*Consegne scaduta*/
-        List<Exercise> exercises = exerciseRepository.findByExpiredBefore(Utils.getNow());
-        System.out.println(exercises.size());
+        List<Assignment> assignments = exerciseRepository.findByExpiredBefore(Utils.getNow());
+        System.out.println(assignments.size());
         HashSet<Student> students = new HashSet<Student>();
-        List<Assignment> assignments = new ArrayList<Assignment>();
+        List<Paper> papers = new ArrayList<Paper>();
         /*Per ogni consegna scaduta trovo gli studenti iscritti a corse a di cui fa parte la consega*/
-        for (Exercise exercise:exercises) {
-            Optional<Course> course = courseRepository.findById(exercise.getCourse().getId());
+        for (Assignment assignment : assignments) {
+            Optional<Course> course = courseRepository.findById(assignment.getCourse().getId());
             if(course.isPresent())
                 students.addAll(course.get().getStudents());
 
@@ -74,29 +74,29 @@ public class ScheduledTasks {
         System.out.println(students.size());
         /*Per ogni consegna cerco l'ultimo elaborato dello studente*/
         if(!students.isEmpty()){
-            for(Exercise exercise:exercises){
+            for(Assignment assignment : assignments){
                 for (Student s:students) {
-                    assignments.add( assignmentRepository.findByStudentAndAndExercise(s,exercise)
+                    papers.add( paperRepository.findByStudentAndAssignment(s, assignment)
                             .stream()
-                            .sorted(Comparator.comparing(Assignment::getPublished, Timestamp::compareTo))
+                            .sorted(Comparator.comparing(Paper::getPublished, Timestamp::compareTo))
                     .reduce((a1,a2)->a2).orElse(null));
                  }
             }
         }
-        System.out.println(assignments.size());
-        for (Assignment a:assignments) {
+        System.out.println(papers.size());
+        for (Paper a: papers) {
             /*Se l'elaborato non ha stato consegnato e ha flag true(può essere caricato)
              allora lo carico con stato consegnato e falg false*/
-            if(a!=null && a.getStatus()!=AssignmentStatus.CONSEGNATO && a.isFlag()){
-                Assignment ac = new Assignment();
+            if(a!=null && a.getStatus()!= PaperStatus.CONSEGNATO && a.isFlag()){
+                Paper ac = new Paper();
                 ac.setImage(a.getImage());
                 ac.setStudent(a.getStudent());
-                ac.setStatus(AssignmentStatus.CONSEGNATO);
+                ac.setStatus(PaperStatus.CONSEGNATO);
                 ac.setPublished(Utils.getNow());
-                ac.setExercise(a.getExercise());
+                ac.setAssignment(a.getAssignment());
                 ac.setScore(null);
                 ac.setFlag(false);
-                assignmentRepository.save(ac);
+                paperRepository.save(ac);
             }
         }
     }

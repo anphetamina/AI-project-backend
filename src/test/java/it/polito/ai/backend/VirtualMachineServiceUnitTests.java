@@ -12,14 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
 import org.opentest4j.TestAbortedException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 
 import javax.transaction.Transactional;
-import javax.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -104,7 +99,7 @@ class VirtualMachineServiceUnitTests {
                             .students(new ArrayList<>())
                             .teachers(new ArrayList<>())
                             .teams(new ArrayList<>())
-                            .exercises(new ArrayList<>())
+                            .assignments(new ArrayList<>())
                             .build();
                     courses.add(course);
 
@@ -139,7 +134,7 @@ class VirtualMachineServiceUnitTests {
                             .courses(new ArrayList<>())
                             .teams(new ArrayList<>())
                             .virtual_machines(new ArrayList<>())
-                            .assignments(new ArrayList<>())
+                            .papers(new ArrayList<>())
                             .build();
                     students.add(student);
 

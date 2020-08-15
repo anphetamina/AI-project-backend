@@ -1,20 +1,12 @@
 package it.polito.ai.backend.security;
 
-import it.polito.ai.backend.entities.Student;
-import it.polito.ai.backend.entities.Teacher;
 import it.polito.ai.backend.repositories.*;
-import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import javax.security.sasl.AuthenticationException;
 import javax.transaction.Transactional;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -33,9 +25,9 @@ public class SecurityServiceImpl implements SecurityService {
     @Autowired
     ConfigurationRepository configurationRepository;
     @Autowired
-    ExerciseRepository exerciseRepository;
+    AssignmentRepository exerciseRepository;
     @Autowired
-    AssignmentRepository assignmentRepository;
+    PaperRepository paperRepository;
     @Autowired
     TokenRepository tokenRepository;
     @Autowired
@@ -249,7 +241,7 @@ public class SecurityServiceImpl implements SecurityService {
     public boolean isDone(Long exerciseId) {
         String userId = this.getId();
         return exerciseRepository.findById(exerciseId).map(
-                e -> e.getAssignments()
+                e -> e.getPapers()
         .stream().anyMatch(assignment -> assignment.getStudent().getId().equalsIgnoreCase(userId)))
         .orElse(false);
     }
@@ -261,7 +253,7 @@ public class SecurityServiceImpl implements SecurityService {
      */
     public boolean isAuthor(Long assignmentId) {
         String userId = this.getId();
-        return assignmentRepository.findById(assignmentId)
+        return paperRepository.findById(assignmentId)
                 .map(a -> a.getStudent().getId().equalsIgnoreCase(userId))
                 .orElse(false);
     }
@@ -273,8 +265,8 @@ public class SecurityServiceImpl implements SecurityService {
      */
     public boolean isReview(Long assignmentId) {
         String userId = this.getId();
-        return assignmentRepository.findById(assignmentId)
-                .map(a -> a.getExercise().getCourse().getTeachers()
+        return paperRepository.findById(assignmentId)
+                .map(a -> a.getAssignment().getCourse().getTeachers()
                 .stream().anyMatch(teacher -> teacher.getId().equalsIgnoreCase(userId)))
                 .orElse(false);
     }

@@ -97,21 +97,15 @@ public class Course {
 
 
     @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    private List<Exercise> exercises =new ArrayList<Exercise>();
-    public void addExercise(Exercise exercise) {
-        exercise.course = this;
-        exercises.add(exercise);
+    private List<Assignment> assignments =new ArrayList<Assignment>();
+    public void addAssignment(Assignment assignment) {
+        assignment.course = this;
+        assignments.add(assignment);
     }
 
-    public void removeExercise(Exercise exercise) {
-        exercises.remove(exercise);
-        exercise.course = null;
+    public void removeAssignment(Assignment assignment) {
+        assignments.remove(assignment);
+        assignment.course = null;
     }
 
-    /*public void removeExercises() {
-        for (Exercise e : exercises) {
-            e.course = null;
-        }
-        exercises.clear();
-    }*/
 }
