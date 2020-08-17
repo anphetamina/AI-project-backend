@@ -66,14 +66,6 @@ public class TeamServiceImpl implements TeamService {
                 .map(c -> modelMapper.map(c, CourseDTO.class));
     }
 
-    @Override
-    @PreAuthorize("(hasRole('TEACHER') ) or (hasRole('STUDENT'))")
-    public List<CourseDTO> getAllCourses() {
-        return courseRepository.findAll()
-                .stream()
-                .map(c -> modelMapper.map(c, CourseDTO.class))
-                .collect(Collectors.toList());
-    }
 
     @Override
     public boolean addStudent(StudentDTO student) {

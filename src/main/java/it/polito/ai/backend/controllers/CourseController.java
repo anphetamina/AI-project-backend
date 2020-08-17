@@ -54,19 +54,6 @@ public class CourseController {
     @Autowired
     ModelMapper modelMapper;
 
-    @Operation(summary = "get all courses")
-    @GetMapping({"", "/"})
-    ResponseEntity<CollectionModel<CourseDTO>> all() {
-        List<CourseDTO> courses = teamService.getAllCourses()
-                .stream()
-                .map(c -> {
-                    Long modelId = virtualMachineService.getVirtualMachineModelForCourse(c.getId()).map(VirtualMachineModelDTO::getId).orElse(null);
-                    return ModelHelper.enrich(c, modelId);
-                })
-                .collect(Collectors.toList());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).all()).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(courses, selfLink), HttpStatus.OK) ;
-    }
 
     @Operation(summary = "get course")
     @GetMapping("/{courseId}")

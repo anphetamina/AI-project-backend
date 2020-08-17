@@ -14,7 +14,6 @@ public interface TeamService {
 
     Optional<CourseDTO> getCourse(String courseId);
 
-    List<CourseDTO> getAllCourses();
 
     boolean addStudent(StudentDTO student);
 
