@@ -10,6 +10,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,34 +30,34 @@ public class VirtualMachineController {
 
     @Operation(summary = "get virtual machine")
     @GetMapping("/{vmId}")
-    VirtualMachineDTO getOne(@PathVariable @NotNull Long vmId) {
+    ResponseEntity<VirtualMachineDTO> getOne(@PathVariable @NotNull Long vmId) {
         VirtualMachineDTO virtualMachineDTO = virtualMachineService.getVirtualMachine(vmId)
                 .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
         Long teamId = virtualMachineService.getTeamForVirtualMachine(vmId).map(TeamDTO::getId).orElse(null);
         Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vmId).map(VirtualMachineModelDTO::getId).orElse(null);
-        return ModelHelper.enrich(virtualMachineDTO, teamId, modelId);
+        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineDTO, teamId, modelId),HttpStatus.OK);
     }
 
     @Operation(summary = "get owners of a virtual machine")
     @GetMapping("/{vmId}/owners")
-    CollectionModel<StudentDTO> getOwners(@PathVariable @NotNull Long vmId) {
+    ResponseEntity<CollectionModel<StudentDTO>> getOwners(@PathVariable @NotNull Long vmId) {
         List<StudentDTO> studentDTOList = virtualMachineService.getOwnersForVirtualMachine(vmId)
                 .stream()
                 .map(ModelHelper::enrich)
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineController.class).getOwners(vmId)).withSelfRel();
-        return CollectionModel.of(studentDTOList, selfLink);
+        return new ResponseEntity<>(CollectionModel.of(studentDTOList, selfLink),HttpStatus.OK);
     }
 
     @Operation(summary = "create a new virtual machine")
     @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
-    VirtualMachineDTO addVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO) {
+    ResponseEntity<VirtualMachineDTO> addVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO) {
         String studentId = virtualMachineDTO.getStudentId();
         Long teamId = virtualMachineDTO.getTeamId();
         Long modelId = virtualMachineDTO.getModelId();
         VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(studentId, teamId, modelId, virtualMachineDTO);
-        return ModelHelper.enrich(virtualMachine, teamId, modelId);
+        return new ResponseEntity<>(ModelHelper.enrich(virtualMachine, teamId, modelId),HttpStatus.OK);
     }
 
     @Operation(summary = "delete an existing virtual machine")
@@ -70,11 +71,12 @@ public class VirtualMachineController {
 
     @Operation(summary = "update an existing virtual machine")
     @PutMapping("/{vmId}")
-    VirtualMachineDTO setVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO, @PathVariable @NotNull Long vmId) {
+    ResponseEntity<VirtualMachineDTO> setVirtualMachine(@RequestBody @Valid VirtualMachineDTO virtualMachineDTO, @PathVariable @NotNull Long vmId) {
         VirtualMachineDTO virtualMachineDTO1 = virtualMachineService.updateVirtualMachine(vmId, virtualMachineDTO);
         // Long teamId = virtualMachineService.getTeamForVirtualMachine(vmId).map(TeamDTO::getId).orElse(null);
         // Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vmId).map(VirtualMachineModelDTO::getId).orElse(null);
-        return ModelHelper.enrich(virtualMachineDTO1, virtualMachineDTO.getTeamId(), virtualMachineDTO.getModelId());
+        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineDTO1,
+                virtualMachineDTO.getTeamId(), virtualMachineDTO.getModelId()),HttpStatus.OK);
     }
 
     @Operation(summary = "turn on a virtual machine")

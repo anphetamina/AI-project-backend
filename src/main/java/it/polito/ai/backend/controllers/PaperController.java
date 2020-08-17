@@ -10,6 +10,8 @@ import it.polito.ai.backend.services.assignment.AssignmentService;
 import it.polito.ai.backend.services.team.StudentNotFoundException;
 import it.polito.ai.backend.services.team.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,10 +32,10 @@ public class PaperController {
 
     @Operation(summary = "get paper")
     @GetMapping("/{paperId}")
-    PaperDTO getOne(@PathVariable @NotNull Long paperId) {
+    ResponseEntity<PaperDTO> getOne(@PathVariable @NotNull Long paperId) {
         PaperDTO paperDTO = assignmentService.getPaper(paperId).orElseThrow(() -> new PaperNotFoundException(paperId.toString()));
         Long exerciseId = assignmentService.getAssignmentForPaper(paperId).map(AssignmentDTO::getId).orElseThrow(() -> new AssignmentNotFoundException(paperId.toString()));
         String studentId = assignmentService.getStudentForPaper(paperId).map(StudentDTO::getId).orElseThrow( () -> new StudentNotFoundException(paperId.toString()));
-        return ModelHelper.enrich(paperDTO,studentId,exerciseId);
+        return new ResponseEntity<>(ModelHelper.enrich(paperDTO,studentId,exerciseId), HttpStatus.OK);
     }
 }

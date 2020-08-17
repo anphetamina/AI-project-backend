@@ -3,9 +3,11 @@ package it.polito.ai.backend.dtos;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.hateoas.server.core.Relation;
 
 @Data
 @Builder
+@Relation(itemRelation = "resourcesResponse")
 public class ResourcesResponse {
     Long teamId;
     @Schema(description = "active cpu cores number sum for all virtual machines") int activeNumVcpu;

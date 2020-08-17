@@ -14,6 +14,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,17 +39,17 @@ public class AssignmentController {
 
     @Operation(summary = "get assignment")
     @GetMapping("/{assignmentId}")
-    AssignmentDTO getOne(@PathVariable @NotNull Long assignmentId) {
+    ResponseEntity<AssignmentDTO> getOne(@PathVariable @NotNull Long assignmentId) {
         AssignmentDTO assignmentDTO = assignmentService.getAssignment(assignmentId)
                 .orElseThrow(() -> new AssignmentNotFoundException(assignmentId.toString()));
         String courseId = assignmentService.getCourse(assignmentId)
                 .map(CourseDTO::getId).orElseThrow(() -> new CourseNotFoundException(String.format("for assignment %s", assignmentId)));
-        return ModelHelper.enrich(assignmentDTO, courseId);
+        return new ResponseEntity<>(ModelHelper.enrich(assignmentDTO, courseId),HttpStatus.OK);
     }
 
     @Operation(summary = "get the last papers of an assignment")
     @GetMapping("/{assignmentId}/papers")
-    CollectionModel<PaperDTO> getLastPapers(@PathVariable @NotNull Long assignmentId ){
+    ResponseEntity<CollectionModel<PaperDTO>> getLastPapers(@PathVariable @NotNull Long assignmentId ){
         List<PaperDTO> lastPapers = assignmentService.getLastPapers(assignmentId)
                 .stream().map(a -> {
                     String studentId = assignmentService.getStudentForPaper(a.getId()).map(StudentDTO::getId)
@@ -57,12 +58,12 @@ public class AssignmentController {
                 }).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getLastPapers(assignmentId)).withSelfRel();
 
-        return  CollectionModel.of(lastPapers,selfLink);
+        return  new ResponseEntity<>(CollectionModel.of(lastPapers,selfLink),HttpStatus.OK);
     }
 
     @Operation(summary = "get the papers history of an assignment")
     @GetMapping("/{assignmentId}/papers/history")
-    CollectionModel<PaperDTO> getHistoryPapers(@PathVariable @NotNull Long assignmentId, @RequestParam @NotBlank String studentId){
+    ResponseEntity<CollectionModel<PaperDTO>> getHistoryPapers(@PathVariable @NotNull Long assignmentId, @RequestParam @NotBlank String studentId){
 
         if (studentId.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -74,7 +75,7 @@ public class AssignmentController {
                 ).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getHistoryPapers(assignmentId,studentId)).withSelfRel();
 
-        return  CollectionModel.of(paperDTOS,selfLink);
+        return new ResponseEntity<>(CollectionModel.of(paperDTOS,selfLink),HttpStatus.OK);
 
     }
 

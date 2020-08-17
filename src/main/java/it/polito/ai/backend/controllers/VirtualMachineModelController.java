@@ -8,6 +8,7 @@ import it.polito.ai.backend.services.vm.VirtualMachineModelNotFoundException;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,20 +28,20 @@ public class VirtualMachineModelController {
 
     @Operation(summary = "get virtual machine model")
     @GetMapping("/{modelId}")
-    VirtualMachineModelDTO getOne(@PathVariable @NotNull Long modelId) {
+    ResponseEntity<VirtualMachineModelDTO> getOne(@PathVariable @NotNull Long modelId) {
         VirtualMachineModelDTO virtualMachineModelDTO = virtualMachineService.getVirtualMachineModel(modelId)
                 .orElseThrow(() -> new VirtualMachineModelNotFoundException(modelId.toString()));
         String courseId = virtualMachineService.getCourseForVirtualMachineModel(modelId).map(CourseDTO::getId).orElse(null);
-        return ModelHelper.enrich(virtualMachineModelDTO, courseId);
+        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineModelDTO, courseId),HttpStatus.OK);
     }
 
     @Operation(summary = "create a new virtual machine model")
     @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
-    VirtualMachineModelDTO addVirtualMachineModel(@RequestBody @Valid VirtualMachineModelDTO virtualMachineModelDTO) {
+    ResponseEntity<VirtualMachineModelDTO> addVirtualMachineModel(@RequestBody @Valid VirtualMachineModelDTO virtualMachineModelDTO) {
         String courseId = virtualMachineModelDTO.getCourseId();
         VirtualMachineModelDTO virtualMachineModel = virtualMachineService.createVirtualMachineModel(courseId, virtualMachineModelDTO);
-        return ModelHelper.enrich(virtualMachineModel, courseId);
+        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineModel, courseId),HttpStatus.OK);
     }
 
     @Operation(summary = "delete an existing virtual machine model")

@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 
 import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
@@ -15,6 +16,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Relation(collectionRelation = "paperList", itemRelation = "paper")
 public class PaperDTO extends RepresentationModel<PaperDTO> {
     Long id;
     @NotNull  @Schema(description = "date(dd/mm/yyyy) when was published") Timestamp published;

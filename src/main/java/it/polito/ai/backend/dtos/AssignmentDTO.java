@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 
 import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
@@ -14,6 +15,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Relation(collectionRelation = "assignmentList", itemRelation = "assignment")
 public class AssignmentDTO extends RepresentationModel<AssignmentDTO> {
     Long id;
     @NotNull @Schema(description = "date(dd/mm/yyyy) when teacher uploaded the exercise") Timestamp published;

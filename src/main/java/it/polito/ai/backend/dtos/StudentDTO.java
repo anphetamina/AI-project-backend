@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 
 import javax.persistence.Id;
 import javax.validation.constraints.Email;
@@ -15,6 +16,7 @@ import javax.validation.constraints.NotBlank;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Relation(collectionRelation = "studentList", itemRelation = "student")
 public class StudentDTO extends RepresentationModel<StudentDTO> {
     @CsvBindByName
     @NotBlank

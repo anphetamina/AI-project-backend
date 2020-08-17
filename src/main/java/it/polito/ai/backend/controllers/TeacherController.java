@@ -12,6 +12,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,13 +34,14 @@ public class TeacherController {
 
     @Operation(summary = "get teacher")
     @GetMapping("/{id}")
-    TeacherDTO getOne(@PathVariable @NotBlank String id) {
-        return ModelHelper.enrich(teamService.getTeacher(id).orElseThrow(() -> new TeacherNotFoundException(id)));
+    ResponseEntity<TeacherDTO> getOne(@PathVariable @NotBlank String id) {
+        return new ResponseEntity<>(ModelHelper.enrich(teamService.getTeacher(id).
+                orElseThrow(() -> new TeacherNotFoundException(id))),HttpStatus.OK);
     }
 
     @Operation(summary = "get courses in which a teacher teaches")
     @GetMapping("/{id}/courses")
-    CollectionModel<CourseDTO> getCourses(@PathVariable @NotBlank String id) {
+    ResponseEntity<CollectionModel<CourseDTO>> getCourses(@PathVariable @NotBlank String id) {
         List<CourseDTO> courses = teamService.getCoursesForTeacher(id)
                 .stream()
                 .map(c -> {
@@ -48,7 +50,7 @@ public class TeacherController {
                 })
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeacherController.class).getCourses(id)).withSelfRel();
-        return CollectionModel.of(courses, selfLink);
+        return new ResponseEntity<>(CollectionModel.of(courses, selfLink),HttpStatus.OK);
     }
 
 

@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,25 +42,25 @@ public class TeamController {
 
     @Operation(summary = "get team")
     @GetMapping("/{teamId}")
-    TeamDTO getOne(@PathVariable @NotNull Long teamId) {
+    ResponseEntity<TeamDTO> getOne(@PathVariable @NotNull Long teamId) {
         TeamDTO teamDTO = teamService.getTeam(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
         String courseId = teamService.getCourseForTeam(teamId).map(CourseDTO::getId).orElse(null);
         Long configurationId = virtualMachineService.getConfigurationForTeam(teamId).map(ConfigurationDTO::getId).orElse(null);
-        return ModelHelper.enrich(teamDTO, courseId, configurationId);
+        return new  ResponseEntity<>(ModelHelper.enrich(teamDTO, courseId, configurationId),HttpStatus.OK);
     }
 
     @Operation(summary = "get team members")
     @GetMapping("/{teamId}/members")
-    CollectionModel<StudentDTO> getMembers(@PathVariable @NotNull Long teamId) {
+    ResponseEntity<CollectionModel<StudentDTO>> getMembers(@PathVariable @NotNull Long teamId) {
         List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getMembers(teamId)).withSelfRel();
-        return CollectionModel.of(students, selfLink);
+        return new ResponseEntity<>(CollectionModel.of(students, selfLink),HttpStatus.OK);
     }
 
 
     @Operation(summary = "get team members status only if in db there are present tokens. The expired token are cancel automaticaly at 4am evry day")
     @GetMapping("/{teamId}/members/status-list")
-    List<JSONObject> getMembersStatus(@PathVariable Long teamId) {
+    ResponseEntity<List<JSONObject>> getMembersStatus(@PathVariable Long teamId) {
 
         List<JSONObject> listMembers = new ArrayList<>();
         Map<StudentDTO,String> memberAndStatus = new HashMap<>();
@@ -84,16 +86,16 @@ public class TeamController {
             entity.put("status",v);
             listMembers.add(entity);
         });
-        return listMembers;
+        return new ResponseEntity<>(listMembers,HttpStatus.OK);
 
     }
 
     @Operation(summary = "get virtual machines for a team")
     @GetMapping("/{teamId}/virtual-machines")
-    CollectionModel<VirtualMachineDTO> getVirtualMachines(@PathVariable @NotNull Long teamId) {
+    ResponseEntity<CollectionModel<VirtualMachineDTO>> getVirtualMachines(@PathVariable @NotNull Long teamId) {
         List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForTeam(teamId);
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getVirtualMachines(teamId)).withSelfRel();
-        return CollectionModel.of(virtualMachineDTOList, selfLink);
+        return new ResponseEntity<>(CollectionModel.of(virtualMachineDTOList, selfLink),HttpStatus.OK);
     }
 
     @Operation(summary = "get the active number of cpu cores by a team")
@@ -128,7 +130,7 @@ public class TeamController {
 
     @Operation(summary = "get the active resources and the configuration max numbers by a team")
     @GetMapping("/{teamId}/virtual-machines/resources")
-    ResourcesResponse getResources(@PathVariable @NotNull Long teamId) {
-        return virtualMachineService.getResourcesByTeam(teamId);
+    ResponseEntity<ResourcesResponse> getResources(@PathVariable @NotNull Long teamId) {
+        return new ResponseEntity<>(virtualMachineService.getResourcesByTeam(teamId),HttpStatus.OK);
     }
 }

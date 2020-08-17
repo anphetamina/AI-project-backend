@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import it.polito.ai.backend.entities.VirtualMachineStatus;
 import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -15,6 +16,7 @@ import javax.validation.constraints.Positive;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@Relation(collectionRelation = "virtualMachineList", itemRelation = "virtualMachine")
 public class VirtualMachineDTO extends RepresentationModel<VirtualMachineDTO> {
     @EqualsAndHashCode.Include
     Long id;

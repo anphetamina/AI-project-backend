@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 
 import javax.persistence.Id;
 import javax.validation.constraints.*;
@@ -15,6 +16,7 @@ import javax.validation.constraints.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Relation(collectionRelation = "courseList", itemRelation = "course")
 public class CourseDTO extends RepresentationModel<CourseDTO> {
     @NotBlank
     @Schema(description = "course name abbreviation")

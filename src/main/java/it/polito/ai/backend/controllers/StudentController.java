@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,21 +38,22 @@ public class StudentController {
 
     @Operation(summary = "get all students")
     @GetMapping({"", "/"})
-    CollectionModel<StudentDTO> all() {
+    ResponseEntity<CollectionModel<StudentDTO>> all() {
         List<StudentDTO> students = teamService.getAllStudents().stream().map(ModelHelper::enrich).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).all()).withSelfRel();
-        return CollectionModel.of(students, selfLink);
+        return new ResponseEntity<>(CollectionModel.of(students, selfLink), HttpStatus.OK);
     }
 
     @Operation(summary = "get student")
     @GetMapping("/{studentId}")
-    StudentDTO getOne(@PathVariable @NotBlank String studentId) {
-        return ModelHelper.enrich(teamService.getStudent(studentId).orElseThrow(() -> new StudentNotFoundException(studentId)));
+    ResponseEntity<StudentDTO> getOne(@PathVariable @NotBlank String studentId) {
+        return new ResponseEntity<>(ModelHelper.enrich(teamService.getStudent(studentId)
+                .orElseThrow(() -> new StudentNotFoundException(studentId))),HttpStatus.OK);
     }
 
     @Operation(summary = "get courses to which a student is enrolled")
     @GetMapping("/{studentId}/courses")
-    CollectionModel<CourseDTO> getCourses(@PathVariable @NotBlank String studentId) {
+    ResponseEntity<CollectionModel<CourseDTO>> getCourses(@PathVariable @NotBlank String studentId) {
         List<CourseDTO> courses = teamService.getCourses(studentId)
                 .stream()
                 .map(c -> {
@@ -59,32 +62,32 @@ public class StudentController {
                 })
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getCourses(studentId)).withSelfRel();
-        return CollectionModel.of(courses, selfLink);
+        return new ResponseEntity<>(CollectionModel.of(courses, selfLink),HttpStatus.OK);
     }
 
 
 
     @Operation(summary = "get team of which a student is part of in defined course")
     @GetMapping("/{studentId}/courses/{courseId}/team")
-    TeamDTO getTeamForStudentAndCourse(@PathVariable String studentId, @PathVariable String courseId) {
+    ResponseEntity<TeamDTO> getTeamForStudentAndCourse(@PathVariable String studentId, @PathVariable String courseId) {
         TeamDTO teamDTO = teamService.getTeamForStudentAndCourse(studentId, courseId)
                     .orElseThrow(() ->
                             new TeamNotFoundException("Not exist a team active for student " + studentId + " enrolld to course: " + courseId));
             Long configurationId = virtualMachineService.getConfigurationForTeam(teamDTO.getId()).map(ConfigurationDTO::getId).orElse(null);
-            return ModelHelper
-                    .enrich(teamDTO, courseId,configurationId);
+            return new ResponseEntity<>( ModelHelper
+                    .enrich(teamDTO, courseId,configurationId),HttpStatus.OK);
 
     }
 
     @Operation(summary = "get unconfirmed teams of which a student is part of in defined course")
     @GetMapping("/{studentId}/courses/{courseId}/unconfirmed-team")
-    CollectionModel<TeamDTO> getProposeTeamsForStudentAndCourse(@PathVariable String studentId, @PathVariable String courseId) {
+    ResponseEntity<CollectionModel<TeamDTO>>getProposeTeamsForStudentAndCourse(@PathVariable String studentId, @PathVariable String courseId) {
         List<TeamDTO> teams = teamService.getProposeTeamsForStudentAndCourse(studentId, courseId)
                     .stream()
                     .map(t -> ModelHelper.enrich(t, courseId,null))
                     .collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getProposeTeamsForStudentAndCourse(studentId, courseId)).withSelfRel();
-            return CollectionModel.of(teams, selfLink);
+            return new ResponseEntity<>(CollectionModel.of(teams, selfLink),HttpStatus.OK);
     }
 
 
@@ -92,12 +95,12 @@ public class StudentController {
 
     @Operation(summary = "get the papers of a student")
     @GetMapping("/{studentId}/assignments/{assignmentId}/papers")
-    CollectionModel<PaperDTO> getPapers(@PathVariable @NotBlank String studentId, @PathVariable @NotNull Long assignmentId ) {
+    ResponseEntity<CollectionModel<PaperDTO>> getPapers(@PathVariable @NotBlank String studentId, @PathVariable @NotNull Long assignmentId ) {
         List<PaperDTO> paperDTOS =  assignmentService.getPaperByStudentAndAssignment(studentId,assignmentId).stream()
                 .map(a -> ModelHelper.enrich(a,studentId,assignmentId))
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getPapers(studentId,assignmentId)).withSelfRel();
-        return CollectionModel.of(paperDTOS, selfLink);
+        return new ResponseEntity<>(CollectionModel.of(paperDTOS, selfLink),HttpStatus.OK);
 
     }
 
@@ -105,7 +108,7 @@ public class StudentController {
 
     @Operation(summary = "get the owned virtual machines by a student")
     @GetMapping("/{studentId}/virtual-machines")
-    CollectionModel<VirtualMachineDTO> getVirtualMachines (@PathVariable @NotBlank String studentId){
+    ResponseEntity<CollectionModel<VirtualMachineDTO>> getVirtualMachines (@PathVariable @NotBlank String studentId){
         List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForStudent(studentId)
                 .stream()
                 .map(vm -> {
@@ -115,7 +118,7 @@ public class StudentController {
                 })
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentId)).withSelfRel();
-        return CollectionModel.of(virtualMachineDTOList, selfLink);
+        return new ResponseEntity<>(CollectionModel.of(virtualMachineDTOList, selfLink),HttpStatus.OK);
     }
 }
 
