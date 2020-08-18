@@ -538,7 +538,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         }
 
         VirtualMachineModel model = VirtualMachineModel.builder()
-                .system_image(modelDTO.getOs())
+                .os(modelDTO.getOs())
                 .build();
         course.setVirtualMachineModel(model);
         virtualMachineModelRepository.save(model);

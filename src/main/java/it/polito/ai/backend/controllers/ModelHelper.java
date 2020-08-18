@@ -13,7 +13,7 @@ public class ModelHelper {
         Link teachersLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeachers(courseDTO.getId())).withRel("taughtBy");
         Link teamsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getTeams(courseDTO.getId())).withRel("registers");
         Link assignmentLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAssignments(courseDTO.getId())).withRel("assignments");
-        Link modelLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineController.class).getOne(modelId)).withRel("virtualMachineModel");
+        Link modelLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineModelController.class).getOne(modelId)).withRel("virtualMachineModel");
         return courseDTO.add(selfLink, studentsLink, teachersLink, teamsLink, assignmentLink).addIf(modelId != null, () -> modelLink);
     }
 

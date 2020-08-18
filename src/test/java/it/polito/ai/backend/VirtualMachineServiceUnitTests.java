@@ -104,7 +104,7 @@ class VirtualMachineServiceUnitTests {
                     courses.add(course);
 
                     VirtualMachineModel model = VirtualMachineModel.builder()
-                            .system_image(SystemImage.values()[i%SystemImage.values().length])
+                            .os(SystemImage.values()[i%SystemImage.values().length])
                             .virtualMachines(new ArrayList<>())
                             .build();
                     models.add(model);
