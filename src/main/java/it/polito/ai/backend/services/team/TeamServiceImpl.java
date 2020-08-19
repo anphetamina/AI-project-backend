@@ -247,7 +247,7 @@ public class TeamServiceImpl implements TeamService {
 
 
     @Override
-    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId)) or (hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId))")
     public List<StudentDTO> getMembers(Long teamId) {
         return teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
