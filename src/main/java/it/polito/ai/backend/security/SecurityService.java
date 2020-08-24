@@ -24,6 +24,7 @@ public interface SecurityService {
 
     boolean hasToken(String tokenId);
 
+    boolean canSee(Long configurationId);
 
     String getId();
 }

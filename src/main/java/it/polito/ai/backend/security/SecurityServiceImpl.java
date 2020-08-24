@@ -1,5 +1,6 @@
 package it.polito.ai.backend.security;
 
+import it.polito.ai.backend.entities.Student;
 import it.polito.ai.backend.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -280,6 +281,22 @@ public class SecurityServiceImpl implements SecurityService {
         String userId = this.getId();
         return tokenRepository.findById(tokenId)
                 .map(t -> t.getStudentId().equalsIgnoreCase(userId)).orElse(false);
+    }
+
+    /**
+     *
+     * @param configurationId
+     * @return true if the authenticated the student is part of the team given configurationId
+     */
+    @Override
+    public boolean canSee(Long configurationId) {
+        String userId = this.getId();
+        return configurationRepository.findById(configurationId)
+                .filter(c -> c.getTeam() != null)
+                .filter(c -> c.getTeam().getMembers().size() > 0)
+                .map(c -> c.getTeam().getMembers()
+                        .stream().map(Student::getId).anyMatch(id -> id.equalsIgnoreCase(userId)))
+                .orElse(false);
     }
 
     /**

@@ -593,7 +593,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.canManage(#configurationId)")
+    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canManage(#configurationId)) or (hasRole('STUDENT') and @securityServiceImpl.canSee(#configurationId))")
     public Optional<ConfigurationDTO> getConfiguration(Long configurationId) {
         return configurationRepository.findById(configurationId).map(c -> modelMapper.map(c, ConfigurationDTO.class));
     }
@@ -673,7 +673,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.hasDefined(#modelId)")
+    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.canAccess(#modelId)) or (hasRole('TEACHER') and @securityServiceImpl.hasDefined(#modelId))")
     public Optional<CourseDTO> getCourseForVirtualMachineModel(Long modelId) {
         Course course = virtualMachineModelRepository.findById(modelId)
                 .orElseThrow(() -> new VirtualMachineModelNotFoundException(modelId.toString()))
