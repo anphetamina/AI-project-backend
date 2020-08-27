@@ -28,4 +28,6 @@ public class VirtualMachineDTO extends RepresentationModel<VirtualMachineDTO> {
     @NotNull Long teamId;
     @NotNull Long modelId;
 
+    @Schema(description = "the current status of the virtual machine") VirtualMachineStatus status;
+
 }

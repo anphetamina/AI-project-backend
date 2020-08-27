@@ -358,7 +358,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
         Student student = studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
 
         if (!virtualMachine.getOwners().contains(student)) {
-            virtualMachine.getOwners().add(student);
+            virtualMachine.addOwner(student);
             return true;
         }
         return false;
