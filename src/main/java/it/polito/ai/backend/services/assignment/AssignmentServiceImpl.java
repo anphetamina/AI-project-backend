@@ -83,6 +83,33 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.canOpen(#assignmentId)")
+    public List<PaperDTO> getLastPapers(Long assignmentId) {
+        Optional<Assignment> assignment = assignmentRepository.findById(assignmentId);
+        if(!assignment.isPresent())
+            throw  new AssignmentNotFoundException(assignmentId.toString());
+        Course course = assignment.get().getCourse();
+        List<Student> students = course.getStudents();
+        List<Paper> lastPapers = new ArrayList<>();
+
+        for (Student student:students) {
+            Paper lastPaper = paperRepository.findByStudentAndAssignment(student,assignment.get())
+                    .stream()
+                    .sorted(Comparator.comparing(Paper::getPublished,Timestamp::compareTo))
+                    .reduce((a1,a2)-> a2).orElse(null);
+            if(lastPaper ==null)
+                throw  new PaperNotFoundException(student.getId());
+            lastPapers.add(lastPaper);
+        }
+
+
+        return lastPapers.stream()
+                .map(a -> modelMapper.map(a, PaperDTO.class))
+                .collect(Collectors.toList());
+
+    }
+
 
     @Override
     @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canOpen(#assignmentId)) or (hasRole('STUDENT') and @securityServiceImpl.canView(#assignmentId))")
@@ -205,32 +232,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                .map(a -> modelMapper.map(a.getStudent(), StudentDTO.class));
     }
 
-    @Override
-    @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.canOpen(#assignmentId)")
-    public List<PaperDTO> getLastPapers(Long assignmentId) {
-        Optional<Assignment> assignment = assignmentRepository.findById(assignmentId);
-        if(!assignment.isPresent())
-            throw  new AssignmentNotFoundException(assignmentId.toString());
-        Course course = assignment.get().getCourse();
-        List<Student> students = course.getStudents();
-        List<Paper> lastPapers = new ArrayList<>();
 
-        for (Student student:students) {
-            Paper lastPaper = paperRepository.findByStudent(student)
-                    .stream()
-                    .sorted(Comparator.comparing(Paper::getPublished,Timestamp::compareTo))
-                    .reduce((a1,a2)-> a2).orElse(null);
-            if(lastPaper ==null)
-                throw  new PaperNotFoundException(student.getId());
-            lastPapers.add(lastPaper);
-        }
-
-
-        return lastPapers.stream()
-                .map(a -> modelMapper.map(a, PaperDTO.class))
-                .collect(Collectors.toList());
-
-    }
 
 
 

@@ -74,7 +74,10 @@ public class AssignmentController {
                 .stream().map(a -> ModelHelper.enrich(a,studentId,assignmentId)
                 ).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getHistoryPapers(assignmentId,studentId)).withSelfRel();
+        for (PaperDTO p:paperDTOS
+        ) { System.out.println(p.getId());
 
+        }
         return new ResponseEntity<>(CollectionModel.of(paperDTOS,selfLink),HttpStatus.OK);
 
     }
