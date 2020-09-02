@@ -169,8 +169,8 @@ public class AssignmentServiceImpl implements AssignmentService {
 
         Byte[] image = paper.getImage();
         if(paper.getStatus()== PaperStatus.NULL ||
-                (paper.getStatus()== PaperStatus.RIVSTO && paper.isFlag())) {
-           addPaperByte(Utils.getNow(), PaperStatus.LETTO,true,null,image,studentId,assignmentId);
+                (paper.getStatus()== PaperStatus.REVISED && paper.isFlag())) {
+           addPaperByte(Utils.getNow(), PaperStatus.READ,true,null,image,studentId,assignmentId);
             return  true;
         }
 
@@ -195,7 +195,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .reduce((a1,a2)-> a2).orElse(null);
         if(paper ==null)
             throw  new PaperNotFoundException(studentId);
-        return assignment.get().getExpired().after(Utils.getNow()) && paper.isFlag() && paper.getStatus() == PaperStatus.LETTO;
+        return assignment.get().getExpired().after(Utils.getNow()) && paper.isFlag() && paper.getStatus() == PaperStatus.READ;
 
     }
 
@@ -213,7 +213,7 @@ public class AssignmentServiceImpl implements AssignmentService {
             throw  new AssignmentNotFoundException(assignmentId.toString());
         Course course = assignment.get().getCourse();
         List<Student> students = course.getStudents();
-        List<Paper> lastPapers = new ArrayList<Paper>();
+        List<Paper> lastPapers = new ArrayList<>();
 
         for (Student student:students) {
             Paper lastPaper = paperRepository.findByStudent(student)

@@ -87,11 +87,11 @@ public class ScheduledTasks {
         for (Paper a: papers) {
             /*Se l'elaborato non ha stato consegnato e ha flag true(può essere caricato)
              allora lo carico con stato consegnato e falg false*/
-            if(a!=null && a.getStatus()!= PaperStatus.CONSEGNATO && a.isFlag()){
+            if(a!=null && a.getStatus()!= PaperStatus.DELIVERED && a.isFlag()){
                 Paper ac = new Paper();
                 ac.setImage(a.getImage());
                 ac.setStudent(a.getStudent());
-                ac.setStatus(PaperStatus.CONSEGNATO);
+                ac.setStatus(PaperStatus.DELIVERED);
                 ac.setPublished(Utils.getNow());
                 ac.setAssignment(a.getAssignment());
                 ac.setScore(null);

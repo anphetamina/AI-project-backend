@@ -52,6 +52,7 @@ VALUES
     ('d10','d10@polito.it','Antonio','Lioy',NULL);
 COMMIT ;
 
+
 INSERT INTO teams.virtual_machine_model (id, os) VALUES (1, 2);
 COMMIT ;
 
@@ -259,6 +260,13 @@ INSERT INTO teams.virtual_machine (id, disk_space, num_vcpu, ram, status, team_i
 
 INSERT INTO teams.student_vm (student_id, vm_id) VALUES ('s13', 3);
 INSERT INTO teams.student_vm (student_id, vm_id) VALUES ('s14', 4);
+
+
+
+UPDATE hibernate_sequence SET next_val=30
+WHERE next_val=1
+
+
 
 
 

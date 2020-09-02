@@ -93,7 +93,7 @@ public class AssignmentController {
         try {
             Utils.checkTypeImage(file);
             if(assignmentService.checkPaper(assignmentId,studentId))
-                assignmentService.addPaperByte(Utils.getNow(), PaperStatus.CONSEGNATO,false,null,Utils.getBytes(file),studentId,assignmentId);
+                assignmentService.addPaperByte(Utils.getNow(), PaperStatus.DELIVERED,false,null,Utils.getBytes(file),studentId,assignmentId);
             else
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, assignmentId.toString());
         } catch (TikaException | IOException e) {
@@ -123,11 +123,11 @@ public class AssignmentController {
             if(flag && (request.getScore()!=null && !request.getScore().equals("null")))
                 throw  new InvalidScore("The flag must be false if you wont to assign a score");
 
-            if(paperDTO.getStatus()!= PaperStatus.CONSEGNATO)
+            if(paperDTO.getStatus()!= PaperStatus.DELIVERED)
                 throw new PaperNotFoundException("The student "+studentId +"not update an paper to be reviewed");
 
 
-            assignmentService.addPaperByte(Utils.getNow(), PaperStatus.RIVSTO,
+            assignmentService.addPaperByte(Utils.getNow(), PaperStatus.REVISED,
                             flag,request.getScore(),Utils.getBytes(file),studentId,assignmentId);
 
 
