@@ -33,7 +33,7 @@ public interface AssignmentService {
     PaperDTO addPaperByte(Timestamp published,
                                PaperStatus state,
                                boolean flag, String score,
-                               Byte[] image,
+                               byte[] image,
                                String studentId, Long assignmentId);
     /** student*/
     boolean checkPaper(Long assignmentId, String studentId) ;

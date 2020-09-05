@@ -20,5 +20,5 @@ public class AssignmentDTO extends RepresentationModel<AssignmentDTO> {
     Long id;
     @NotNull @Schema(description = "date(dd/mm/yyyy) when teacher uploaded the exercise") Timestamp published;
     @NotNull @Schema(description = "date(dd/mm/yyyy) when exercise expired and the students can not upload an assignment") Timestamp expired;
-    @Schema(description = "an array of byte of the image uploaded") private Byte[] image;
+    @Schema(description = "an array of byte of the image uploaded") private byte[] image;
 }

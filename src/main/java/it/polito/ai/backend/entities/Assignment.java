@@ -16,7 +16,7 @@ public class Assignment {
     Timestamp published;
     Timestamp expired;
     @Lob
-    private Byte[] image;
+    private byte[] image;
     @ManyToOne
     @JoinColumn(name = "course_id")
     Course course;

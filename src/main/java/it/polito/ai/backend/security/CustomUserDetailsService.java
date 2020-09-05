@@ -88,7 +88,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return false;
     }
 
-    public void signUpUser(UserInformationRequest data, Byte[] image)  {
+    public void signUpUser(UserInformationRequest data, byte[] image)  {
         /*check if there is an other user with the same email and if email is of polito.it*/
         if(userRepository.findByEmail(data.getEmail()).isPresent()
                 || (!data.getEmail().contains("@polito.it") && !data.getEmail().contains("@studenti.polito.it")))

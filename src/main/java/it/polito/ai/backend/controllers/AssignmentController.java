@@ -2,6 +2,7 @@ package it.polito.ai.backend.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.repositories.AssignmentRepository;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.assignment.*;
 import it.polito.ai.backend.dtos.PaperStatus;
@@ -9,26 +10,32 @@ import it.polito.ai.backend.services.team.CourseNotFoundException;
 
 import it.polito.ai.backend.services.team.TeamService;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/API/assignments")
+@RequestMapping("assignments")
 @Validated
 public class AssignmentController {
 
@@ -140,4 +147,5 @@ public class AssignmentController {
         }
 
     }
+
 }

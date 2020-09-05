@@ -24,5 +24,5 @@ public class PaperDTO extends RepresentationModel<PaperDTO> {
     PaperStatus status;
     @NotNull @Schema(description = "if true the student che upload an assignment, it is set to false when teacher assignmet an score") boolean flag;
     @Schema(description = "is a string with an opinion/score assigned by the teacher, can be null") String score;
-    @Schema(description = "an array of byte of the image uploaded") private Byte[] image;
+    @Schema(description = "an array of byte of the image uploaded") private byte[] image;
 }

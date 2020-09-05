@@ -20,7 +20,7 @@ public class Paper {
 
     String score;
     @Lob
-    private Byte[] image;
+    private byte[] image;
     @ManyToOne
     @JoinColumn(name = "assignment_id")
     Assignment assignment;

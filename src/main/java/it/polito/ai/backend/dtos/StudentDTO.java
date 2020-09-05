@@ -29,5 +29,5 @@ public class StudentDTO extends RepresentationModel<StudentDTO> {
     String lastName;
     @Email
     private String email;
-    private Byte[] image;
+    private byte[] image;
 }

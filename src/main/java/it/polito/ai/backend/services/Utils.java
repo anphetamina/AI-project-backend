@@ -21,11 +21,11 @@ public class Utils {
         return new Timestamp(nowLong);
     }
 
-    public static Byte[] getBytes(MultipartFile file) throws IOException {
+    public static byte[] getBytes(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        Byte[] byteObjects = new Byte[file.getBytes().length];
+        byte[] byteObjects = new byte[file.getBytes().length];
 
         int i = 0;
 

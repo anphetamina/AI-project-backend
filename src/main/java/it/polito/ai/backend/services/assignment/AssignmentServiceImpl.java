@@ -194,7 +194,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         if(paper ==null)
             throw  new PaperNotFoundException(studentId);
 
-        Byte[] image = paper.getImage();
+        byte[] image = paper.getImage();
         if(paper.getStatus()== PaperStatus.NULL ||
                 (paper.getStatus()== PaperStatus.REVISED && paper.isFlag())) {
            addPaperByte(Utils.getNow(), PaperStatus.READ,true,null,image,studentId,assignmentId);
@@ -208,7 +208,7 @@ public class AssignmentServiceImpl implements AssignmentService {
     @Override
     @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#assignmentId) and @securityServiceImpl.isDone(#assignmentId) and @securityServiceImpl.isAuthorized(#studentId)")
     public boolean checkPaper(Long assignmentId, String studentId){
-        //todo
+
         /*The student can only upload a solution before the teacher gives him permission to do it again */
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
@@ -238,7 +238,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.canOpen(#assignmentId)) or (hasRole('STUDENT') and @securityServiceImpl.canView(#assignmentId) and @securityServiceImpl.isDone(#assignmentId) and @securityServiceImpl.isAuthorized(#studentId))")
-    public PaperDTO addPaperByte(Timestamp published, PaperStatus state, boolean flag, String score, Byte[] image, String studentId, Long assignmentId) {
+    public PaperDTO addPaperByte(Timestamp published, PaperStatus state, boolean flag, String score, byte[] image, String studentId, Long assignmentId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())
             throw  new StudentNotFoundException(studentId);

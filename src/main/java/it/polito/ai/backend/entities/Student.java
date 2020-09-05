@@ -26,7 +26,7 @@ public class Student {
     @Email
     private String email;
     @Lob
-    private Byte[] image;
+    private byte[] image;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "student_course",
