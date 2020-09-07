@@ -35,7 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("assignments")
+@RequestMapping("/API/assignments")
 @Validated
 public class AssignmentController {
 
