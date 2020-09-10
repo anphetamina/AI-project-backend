@@ -105,7 +105,7 @@ public class AssignmentController {
             if(assignmentService.checkPaper(assignmentId,studentId))
                 assignmentService.addPaperByte(Utils.getNow(), PaperStatus.DELIVERED,false,null,Utils.getBytes(file),studentId,assignmentId);
             else
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, assignmentId.toString());
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already a delivered paper for this assignment with id: "+assignmentId.toString());
         } catch (TikaException | IOException e) {
             e.printStackTrace();
             throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
