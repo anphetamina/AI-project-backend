@@ -127,11 +127,11 @@ public class AssignmentController {
                 throw  new PaperNotFoundException("There are not any assignment for student: "+studentId);
 
             boolean flag =  request.isFlag();
-            if(!flag && (request.getScore()==null || request.getScore().equals("null")))
+            if(!flag && (request.getScore()==null || request.getScore().toLowerCase().equals("null")))
                 throw  new InvalidScore("The score do not be null");
 
-            if(flag && (request.getScore()!=null && !request.getScore().equals("null")))
-                throw  new InvalidScore("The flag must be false if you wont to assign a score");
+            if(flag && (request.getScore()!=null && !request.getScore().toLowerCase().equals("null")))
+                throw  new InvalidScore("The flag must be false if you want to assign a score");
 
             if(paperDTO.getStatus()!= PaperStatus.DELIVERED)
                 throw new PaperNotFoundException("The student "+studentId +"not update an paper to be reviewed");
