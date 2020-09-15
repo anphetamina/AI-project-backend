@@ -63,11 +63,11 @@ public class AuthController {
 
     @Operation(summary = "registration")
     @PostMapping("/sign-up")
-    public ResponseEntity.BodyBuilder signUp(@RequestPart("user") @Valid UserInformationRequest user, @RequestPart("image")MultipartFile file) {
+    public void signUp(@RequestPart("user") @Valid UserInformationRequest user, @RequestPart("image")MultipartFile file) {
         try {
             Utils.checkTypeImage(file);
             customUserDetailsService.signUpUser(user,Utils.getBytes(file));
-            return ResponseEntity.status(HttpStatus.OK);
+           // return ok(model);
 
         } catch (AuthenticationException e) {
             throw new BadCredentialsException("Invalid username/password supplied");
