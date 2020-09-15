@@ -158,24 +158,26 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.canOpen(#paperId)")
-    public boolean setPapersNullForAssignment(Long paperId) {
+    public void setPapersNullForAssignment(Long paperId) {
         Optional<Assignment> exercise = assignmentRepository.findById(paperId);
         if(!exercise.isPresent())
             throw  new AssignmentNotFoundException(paperId.toString());
-         /* There must be no others papers*/
-       List<Paper> paper = exercise.get().getPapers();
-       if(!paper.isEmpty())
-          return false;
-       // For each student enrolled to the course add an paper with state null
+        // For each student enrolled to the course add an paper with state null
+        /* There must be no others papers*/
        List<Student> students= exercise.get().getCourse().getStudents();
         for (Student student:students) {
-            addPaperByte(
-                    Utils.getNow(),
-                    PaperStatus.NULL,
-                    true,null,exercise.get().getImage(),student.getId(),paperId);
+            List<Paper> paper = paperRepository.findByStudentAndAssignment(student,exercise.get());
+            if(paper.isEmpty()){
+                addPaperByte(
+                        Utils.getNow(),
+                        PaperStatus.NULL,
+                        true,null,exercise.get().getImage(),student.getId(),paperId);
+            }
         }
-        return  true;
+
     }
+
+
 
     @Override
     @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.canView(#assignmentId) and @securityServiceImpl.isDone(#assignmentId) and @securityServiceImpl.isAuthorized(#studentId)")

@@ -160,6 +160,14 @@ public class CourseController {
         if (!teamService.addStudentToCourse(studentId, courseId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("student %s already inserted", studentId));
         }
+        assignmentService.getAssignmentsForCourse(courseId).forEach(
+                assignmentDTO -> {
+                    if(assignmentDTO.getExpired().after(Utils.getNow()))
+                    assignmentService.setPapersNullForAssignment(assignmentDTO.getId());
+                }
+        );
+
+
     }
 
     @Operation(summary = "remove an enrolled students from a course")
@@ -214,6 +222,13 @@ public class CourseController {
             if (!file.isEmpty()) {
                 Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
                 addedAndEnrolledStudents = teamService.addAndEnroll(reader, courseId);
+                assignmentService.getAssignmentsForCourse(courseId).forEach(
+                        assignmentDTO -> {
+                            if(assignmentDTO.getExpired().after(Utils.getNow()))
+                                assignmentService.setPapersNullForAssignment(assignmentDTO.getId());
+                        }
+                );
+
             }
 
             return addedAndEnrolledStudents;
@@ -254,6 +269,12 @@ public class CourseController {
                 List<StudentDTO> students = csvToBean.parse();
                 List<String> studentIds = students.stream().map(StudentDTO::getId).collect(Collectors.toList());
                 enrolledStudents = teamService.enrollAll(studentIds, courseId);
+                assignmentService.getAssignmentsForCourse(courseId).forEach(
+                        assignmentDTO -> {
+                            if(assignmentDTO.getExpired().after(Utils.getNow()))
+                                assignmentService.setPapersNullForAssignment(assignmentDTO.getId());
+                        }
+                );
             }
 
             return enrolledStudents;

@@ -25,7 +25,8 @@ public interface AssignmentService {
     Optional<AssignmentDTO> getAssignmentForPaper(Long paperId);
     List<AssignmentDTO> getAssignmentsForCourse(String courseId);
     Optional<CourseDTO> getCourse(Long assignmentId);
-    boolean setPapersNullForAssignment(Long assignmentId);
+    void setPapersNullForAssignment(Long assignmentId);
+
     boolean setPapersReadForStudentAndAssignment(Long assignmentId, String studentId);
 
     Optional<StudentDTO> getStudentForPaper(Long paperId);
