@@ -18,7 +18,7 @@ import javax.validation.constraints.Pattern;
 @NoArgsConstructor
 public class UserInformationRequest {
     @NotBlank @Schema(description = "id of user") String id;
-    @Email @Pattern(regexp = "polito.it") @Schema(description = "email of user must contains polito.it") private String email;
+    @Email @Pattern(regexp = "^.*polito\\.it$") @Schema(description = "email of user must contains polito.it") private String email;
     @NotBlank @Schema(description = "last name of user") private String lastName;
     @NotBlank @Schema(description = "first name of user") private String firstName;
     @NotBlank
