@@ -15,6 +15,8 @@ import it.polito.ai.backend.services.team.TeamServiceImpl;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
@@ -136,18 +138,18 @@ public class CustomUserDetailsService implements UserDetailsService {
     public String confirmUser(String  confirmationTokenId) {
         Optional<ConfirmationToken> tokenOptional = confirmationTokenRepository.findById(confirmationTokenId);
         if (!tokenOptional.isPresent()) {
-            throw new SecurityServiceException("Expired session");
+            throw new SecurityServiceException("User already confirmed");
         }
         if(tokenOptional.get().getExpiryDate().before(Utils.getNow()))
-            throw new SecurityServiceException("Expired session");
+            throw new SecurityServiceException("User already confirmed");
 
         Optional<User> user = userRepository.findById(tokenOptional.get().getUsername());
         if(!user.isPresent())
-            throw new UsernameNotFoundException("User not found");
+            throw new UsernameNotFoundException("User already confirmed");
         user.get().setEnabled(true);
         userRepository.save(user.get());
         confirmationTokenRepository.delete(tokenOptional.get());
-        return user.get().getId();
+        return "User correct confirmed";
     }
 
     public String getId(String username){

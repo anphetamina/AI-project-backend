@@ -79,15 +79,10 @@ public class AuthController {
 
     @Operation(summary = "confirm account ")
     @GetMapping("/sign-up/confirm/{token}")
-    public ResponseEntity confirmMail(@PathVariable String token) {
-        String username = customUserDetailsService.confirmUser(token);
-        /*autologin*/
-        String tokenAuth = jwtTokenProvider.createToken(username,
-                    customUserDetailsService.getRoles(username));
-            Map<Object,Object> model = new HashMap<>();
-            model.put("username",username);
-            model.put("token",tokenAuth);
-            return ok(model);
+    public String confirmMail(@PathVariable String token) {
+        return customUserDetailsService.confirmUser(token);
+
+
     }
 
     @Operation(summary = "logout")
