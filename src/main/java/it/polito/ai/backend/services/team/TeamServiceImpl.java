@@ -527,9 +527,9 @@ public class TeamServiceImpl implements TeamService {
         Course course = courseRepository.findById(courseDTO.getId()).orElseThrow(() -> new CourseNotFoundException(courseDTO.getId()));
 
         /**
-         * check if the course is disable
+         * check if the course is enabled
          */
-        if (!course.isEnabled()) {
+        if (course.isEnabled()) {
             throw new CourseEnabledException(courseDTO.getId());
         }
 
