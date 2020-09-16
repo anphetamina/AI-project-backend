@@ -98,9 +98,8 @@ public class AssignmentServiceImpl implements AssignmentService {
                     .stream()
                     .sorted(Comparator.comparing(Paper::getPublished,Timestamp::compareTo))
                     .reduce((a1,a2)-> a2).orElse(null);
-            if(lastPaper ==null)
-                throw  new PaperNotFoundException(student.getId());
-            lastPapers.add(lastPaper);
+            if(lastPaper != null)
+                lastPapers.add(lastPaper);
         }
 
 
