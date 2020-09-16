@@ -527,18 +527,20 @@ public class TeamServiceImpl implements TeamService {
         Course course = courseRepository.findById(courseDTO.getId()).orElseThrow(() -> new CourseNotFoundException(courseDTO.getId()));
 
         /**
-         * check if the course is enabled
+         * check if the course is disable
          */
-        if (course.isEnabled()) {
+        if (!course.isEnabled()) {
             throw new CourseEnabledException(courseDTO.getId());
         }
 
         String name = courseDTO.getName();
 
-        /**
-         * check if the new name is unique
-         */
-        if (courseRepository.findAll().stream().anyMatch(c -> c.getName().equalsIgnoreCase(name))) {
+
+         /** check if the new name is unique*/
+         List<Course> courses = courseRepository.findAll();
+         courses.remove(course);
+
+        if (courses.stream().anyMatch(c -> c.getName().equalsIgnoreCase(name))) {
             throw new DuplicateCourseNameException(name);
         }
 
