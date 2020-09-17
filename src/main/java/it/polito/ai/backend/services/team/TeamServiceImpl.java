@@ -538,9 +538,11 @@ public class TeamServiceImpl implements TeamService {
 
          /** check if the new name is unique*/
          List<Course> courses = courseRepository.findAll();
+         /** remove actual course from the list*/
          courses.remove(course);
 
-        if (courses.stream().anyMatch(c -> c.getName().equalsIgnoreCase(name))) {
+
+        if (courses.stream().anyMatch((c -> c.getName().toLowerCase().equals(name.toLowerCase())))) {
             throw new DuplicateCourseNameException(name);
         }
 
