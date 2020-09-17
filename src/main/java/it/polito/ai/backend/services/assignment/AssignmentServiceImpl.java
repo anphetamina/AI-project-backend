@@ -89,9 +89,11 @@ public class AssignmentServiceImpl implements AssignmentService {
         Optional<Assignment> assignment = assignmentRepository.findById(assignmentId);
         if(!assignment.isPresent())
             throw  new AssignmentNotFoundException(assignmentId.toString());
-        Course course = assignment.get().getCourse();
-        List<Student> students = course.getStudents();
+
+
+        List<Student> students = assignment.get().getPapers().stream().map(p -> p.getStudent()).collect(Collectors.toList());
         List<Paper> lastPapers = new ArrayList<>();
+
 
         for (Student student:students) {
             Paper lastPaper = paperRepository.findByStudentAndAssignment(student,assignment.get())
