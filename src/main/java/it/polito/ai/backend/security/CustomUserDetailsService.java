@@ -149,7 +149,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         user.get().setEnabled(true);
         userRepository.save(user.get());
         confirmationTokenRepository.delete(tokenOptional.get());
-        return "User correct confirmed";
+        return "User correct confirmed. Now you can";
     }
 
     public String getId(String username){

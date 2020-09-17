@@ -1,11 +1,14 @@
 package it.polito.ai.backend.controllers;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwt;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.impl.DefaultClaims;
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.AuthenticationRequest;
 import it.polito.ai.backend.dtos.UserInformationRequest;
 import it.polito.ai.backend.security.CustomUserDetailsService;
 import it.polito.ai.backend.security.JwtTokenProvider;
-import it.polito.ai.backend.repositories.UserRepository;
 
 import it.polito.ai.backend.services.Utils;
 import org.apache.tika.exception.TikaException;
@@ -16,9 +19,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
+
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -67,7 +69,7 @@ public class AuthController {
         try {
             Utils.checkTypeImage(file);
             customUserDetailsService.signUpUser(user,Utils.getBytes(file));
-           // return ok(model);
+
 
         } catch (AuthenticationException e) {
             throw new BadCredentialsException("Invalid username/password supplied");
@@ -92,4 +94,26 @@ public class AuthController {
         return jwtTokenProvider.revokeToken(token);
     }
 
+    @GetMapping("/refreshToken")
+    public ResponseEntity<?> refreshToken(HttpServletRequest request) throws Exception {
+        // From the HttpRequest get the claims
+        String tokenold= jwtTokenProvider.resolveToken(request);
+        Claims claims = jwtTokenProvider.getAllClaimsFromToken(tokenold);
+
+
+        Map<String, Object> expectedMap = getMapFromIoJsonwebtokenClaims(claims);
+        String token = jwtTokenProvider.doGenerateRefreshToken(expectedMap, expectedMap.get("sub").toString());
+        Map<Object,Object> model = new HashMap<>();
+        model.put("token",token);
+        return ok(model);
+
+    }
+
+    public Map<String, Object> getMapFromIoJsonwebtokenClaims(Claims claims) {
+        Map<String, Object> expectedMap = new HashMap<String, Object>();
+        for (Map.Entry<String, Object> entry : claims.entrySet()) {
+            expectedMap.put(entry.getKey(), entry.getValue());
+        }
+        return expectedMap;
+    }
 }

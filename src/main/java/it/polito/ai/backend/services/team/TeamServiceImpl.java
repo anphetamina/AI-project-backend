@@ -14,10 +14,12 @@ import it.polito.ai.backend.repositories.TeamRepository;
 import it.polito.ai.backend.services.notification.NotificationService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.HashSet;
 import java.util.List;
@@ -204,12 +206,13 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @PreAuthorize("hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)")
-    public List<Boolean> addAndEnroll(Reader r, String courseName) {
+    public List<Boolean> addAndEnroll(Reader r, String courseName)  {
         CsvToBean<StudentDTO> csvToBean = new CsvToBeanBuilder(r)
                 .withType(StudentDTO.class)
                 .withIgnoreLeadingWhiteSpace(true)
                 .build();
         List<StudentDTO> students = csvToBean.parse();
+
 
         /*
          * added   enrolled

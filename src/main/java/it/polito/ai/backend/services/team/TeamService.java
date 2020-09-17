@@ -5,6 +5,7 @@ import it.polito.ai.backend.dtos.StudentDTO;
 import it.polito.ai.backend.dtos.TeacherDTO;
 import it.polito.ai.backend.dtos.TeamDTO;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ public interface TeamService {
 
     //List<Boolean> addAll(List<StudentDTO> students);
     List<Boolean> enrollAll(List<String> studentIds, String courseId);
-    List<Boolean> addAndEnroll(Reader r, String  courseId);
+    List<Boolean> addAndEnroll(Reader r, String  courseId) throws IOException;
 
     List<CourseDTO> getCourses(String studentId);
 
