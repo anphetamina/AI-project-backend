@@ -58,21 +58,20 @@ public class ScheduledTasks {
      * */
     @Scheduled(cron = "0 00 4 * * ?")
     public void expiredAssignment() {
-        System.out.println("Conrtollo la scadenza condegne");
-        /*Consegne scaduta*/
+
+        /** check expired assignments*/
         List<Assignment> assignments = exerciseRepository.findByExpiredBefore(Utils.getNow());
         System.out.println(assignments.size());
         HashSet<Student> students = new HashSet<Student>();
         List<Paper> papers = new ArrayList<Paper>();
-        /*Per ogni consegna scaduta trovo gli studenti iscritti a corse a di cui fa parte la consega*/
+        /** Find students for expired assignments */
         for (Assignment assignment : assignments) {
             Optional<Course> course = courseRepository.findById(assignment.getCourse().getId());
-            if(course.isPresent())
-                students.addAll(course.get().getStudents());
+            course.ifPresent(value -> students.addAll(value.getStudents()));
 
         }
-        System.out.println(students.size());
-        /*Per ogni consegna cerco l'ultimo elaborato dello studente*/
+
+        /** Find last paper for student*/
         if(!students.isEmpty()){
             for(Assignment assignment : assignments){
                 for (Student s:students) {
@@ -83,10 +82,9 @@ public class ScheduledTasks {
                  }
             }
         }
-        System.out.println(papers.size());
+
         for (Paper a: papers) {
-            /*Se l'elaborato non ha stato consegnato e ha flag true(può essere caricato)
-             allora lo carico con stato consegnato e falg false*/
+            /** If status!= Delivered and flag==true => status= delivered and flag=false*/
             if(a!=null && a.getStatus()!= PaperStatus.DELIVERED && a.isFlag()){
                 Paper ac = new Paper();
                 ac.setImage(a.getImage());
@@ -99,6 +97,7 @@ public class ScheduledTasks {
                 paperRepository.save(ac);
             }
         }
+        System.out.println("Chek assignment expired");
     }
 
     /*

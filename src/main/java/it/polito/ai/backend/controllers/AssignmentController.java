@@ -119,6 +119,10 @@ public class AssignmentController {
     void reviewAssignment(@RequestPart("image") MultipartFile file, @RequestPart @Valid PaperRequest request, @PathVariable @NotNull Long assignmentId){
         try {
             Utils.checkTypeImage(file);
+            Optional<AssignmentDTO> assignmentDTO = assignmentService.getAssignment(assignmentId);
+            if(!assignmentDTO.isPresent())
+                throw  new AssignmentNotFoundException("Assignment: "+assignmentId.toString()+" not found");
+
             String studentId = request.getStudentId();
             PaperDTO paperDTO = assignmentService.getPaperByStudentAndAssignment(studentId,assignmentId)
                     .stream()
@@ -126,9 +130,15 @@ public class AssignmentController {
             if(paperDTO==null)
                 throw  new PaperNotFoundException("There are not any assignment for student: "+studentId);
 
+
             boolean flag =  request.isFlag();
+            /* expired assignment case*/
+            if(assignmentDTO.get().getExpired().after(Utils.getNow()) &&
+                    (flag || (request.getScore()==null || request.getScore().toLowerCase().equals("null") )))
+                throw  new InvalidScore("The flag must be false and the score must not be null");
+
             if(!flag && (request.getScore()==null || request.getScore().toLowerCase().equals("null")))
-                throw  new InvalidScore("The score do not be null");
+                throw  new InvalidScore("The score must not be null");
 
             if(flag && (request.getScore()!=null && !request.getScore().toLowerCase().equals("null")))
                 throw  new InvalidScore("The flag must be false if you want to assign a score");
