@@ -111,6 +111,7 @@ public class ScheduledTasks {
         listToken.forEach(t -> {
 
                 userService.deleteUser(t.getUsername());
+
         });
 
         confirmationTokenRepository.deleteAll(listToken);

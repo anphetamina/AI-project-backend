@@ -555,12 +555,10 @@ public class TeamServiceImpl implements TeamService {
         /**
          * check if there are no teams which size is lower than the new min and greater than the new max
          */
-        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() < min)) {
-            throw new TeamSizeMinException(String.valueOf(min), String.valueOf(course.getMin()));
+        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() < min) && course.getTeams().stream().anyMatch(t -> t.getMembers().size() > max)) {
+            throw new TeamSizeException("Min or Max does not respect the conditions of the team size in the old course");
         }
-        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() > max)) {
-            throw new TeamSizeMaxException(String.valueOf(max), String.valueOf(course.getMax()));
-        }
+
 
         course.setName(name);
         course.setMin(min);
