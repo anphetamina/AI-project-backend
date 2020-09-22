@@ -570,7 +570,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
 
         virtualMachineModel.setCourse(null);
         /**
-         * this remove will remove all the virtual machines
+         * this will remove all the virtual machines
          * and cascade the operation to all their relationships (owners and teams)
          */
         virtualMachineModel.removeVirtualMachines();

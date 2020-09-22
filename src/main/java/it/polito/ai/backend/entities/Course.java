@@ -34,12 +34,12 @@ public class Course {
         student.courses.remove(this);
     }
 
-    /*public void removeStudents() {
+    public void removeStudents() {
         for (Student s : students) {
             s.courses.remove(this);
         }
         students.clear();
-    }*/
+    }
 
     @ManyToMany(mappedBy = "courses", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     List<Teacher> teachers = new ArrayList<>();
@@ -74,12 +74,15 @@ public class Course {
         teams.remove(team);
     }
 
-    /*public void removeTeams() {
+    public void removeTeams() {
         for (Team t : teams) {
             t.course = null;
+            t.setConfiguration(null);
+            t.removeMembers();
+            t.removeVirtualMachines();
         }
         teams.clear();
-    }*/
+    }
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @JoinColumn(name = "model_id")
@@ -97,7 +100,8 @@ public class Course {
 
 
     @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    private List<Assignment> assignments =new ArrayList<Assignment>();
+    private List<Assignment> assignments = new ArrayList<Assignment>();
+
     public void addAssignment(Assignment assignment) {
         assignment.course = this;
         assignments.add(assignment);
@@ -106,6 +110,14 @@ public class Course {
     public void removeAssignment(Assignment assignment) {
         assignments.remove(assignment);
         assignment.course = null;
+    }
+
+    public void removeAssignments() {
+        for (Assignment a : assignments) {
+            a.course = null;
+            a.removePapers();
+        }
+        assignments.clear();
     }
 
 }

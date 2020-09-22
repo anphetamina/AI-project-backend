@@ -31,8 +31,9 @@ public class Assignment {
         }
     }
 
-    @OneToMany(mappedBy = "assignment")
+    @OneToMany(mappedBy = "assignment", orphanRemoval = true)
     private List<Paper> papers =new ArrayList<Paper>();
+
     public void addPaper(Paper paper) {
         paper.assignment =this;
         papers.add(paper);
@@ -42,5 +43,13 @@ public class Assignment {
     public void removePaper(Paper paper) {
         papers.remove(paper);
         paper.assignment = null;
+    }
+
+    public void removePapers() {
+        for (Paper p : papers) {
+            p.assignment = null;
+            p.setStudent(null);
+        }
+        papers.clear();
     }
 }

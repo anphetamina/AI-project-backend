@@ -37,12 +37,10 @@ public class VirtualMachine {
     }
 
     public void removeOwners() {
-        if (owners.size() > 0) {
-            for (Student s : owners) {
-                s.virtual_machines.remove(this);
-            }
-            owners.clear();
+        for (Student s : owners) {
+            s.virtual_machines.remove(this);
         }
+        owners.clear();
     }
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})

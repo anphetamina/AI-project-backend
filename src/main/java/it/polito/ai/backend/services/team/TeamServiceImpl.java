@@ -7,10 +7,7 @@ import it.polito.ai.backend.dtos.StudentDTO;
 import it.polito.ai.backend.dtos.TeacherDTO;
 import it.polito.ai.backend.dtos.TeamDTO;
 import it.polito.ai.backend.entities.*;
-import it.polito.ai.backend.repositories.CourseRepository;
-import it.polito.ai.backend.repositories.StudentRepository;
-import it.polito.ai.backend.repositories.TeacherRepository;
-import it.polito.ai.backend.repositories.TeamRepository;
+import it.polito.ai.backend.repositories.*;
 import it.polito.ai.backend.services.notification.NotificationService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +35,14 @@ public class TeamServiceImpl implements TeamService {
     TeamRepository teamRepository;
     @Autowired
     TeacherRepository teacherRepository;
+    @Autowired
+    AssignmentRepository assignmentRepository;
+    @Autowired
+    ConfigurationRepository configurationRepository;
+    @Autowired
+    PaperRepository paperRepository;
+    @Autowired
+    VirtualMachineRepository virtualMachineRepository;
     @Autowired
     ModelMapper modelMapper;
     @Autowired
@@ -504,15 +509,25 @@ public class TeamServiceImpl implements TeamService {
         Course course =  courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
 
         /**
-         * a course cannot be deleted if enabled or there are enrolled students
-         * having enrolled students means possibly having more entities related to this course
+         * a course cannot be deleted if enabled
          */
-        if (course.isEnabled() || course.getStudents().size() > 0 || course.getTeams().size() > 0 || course.getAssignments().size() > 0) {
+        if (course.isEnabled()) {
             return false;
         }
 
+        /**
+         * removes relations only
+         */
         course.removeTeachers();
+        course.removeStudents();
+
+        /**
+         * removes relations and entities
+         */
         course.setVirtualMachineModel(null);
+        course.removeTeams();
+        course.removeAssignments();
+
         courseRepository.delete(course);
 
         return true;

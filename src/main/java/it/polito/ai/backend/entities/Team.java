@@ -51,6 +51,13 @@ public class Team {
         student.teams.remove(this);
     }
 
+    public void removeMembers() {
+        for (Student s : members) {
+            s.teams.remove(this);
+        }
+        members.clear();
+    }
+
     public void setStatus(TeamStatus status) {
         this.status = status;
 
@@ -81,5 +88,14 @@ public class Team {
     public void removeVirtualMachine(VirtualMachine virtualMachine) {
         virtualMachines.remove(virtualMachine);
         virtualMachine.team = null;
+    }
+
+    public void removeVirtualMachines() {
+        for (VirtualMachine v : virtualMachines) {
+            v.team = null;
+            v.setVirtualMachineModel(null);
+            v.removeOwners();
+        }
+        virtualMachines.clear();
     }
 }

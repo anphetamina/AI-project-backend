@@ -1,8 +1,8 @@
 package it.polito.ai.backend;
 
 import it.polito.ai.backend.dtos.CourseDTO;
-import it.polito.ai.backend.entities.Course;
-import it.polito.ai.backend.repositories.CourseRepository;
+import it.polito.ai.backend.entities.*;
+import it.polito.ai.backend.repositories.*;
 import it.polito.ai.backend.services.team.DuplicateIdException;
 import it.polito.ai.backend.services.team.TeamService;
 import org.junit.jupiter.api.Assertions;
@@ -12,6 +12,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.transaction.Transactional;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 @Transactional
@@ -22,6 +25,20 @@ public class TeamServiceUnitTests {
     TeamService teamService;
     @Autowired
     CourseRepository courseRepository;
+    @Autowired
+    TeamRepository teamRepository;
+    @Autowired
+    TeacherRepository teacherRepository;
+    @Autowired
+    StudentRepository studentRepository;
+    @Autowired
+    AssignmentRepository assignmentRepository;
+    @Autowired
+    VirtualMachineModelRepository virtualMachineModelRepository;
+    @Autowired
+    VirtualMachineRepository virtualMachineRepository;
+    @Autowired
+    PaperRepository paperRepository;
 
     @Test
     void updateCourse() {
@@ -84,5 +101,31 @@ public class TeamServiceUnitTests {
                 .build();
 
         Assertions.assertThrows(DuplicateIdException.class, () -> teamService.updateCourse("c5", courseDTO));
+    }
+
+    @Test
+    void deleteCourse() {
+        Course course = courseRepository.getOne("c5");
+
+        VirtualMachineModel virtualMachineModel = course.getVirtualMachineModel();
+        List<Student> students = course.getStudents();
+        List<Team> teams = course.getTeams();
+        List<Teacher> teachers = course.getTeachers();
+        List<Assignment> assignments = course.getAssignments();
+        List<VirtualMachine> virtualMachines = teams.stream().flatMap(t -> t.getVirtualMachines().stream()).collect(Collectors.toList());
+        List<Paper> papers = assignments.stream().flatMap(a -> a.getPapers().stream()).collect(Collectors.toList());
+
+        teamService.deleteCourse(course.getId());
+
+        Assertions.assertEquals(Optional.empty(), courseRepository.findById(course.getId()));
+
+        Assertions.assertTrue(students.stream().noneMatch(s -> s.getCourses().contains(course)));
+        Assertions.assertTrue(teachers.stream().noneMatch(t -> t.getCourses().contains(course)));
+
+        Assertions.assertTrue(teams.stream().noneMatch(t -> teamRepository.existsById(t.getId())));
+        Assertions.assertTrue(assignments.stream().noneMatch(a -> assignmentRepository.existsById(a.getId())));
+        Assertions.assertTrue(virtualMachines.stream().noneMatch(v -> virtualMachineRepository.existsById(v.getId())));
+        Assertions.assertTrue(papers.stream().noneMatch(p -> paperRepository.existsById(p.getId())));
+        Assertions.assertFalse(virtualMachineModelRepository.existsById(virtualMachineModel.getId()));
     }
 }
