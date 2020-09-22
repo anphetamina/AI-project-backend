@@ -1,6 +1,7 @@
 package it.polito.ai.backend.security;
 
 import it.polito.ai.backend.entities.Student;
+import it.polito.ai.backend.entities.User;
 import it.polito.ai.backend.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -301,7 +302,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     /**
      *
-     * @return the first part of the email with which the user has been authenticated
+     * @return the id of the authenticated user
      */
     @Override
     public String getId() {

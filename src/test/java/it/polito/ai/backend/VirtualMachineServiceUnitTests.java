@@ -12,7 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
 import org.opentest4j.TestAbortedException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import javax.transaction.Transactional;
 import java.util.ArrayList;
@@ -24,9 +27,7 @@ import java.util.stream.IntStream;
 
 @SpringBootTest
 @Transactional
-/**
- * disable preAuthorize
- */
+@ActiveProfiles("dev")
 class VirtualMachineServiceUnitTests {
 
     static List<Team> teams;
@@ -119,6 +120,7 @@ class VirtualMachineServiceUnitTests {
                             .courses(new ArrayList<>())
                             .build();
 
+                    course.addTeacher(teacher);
                     course.setVirtualMachineModel(model);
 
                 });

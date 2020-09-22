@@ -2,12 +2,14 @@ package it.polito.ai.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.polito.ai.backend.dtos.VirtualMachineDTO;
+import it.polito.ai.backend.entities.VirtualMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @Transactional
+@ActiveProfiles("prod")
 public class VirtualMachineServiceIntegrationAndSecurityTests {
 
     private MockMvc mockMvc;
@@ -147,8 +150,8 @@ public class VirtualMachineServiceIntegrationAndSecurityTests {
         String courseId = "c0";
         Long teamId = 1L;
         String studentId = "student";
-        Long vmId = 1L;
-        Long modelId = 1L;
+        Long vmId = 4L;
+        Long modelId = 3L;
 
         VirtualMachineDTO virtualMachineDTO = VirtualMachineDTO.builder()
                 .id(vmId)

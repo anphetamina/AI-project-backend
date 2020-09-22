@@ -15,7 +15,6 @@ public interface TeamService {
 
     Optional<CourseDTO> getCourse(String courseId);
 
-
     boolean addStudent(StudentDTO student);
 
     Optional<StudentDTO> getStudent(String studentId);

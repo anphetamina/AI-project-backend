@@ -82,7 +82,7 @@ public class Course {
     }*/
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    @JoinColumn(name = "vm_model")
+    @JoinColumn(name = "model_id")
     VirtualMachineModel virtualMachineModel;
 
     public void setVirtualMachineModel(VirtualMachineModel virtualMachineModel) {
