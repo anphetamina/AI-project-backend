@@ -521,30 +521,38 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId))")
+    /**
+     * courseId is the id of the course to update
+     */
     public CourseDTO updateCourse(String courseId, CourseDTO courseDTO) {
 
-        if (!courseId.equals(courseDTO.getId())) {
-            throw new CourseIdNotCorrespondingException(courseDTO.getId(), courseId);
-        }
-
-        Course course = courseRepository.findById(courseDTO.getId()).orElseThrow(() -> new CourseNotFoundException(courseDTO.getId()));
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
 
         /**
-         * check if the course is enabled
+         * enabled courses cannot be updated
          */
         if (course.isEnabled()) {
-            throw new CourseEnabledException(courseDTO.getId());
+            throw new CourseEnabledException(courseId);
         }
 
+        List<Course> courses = courseRepository.findAll();
+
+        /**
+         * check if there's already a course with the same id
+         * the check is done only when the new id is not matching the old one
+         */
+        String id = courseDTO.getId();
+        if (!id.toLowerCase().equalsIgnoreCase(courseId.toLowerCase())) {
+            if (courses.stream().anyMatch((c -> c.getId().toLowerCase().equalsIgnoreCase(id.toLowerCase())))) {
+                throw new DuplicateIdException(id);
+            }
+        }
+
+
+        /**
+         * check if the new name is unique
+         */
         String name = courseDTO.getName();
-
-
-         /** check if the new name is unique*/
-         List<Course> courses = courseRepository.findAll();
-         /** remove actual course from the list*/
-         courses.remove(course);
-
-
         if (courses.stream().anyMatch((c -> c.getName().toLowerCase().equals(name.toLowerCase())))) {
             throw new DuplicateCourseNameException(name);
         }
@@ -555,8 +563,11 @@ public class TeamServiceImpl implements TeamService {
         /**
          * check if there are no teams which size is lower than the new min and greater than the new max
          */
-        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() < min) && course.getTeams().stream().anyMatch(t -> t.getMembers().size() > max)) {
-            throw new TeamSizeException("Min or Max does not respect the conditions of the team size in the old course");
+        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() < min)) {
+            throw new TeamSizeMinException(String.valueOf(min), String.valueOf(course.getMin()));
+        }
+        if (course.getTeams().stream().anyMatch(t -> t.getMembers().size() > max)) {
+            throw new TeamSizeMaxException(String.valueOf(max), String.valueOf(course.getMax()));
         }
 
 
