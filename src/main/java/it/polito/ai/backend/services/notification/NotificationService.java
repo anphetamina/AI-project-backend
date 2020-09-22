@@ -11,8 +11,8 @@ import java.util.Optional;
 public interface NotificationService {
     void sendMessage(String address, String subject, String body, String sender);
 
-    boolean confirm(String token);
-    boolean reject(String token);
+    String confirm(String token);
+    String reject(String token);
     void notifyTeam(TeamDTO dto, List<String> memberIds, Timestamp timeout, String proponent);
     boolean addToken(TokenDTO token);
     List<TokenDTO> getTokenTeam(Long teamId);

@@ -65,7 +65,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.hasToken(#tokenId)")
-    public boolean confirm(String tokenId) {
+    public String confirm(String tokenId) {
 
         Optional<Token> tokenOptional = tokenRepository.findById(tokenId);
 
@@ -104,7 +104,8 @@ public class NotificationServiceImpl implements NotificationService {
         List<Token> teamTokens = tokenRepository.findAllByTeamId(teamId);
         //disable the request
         if(teamTokens.stream().anyMatch(token -> token.getStatus().equals(TokenStatus.REJECT)))
-            return false;
+            //return false;
+            return "Thanks for your choice. You can see the status of the team in your private area.";
 
         //remove the current token from the list to check the other tokens
         teamTokens.remove(tokenOptional.get());
@@ -116,7 +117,9 @@ public class NotificationServiceImpl implements NotificationService {
             if(teamStudent.getCourse().equals(courseTeam) && teamStudent.getStatus().equals(TeamStatus.ACTIVE)){
                 // the student can not accept a propose for a team in the same course if he has a confirmed team
                 tokenRepository.save(tokenOptional.get());
-                return false;
+                //return false;
+                return "Thanks for your choice. You can see the status of the team in your private area.";
+
             }
 
         }
@@ -125,17 +128,19 @@ public class NotificationServiceImpl implements NotificationService {
             teamService.confirmTeam(teamId);
             tokenOptional.get().setStatus(TokenStatus.ACCEPT);
             tokenRepository.save(tokenOptional.get());
-            return true;
+            //return true;
+            return "Thanks for your choice. You can see the status of the team in your private area.";
         }
 
         tokenOptional.get().setStatus(TokenStatus.ACCEPT);
         tokenRepository.save(tokenOptional.get());
-        return false;
+        //return false;
+        return "Thanks for your choice. You can see the status of the team in your private area.";
     }
 
     @Override
     @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.hasToken(#tokenId)")
-    public boolean reject(String tokenId) {
+    public String reject(String tokenId) {
         Optional<Token> tokenOptional = tokenRepository.findById(tokenId);
 
         if (!tokenOptional.isPresent()) {
@@ -157,11 +162,13 @@ public class NotificationServiceImpl implements NotificationService {
         List<Token> teamTokens = tokenRepository.findAllByTeamId(teamId);
         if(teamTokens.stream().anyMatch(token -> token.getStatus().equals(TokenStatus.REJECT)))
             // request disabled
-            return false;
+            //return false;
+            return "Thanks for your choice. You can see the status of the team in your private area.";
 
         tokenOptional.get().setStatus(TokenStatus.REJECT);
         tokenRepository.save(tokenOptional.get());
-        return true;
+        //return true;
+        return "Thanks for your choice. You can see the status of the team in your private area.";
     }
 
     @Override

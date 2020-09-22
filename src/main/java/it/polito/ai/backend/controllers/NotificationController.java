@@ -17,7 +17,7 @@ public class NotificationController {
 
     @Operation(summary = "confirm team return true if operation has successful else return false")
     @GetMapping("/teams/confirm/{token}")
-    boolean confirmToken(@PathVariable String token) {
+    String confirmToken(@PathVariable String token) {
 
         return notificationService.confirm(token);
 
@@ -25,7 +25,7 @@ public class NotificationController {
 
     @Operation(summary = "reject team  return true if operation has successful else return false")
     @GetMapping("/teams/reject/{token}")
-    boolean rejectToken(@PathVariable String token) {
+    String rejectToken(@PathVariable String token) {
 
         return notificationService.reject(token);
     }

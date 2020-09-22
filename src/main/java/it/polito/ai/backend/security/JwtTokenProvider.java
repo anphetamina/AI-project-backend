@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Timestamp;
 import java.util.*;
 
 @Component
@@ -29,7 +30,7 @@ public class JwtTokenProvider {
     @Value("${security.jwt.token.expire-length:3600000}")
     private long validityInMilliseconds = 3600000; // 1h
 
-    @Value("${jwt.refreshExpirationDateInMs}")
+    @Value("360000")
     public void setRefreshExpirationDateInMs(int refreshExpirationDateInMs) {
         this.refreshExpirationDateInMs = refreshExpirationDateInMs;
     }
@@ -92,15 +93,19 @@ public class JwtTokenProvider {
             return true;
         }
         else return false;
-
-
-
-   }
+    }
 
     public boolean validateToken(String token) throws InvalidJwtAuthenticationException {
         try {
+
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            if (claims.getBody().getExpiration().before(new Date()) || jwtBlackListRepository.findById(token).isPresent()){
+            long refresh = claims.getBody().getExpiration().getTime() - 300000; /*calculate time for refresh 5 minutes before it expires*/
+            if(new Timestamp(refresh).before(Utils.getNow())){
+
+                revokeToken(token);
+
+            }
+            if (claims.getBody().getExpiration().before(Utils.getNow()) || jwtBlackListRepository.findById(token).isPresent()){
                 return false;
             }
             return true;
