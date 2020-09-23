@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.parameters.P;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.transaction.Transactional;
@@ -81,6 +82,8 @@ class VirtualMachineServiceUnitTests {
         final int nCourses = 6;
         final int nStudents = 50;
         final int nTeams = 20;
+        final int nAssignments = nCourses*2;
+        final int nPapers = 30;
 
         virtualMachineModelRepository.deleteAll();
         configurationRepository.deleteAll();
@@ -125,6 +128,16 @@ class VirtualMachineServiceUnitTests {
 
                 });
 
+        courses.get(courses.size()-1).setEnabled(false);
+
+        IntStream.range(0, nAssignments)
+                .forEach(i -> {
+                    Assignment assignment = new Assignment();
+
+                    Course course = courses.get(i%nCourses);
+                    course.addAssignment(assignment);
+                });
+
         IntStream.range(0, nStudents)
                 .forEach(i -> {
                     String id = "s"+i;
@@ -141,6 +154,17 @@ class VirtualMachineServiceUnitTests {
                     students.add(student);
 
                     courses.forEach(student::addCourse);
+                });
+
+        IntStream.range(0, nPapers)
+                .forEach(i -> {
+                    Paper paper = new Paper();
+                    Student student = students.get(i%nStudents);
+                    Course course = student.getCourses().get(i%(student.getCourses().size()));
+                    Assignment assignment = course.getAssignments().get(i%(course.getAssignments().size()));
+
+                    paper.setStudent(student);
+                    paper.setAssignment(assignment);
                 });
 
         IntStream.range(0, nTeams)
