@@ -99,12 +99,6 @@ public class JwtTokenProvider {
         try {
 
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            long refresh = claims.getBody().getExpiration().getTime() - 300000; /*calculate time for refresh 5 minutes before it expires*/
-            if(new Timestamp(refresh).before(Utils.getNow())){
-
-                revokeToken(token);
-
-            }
             if (claims.getBody().getExpiration().before(Utils.getNow()) || jwtBlackListRepository.findById(token).isPresent()){
                 return false;
             }
