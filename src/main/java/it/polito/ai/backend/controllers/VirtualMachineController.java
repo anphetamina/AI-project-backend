@@ -43,9 +43,7 @@ public class VirtualMachineController {
     ResponseEntity<CollectionModel<StudentDTO>> getOwners(@PathVariable @NotNull Long vmId) {
         List<StudentDTO> studentDTOList = virtualMachineService.getOwnersForVirtualMachine(vmId)
                 .stream()
-                .map(s->{
-                    return ModelHelper.enrich(s,null);
-                })
+                .map(ModelHelper::enrich)
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineController.class).getOwners(vmId)).withSelfRel();
         return new ResponseEntity<>(CollectionModel.of(studentDTOList, selfLink),HttpStatus.OK);

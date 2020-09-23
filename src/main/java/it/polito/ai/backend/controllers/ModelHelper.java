@@ -19,15 +19,10 @@ public class ModelHelper {
         return courseDTO.add(selfLink, studentsLink, teachersLink, teamsLink, assignmentLink).addIf(modelId != null, () -> modelLink);
     }
 
-    public static StudentDTO enrich(StudentDTO studentDTO, String courseId) {
+    public static StudentDTO enrich(StudentDTO studentDTO) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getOne(studentDTO.getId())).withSelfRel();
         Link coursesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getCourses(studentDTO.getId())).withRel("enrolledTo");
         Link virtualMachinesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentDTO.getId())).withRel("owns");
-        if(courseId!=null){
-            Link team = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeamForStudentAndCourse(studentDTO.getId(),courseId)).withRel("Team for "+courseId);
-            studentDTO.add(team);
-        }
-
         return studentDTO.add(selfLink).add(coursesLink).add(virtualMachinesLink);
     }
 

@@ -4,11 +4,13 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import io.swagger.v3.oas.annotations.Operation;
 import it.polito.ai.backend.dtos.*;
+import it.polito.ai.backend.entities.TeamStatus;
 import it.polito.ai.backend.services.Utils;
 import it.polito.ai.backend.services.assignment.AssignmentService;
 import it.polito.ai.backend.services.notification.NotificationService;
 import it.polito.ai.backend.services.team.*;
 import it.polito.ai.backend.services.vm.VirtualMachineService;
+import net.minidev.json.JSONObject;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
@@ -65,14 +67,31 @@ public class CourseController {
 
     @Operation(summary = "get enrolled students")
     @GetMapping("/{courseId}/enrolled")
-    ResponseEntity<CollectionModel<StudentDTO>> enrolledStudents(@PathVariable @NotBlank String courseId) {
+    ResponseEntity<CollectionModel<JSONObject>> enrolledStudents(@PathVariable @NotBlank String courseId) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(courseId)).withSelfRel();
-        List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(courseId).stream()
-                .map(s->{
-                    return ModelHelper.enrich(s,courseId);
-                }).collect(Collectors.toList());
+        List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<JSONObject> list = new ArrayList<>();
+        Map<StudentDTO,String> memberAndStatus = new HashMap<>();
+
+        for (StudentDTO s:enrolledStudents) {
+            Optional<TeamDTO> teamDTO = teamService.getTeamForStudentAndCourse(s.getId(),courseId);
+            if(teamDTO.isPresent() && teamDTO.get().getStatus()== TeamStatus.ACTIVE){
+                String teamName = teamService.getTeamForStudentAndCourse(s.getId(),courseId).get().getName();
+                memberAndStatus.put(s,teamName);
+            }
+            else memberAndStatus.put(s,"");
+        }
+
+        memberAndStatus.forEach( (k, v) ->{
+            JSONObject entity = new JSONObject();
+            entity.put("student" , k);
+            entity.put("teamName",v);
+            list.add(entity);
+        });
+
+
         return new ResponseEntity<>(
-                CollectionModel.of(enrolledStudents, selfLink),
+                CollectionModel.of(list, selfLink),
                 HttpStatus.OK);
 
     }
@@ -129,10 +148,7 @@ public class CourseController {
     @Operation(summary = "get all students enrolled to the course that are part of an active team")
     @GetMapping("/{courseId}/teams/students")
     ResponseEntity<CollectionModel<StudentDTO>> getStudentsInTeams(@PathVariable @NotBlank String courseId) {
-        List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(
-                s ->{
-                    return ModelHelper.enrich(s,courseId);
-                }).collect(Collectors.toList());
+        List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getStudentsInTeams(courseId)).withSelfRel();
         return new ResponseEntity<>(CollectionModel.of(studentsInTeams, selfLink),HttpStatus.OK);
     }
@@ -140,12 +156,7 @@ public class CourseController {
     @Operation(summary = "get all students enrolled to the course not being part of an active team")
     @GetMapping("/{courseId}/teams/available-students")
     ResponseEntity<CollectionModel<StudentDTO>> getAvailableStudents(@PathVariable @NotBlank String courseId) {
-        List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream()
-                .map(
-                        s->{
-                            return ModelHelper.enrich(s,courseId);
-                        }
-                ).collect(Collectors.toList());
+        List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAvailableStudents(courseId)).withSelfRel();
         return new ResponseEntity<>(CollectionModel.of(availableStudents, selfLink),HttpStatus.OK);
     }
