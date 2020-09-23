@@ -7,6 +7,7 @@ import it.polito.ai.backend.services.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -30,12 +31,10 @@ public class JwtTokenProvider {
     @Value("${security.jwt.token.expire-length:3600000}")
     private long validityInMilliseconds = 3600000; // 1h
 
-    @Value("360000")
+    @Value("3600000")
     public void setRefreshExpirationDateInMs(int refreshExpirationDateInMs) {
         this.refreshExpirationDateInMs = refreshExpirationDateInMs;
     }
-
-
 
     @Qualifier("customUserDetailsService")
     @Autowired
@@ -89,7 +88,11 @@ public class JwtTokenProvider {
    public  boolean revokeToken(String token){
         if(!jwtBlackListRepository.findById(token).isPresent()){
             JwtBlackList jwt = new JwtBlackList(token);
-            jwtBlackListRepository.save(jwt);
+            try {
+                jwtBlackListRepository.saveAndFlush(jwt);
+            } catch (DataIntegrityViolationException e) {
+                return true;
+            }
             return true;
         }
         else return false;
