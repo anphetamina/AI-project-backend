@@ -131,7 +131,7 @@ public class CourseController {
     ResponseEntity<CourseDTO> updateCourse(@RequestBody @Valid CourseDTO courseDTO, @PathVariable @NotBlank String courseId){
         CourseDTO courseDTO1 = teamService.updateCourse(courseId, courseDTO);
         Long modelId = virtualMachineService.getVirtualMachineModelForCourse(courseId).map(VirtualMachineModelDTO::getId).orElse(null);
-        return new ResponseEntity<>(ModelHelper.enrich(courseDTO1, modelId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(courseDTO1, modelId), HttpStatus.OK);
 
     }
 
@@ -142,7 +142,7 @@ public class CourseController {
         if (!teamService.addCourse(courseDTO)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("course %s already exists", courseDTO.getId()));
         }
-        return new ResponseEntity<>(ModelHelper.enrich(courseDTO, null),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(courseDTO, null), HttpStatus.CREATED);
     }
 
     @Operation(summary = "get all students enrolled to the course that are part of an active team")
@@ -150,7 +150,7 @@ public class CourseController {
     ResponseEntity<CollectionModel<StudentDTO>> getStudentsInTeams(@PathVariable @NotBlank String courseId) {
         List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getStudentsInTeams(courseId)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(studentsInTeams, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(studentsInTeams, selfLink), HttpStatus.OK);
     }
 
     @Operation(summary = "get all students enrolled to the course not being part of an active team")
@@ -158,7 +158,7 @@ public class CourseController {
     ResponseEntity<CollectionModel<StudentDTO>> getAvailableStudents(@PathVariable @NotBlank String courseId) {
         List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAvailableStudents(courseId)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(availableStudents, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(availableStudents, selfLink), HttpStatus.OK);
     }
 
     @Operation(summary = "enable a course")
@@ -336,7 +336,7 @@ public class CourseController {
                 memberIds.remove(proponent.get().getId());
                 notificationService.notifyTeam(team, memberIds,timeout,proponent.get().getId());
 
-                return new ResponseEntity<>(ModelHelper.enrich(team, courseId, null),HttpStatus.OK);
+                return new ResponseEntity<>(ModelHelper.enrich(team, courseId, null), HttpStatus.CREATED);
 
 
             } catch (ParseException  e) {
@@ -369,7 +369,7 @@ public class CourseController {
         List<AssignmentDTO> assignmentDTOS = assignmentService.getAssignmentsForCourse(courseId).stream()
                 .map(e -> ModelHelper.enrich(e,courseId)).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAssignments(courseId)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(assignmentDTOS, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(assignmentDTOS, selfLink), HttpStatus.OK);
 
 
     }

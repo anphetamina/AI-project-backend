@@ -29,7 +29,7 @@ public class ConfigurationController {
                 .orElseThrow(() -> new ConfigurationNotFoundException(configurationId.toString()));
         Long teamId = virtualMachineService.getTeamForConfiguration(configurationId).map(TeamDTO::getId).orElse(null);
 
-        return new ResponseEntity<>(ModelHelper.enrich(configurationDTO, teamId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(configurationDTO, teamId), HttpStatus.OK);
     }
 
     @Operation(summary = "create a new configuration")
@@ -38,7 +38,7 @@ public class ConfigurationController {
     ResponseEntity<ConfigurationDTO> addConfiguration(@RequestBody @Valid ConfigurationDTO configurationDTO) {
         Long teamId = configurationDTO.getTeamId();
         ConfigurationDTO newConfigurationDTO = virtualMachineService.createConfiguration(teamId, configurationDTO);
-        return new ResponseEntity<>(ModelHelper.enrich(newConfigurationDTO, teamId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(newConfigurationDTO, teamId), HttpStatus.CREATED);
     }
 
     @Operation(summary = "update an existing configuration")
@@ -46,6 +46,6 @@ public class ConfigurationController {
     ResponseEntity<ConfigurationDTO> setConfiguration(@RequestBody @Valid ConfigurationDTO configurationDTO, @PathVariable @NotNull Long configurationId) {
         ConfigurationDTO configurationDTO1 = virtualMachineService.updateConfiguration(configurationId, configurationDTO);
         Long teamId = virtualMachineService.getTeamForConfiguration(configurationId).map(TeamDTO::getId).orElse(null);
-        return new ResponseEntity<>(ModelHelper.enrich(configurationDTO1, teamId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(configurationDTO1, teamId), HttpStatus.OK);
     }
 }

@@ -48,7 +48,7 @@ public class StudentController {
     @GetMapping("/{studentId}")
     ResponseEntity<StudentDTO> getOne(@PathVariable @NotBlank String studentId) {
         return new ResponseEntity<>(ModelHelper.enrich(teamService.getStudent(studentId)
-                .orElseThrow(() -> new StudentNotFoundException(studentId))),HttpStatus.OK);
+                .orElseThrow(() -> new StudentNotFoundException(studentId))), HttpStatus.OK);
     }
 
     @Operation(summary = "get courses to which a student is enrolled")
@@ -62,7 +62,7 @@ public class StudentController {
                 })
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getCourses(studentId)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(courses, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(courses, selfLink), HttpStatus.OK);
     }
 
 
@@ -75,7 +75,7 @@ public class StudentController {
                             new TeamNotFoundException("Not exist a team active for student " + studentId + " enrolld to course: " + courseId));
             Long configurationId = virtualMachineService.getConfigurationForTeam(teamDTO.getId()).map(ConfigurationDTO::getId).orElse(null);
             return new ResponseEntity<>( ModelHelper
-                    .enrich(teamDTO, courseId,configurationId),HttpStatus.OK);
+                    .enrich(teamDTO, courseId,configurationId), HttpStatus.OK);
 
     }
 
@@ -87,7 +87,7 @@ public class StudentController {
                     .map(t -> ModelHelper.enrich(t, courseId,null))
                     .collect(Collectors.toList());
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getProposeTeamsForStudentAndCourse(studentId, courseId)).withSelfRel();
-            return new ResponseEntity<>(CollectionModel.of(teams, selfLink),HttpStatus.OK);
+            return new ResponseEntity<>(CollectionModel.of(teams, selfLink), HttpStatus.OK);
     }
 
 
@@ -100,7 +100,7 @@ public class StudentController {
                 .map(a -> ModelHelper.enrich(a,studentId,assignmentId))
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getPapers(studentId,assignmentId)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(paperDTOS, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(paperDTOS, selfLink), HttpStatus.OK);
 
     }
 
@@ -118,7 +118,7 @@ public class StudentController {
                 })
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentId)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(virtualMachineDTOList, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(virtualMachineDTOList, selfLink), HttpStatus.OK);
     }
 }
 

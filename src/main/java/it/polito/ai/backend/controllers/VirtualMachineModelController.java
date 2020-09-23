@@ -32,7 +32,7 @@ public class VirtualMachineModelController {
         VirtualMachineModelDTO virtualMachineModelDTO = virtualMachineService.getVirtualMachineModel(modelId)
                 .orElseThrow(() -> new VirtualMachineModelNotFoundException(modelId.toString()));
         String courseId = virtualMachineService.getCourseForVirtualMachineModel(modelId).map(CourseDTO::getId).orElse(null);
-        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineModelDTO, courseId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineModelDTO, courseId), HttpStatus.OK);
     }
 
     @Operation(summary = "create a new virtual machine model")
@@ -41,7 +41,7 @@ public class VirtualMachineModelController {
     ResponseEntity<VirtualMachineModelDTO> addVirtualMachineModel(@RequestBody @Valid VirtualMachineModelDTO virtualMachineModelDTO) {
         String courseId = virtualMachineModelDTO.getCourseId();
         VirtualMachineModelDTO virtualMachineModel = virtualMachineService.createVirtualMachineModel(courseId, virtualMachineModelDTO);
-        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineModel, courseId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineModel, courseId), HttpStatus.CREATED);
     }
 
     @Operation(summary = "delete an existing virtual machine model")
