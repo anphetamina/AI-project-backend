@@ -133,7 +133,7 @@ public class AssignmentController {
 
             boolean flag =  request.isFlag();
             /* expired assignment case*/
-            if(assignmentDTO.get().getExpired().after(Utils.getNow()) &&
+            if(assignmentDTO.get().getExpired().before(Utils.getNow()) &&
                     (flag || (request.getScore()==null || request.getScore().toLowerCase().equals("null") )))
                 throw  new InvalidScore("The flag must be false and the score must not be null");
 
