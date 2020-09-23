@@ -39,7 +39,10 @@ public class StudentController {
     @Operation(summary = "get all students")
     @GetMapping({"", "/"})
     ResponseEntity<CollectionModel<StudentDTO>> all() {
-        List<StudentDTO> students = teamService.getAllStudents().stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<StudentDTO> students = teamService.getAllStudents().stream().map(
+                s->{
+                    return ModelHelper.enrich(s,null);
+                }).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).all()).withSelfRel();
         return new ResponseEntity<>(CollectionModel.of(students, selfLink), HttpStatus.OK);
     }
@@ -48,7 +51,7 @@ public class StudentController {
     @GetMapping("/{studentId}")
     ResponseEntity<StudentDTO> getOne(@PathVariable @NotBlank String studentId) {
         return new ResponseEntity<>(ModelHelper.enrich(teamService.getStudent(studentId)
-                .orElseThrow(() -> new StudentNotFoundException(studentId))),HttpStatus.OK);
+                .orElseThrow(() -> new StudentNotFoundException(studentId)),null),HttpStatus.OK);
     }
 
     @Operation(summary = "get courses to which a student is enrolled")

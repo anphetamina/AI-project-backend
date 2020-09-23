@@ -67,7 +67,10 @@ public class CourseController {
     @GetMapping("/{courseId}/enrolled")
     ResponseEntity<CollectionModel<StudentDTO>> enrolledStudents(@PathVariable @NotBlank String courseId) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).enrolledStudents(courseId)).withSelfRel();
-        List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<StudentDTO> enrolledStudents = teamService.getEnrolledStudents(courseId).stream()
+                .map(s->{
+                    return ModelHelper.enrich(s,courseId);
+                }).collect(Collectors.toList());
         return new ResponseEntity<>(
                 CollectionModel.of(enrolledStudents, selfLink),
                 HttpStatus.OK);
@@ -126,7 +129,10 @@ public class CourseController {
     @Operation(summary = "get all students enrolled to the course that are part of an active team")
     @GetMapping("/{courseId}/teams/students")
     ResponseEntity<CollectionModel<StudentDTO>> getStudentsInTeams(@PathVariable @NotBlank String courseId) {
-        List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<StudentDTO> studentsInTeams = teamService.getStudentsInTeams(courseId).stream().map(
+                s ->{
+                    return ModelHelper.enrich(s,courseId);
+                }).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getStudentsInTeams(courseId)).withSelfRel();
         return new ResponseEntity<>(CollectionModel.of(studentsInTeams, selfLink),HttpStatus.OK);
     }
@@ -134,7 +140,12 @@ public class CourseController {
     @Operation(summary = "get all students enrolled to the course not being part of an active team")
     @GetMapping("/{courseId}/teams/available-students")
     ResponseEntity<CollectionModel<StudentDTO>> getAvailableStudents(@PathVariable @NotBlank String courseId) {
-        List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<StudentDTO> availableStudents = teamService.getAvailableStudents(courseId).stream()
+                .map(
+                        s->{
+                            return ModelHelper.enrich(s,courseId);
+                        }
+                ).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CourseController.class).getAvailableStudents(courseId)).withSelfRel();
         return new ResponseEntity<>(CollectionModel.of(availableStudents, selfLink),HttpStatus.OK);
     }

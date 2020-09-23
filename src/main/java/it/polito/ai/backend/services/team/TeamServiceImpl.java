@@ -323,7 +323,8 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @PreAuthorize("(hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId)) and @securityServiceImpl.isEnrolled(#courseId)")
+    @PreAuthorize("(((hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId)) and " +
+            "@securityServiceImpl.isEnrolled(#courseId)) OR (hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)))")
     public Optional<TeamDTO> getTeamForStudentAndCourse(String studentId, String courseId) {
         Optional<Student> student = studentRepository.findById(studentId);
         if(!student.isPresent())

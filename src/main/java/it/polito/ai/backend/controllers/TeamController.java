@@ -52,7 +52,11 @@ public class TeamController {
     @Operation(summary = "get team members")
     @GetMapping("/{teamId}/members")
     ResponseEntity<CollectionModel<StudentDTO>> getMembers(@PathVariable @NotNull Long teamId) {
-        List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<StudentDTO> students = teamService.getMembers(teamId).stream()
+                .map(studentDTO ->
+                {
+                    return ModelHelper.enrich(studentDTO,null);
+                }).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getMembers(teamId)).withSelfRel();
         return new ResponseEntity<>(CollectionModel.of(students, selfLink),HttpStatus.OK);
     }
@@ -64,7 +68,10 @@ public class TeamController {
 
         List<JSONObject> listMembers = new ArrayList<>();
         Map<StudentDTO,String> memberAndStatus = new HashMap<>();
-        List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
+        List<StudentDTO> students = teamService.getMembers(teamId).stream()
+                .map(studentDTO -> {
+                    return ModelHelper.enrich(studentDTO,null);
+                }).collect(Collectors.toList());
         List<TokenDTO>  tokenDTOS = notificationService.getTokenTeam(teamId);
         if(tokenDTOS.isEmpty())
             throw new TeamNotFoundException("Non exist propose for team: "+teamId);
