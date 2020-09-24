@@ -35,7 +35,7 @@ public class VirtualMachineController {
                 .orElseThrow(() -> new VirtualMachineNotFoundException(vmId.toString()));
         Long teamId = virtualMachineService.getTeamForVirtualMachine(vmId).map(TeamDTO::getId).orElse(null);
         Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vmId).map(VirtualMachineModelDTO::getId).orElse(null);
-        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineDTO, teamId, modelId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(virtualMachineDTO, teamId, modelId), HttpStatus.OK);
     }
 
     @Operation(summary = "get owners of a virtual machine")
@@ -46,7 +46,7 @@ public class VirtualMachineController {
                 .map(ModelHelper::enrich)
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(VirtualMachineController.class).getOwners(vmId)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(studentDTOList, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(studentDTOList, selfLink), HttpStatus.OK);
     }
 
     @Operation(summary = "create a new virtual machine")
@@ -57,7 +57,7 @@ public class VirtualMachineController {
         Long teamId = virtualMachineDTO.getTeamId();
         Long modelId = virtualMachineDTO.getModelId();
         VirtualMachineDTO virtualMachine = virtualMachineService.createVirtualMachine(studentId, teamId, modelId, virtualMachineDTO);
-        return new ResponseEntity<>(ModelHelper.enrich(virtualMachine, teamId, modelId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(virtualMachine, teamId, modelId), HttpStatus.CREATED);
     }
 
     @Operation(summary = "delete an existing virtual machine")
@@ -76,7 +76,7 @@ public class VirtualMachineController {
         // Long teamId = virtualMachineService.getTeamForVirtualMachine(vmId).map(TeamDTO::getId).orElse(null);
         // Long modelId = virtualMachineService.getVirtualMachineModelForVirtualMachine(vmId).map(VirtualMachineModelDTO::getId).orElse(null);
         return new ResponseEntity<>(ModelHelper.enrich(virtualMachineDTO1,
-                virtualMachineDTO.getTeamId(), virtualMachineDTO.getModelId()),HttpStatus.OK);
+                virtualMachineDTO.getTeamId(), virtualMachineDTO.getModelId()), HttpStatus.OK);
     }
 
     @Operation(summary = "turn on a virtual machine")

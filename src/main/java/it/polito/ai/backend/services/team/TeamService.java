@@ -42,7 +42,7 @@ public interface TeamService {
     TeamDTO proposeTeam(String courseId, String name, List<String> memberIds);
     List<TeamDTO> getProposeTeamsForStudentAndCourse(String studentId, String courseId);
 
-
+    List<TeamDTO> getTeamsForStudent(String studentId);
     Optional<TeamDTO> getTeamForStudentAndCourse(String studentId, String courseId);
 
     List<TeamDTO> getTeamsForCourse(String courseId);

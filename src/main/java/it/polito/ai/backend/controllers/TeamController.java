@@ -46,7 +46,7 @@ public class TeamController {
         TeamDTO teamDTO = teamService.getTeam(teamId).orElseThrow(() -> new TeamNotFoundException(teamId.toString()));
         String courseId = teamService.getCourseForTeam(teamId).map(CourseDTO::getId).orElse(null);
         Long configurationId = virtualMachineService.getConfigurationForTeam(teamId).map(ConfigurationDTO::getId).orElse(null);
-        return new  ResponseEntity<>(ModelHelper.enrich(teamDTO, courseId, configurationId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(teamDTO, courseId, configurationId), HttpStatus.OK);
     }
 
     @Operation(summary = "get team members")
@@ -54,7 +54,7 @@ public class TeamController {
     ResponseEntity<CollectionModel<StudentDTO>> getMembers(@PathVariable @NotNull Long teamId) {
         List<StudentDTO> students = teamService.getMembers(teamId).stream().map(ModelHelper::enrich).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getMembers(teamId)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(students, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(students, selfLink), HttpStatus.OK);
     }
 
 
@@ -70,7 +70,7 @@ public class TeamController {
             throw new TeamNotFoundException("Non exist propose for team: "+teamId);
         students.forEach(studentDTO -> {
             for (TokenDTO tokenDTO:tokenDTOS) {
-                if(tokenDTO.getStudentId().equals(studentDTO.getId())) 
+                if(tokenDTO.getStudentId().equals(studentDTO.getId()))
                     memberAndStatus.put(studentDTO,tokenDTO.getStatus().toString());
             }
             if(tokenDTOS.stream().noneMatch(tokenDTO -> tokenDTO.getStudentId().equals(studentDTO.getId()))){
@@ -86,7 +86,7 @@ public class TeamController {
             entity.put("status",v);
             listMembers.add(entity);
         });
-        return new ResponseEntity<>(listMembers,HttpStatus.OK);
+        return new ResponseEntity<>(listMembers, HttpStatus.OK);
 
     }
 
@@ -95,7 +95,7 @@ public class TeamController {
     ResponseEntity<CollectionModel<VirtualMachineDTO>> getVirtualMachines(@PathVariable @NotNull Long teamId) {
         List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForTeam(teamId);
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeamController.class).getVirtualMachines(teamId)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(virtualMachineDTOList, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(virtualMachineDTOList, selfLink), HttpStatus.OK);
     }
 
     @Operation(summary = "get the active number of cpu cores by a team")
@@ -131,6 +131,6 @@ public class TeamController {
     @Operation(summary = "get the active resources and the configuration max numbers by a team")
     @GetMapping("/{teamId}/virtual-machines/resources")
     ResponseEntity<ResourcesResponse> getResources(@PathVariable @NotNull Long teamId) {
-        return new ResponseEntity<>(virtualMachineService.getResourcesByTeam(teamId),HttpStatus.OK);
+        return new ResponseEntity<>(virtualMachineService.getResourcesByTeam(teamId), HttpStatus.OK);
     }
 }

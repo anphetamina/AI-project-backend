@@ -36,7 +36,7 @@ public class TeacherController {
     @GetMapping("/{id}")
     ResponseEntity<TeacherDTO> getOne(@PathVariable @NotBlank String id) {
         return new ResponseEntity<>(ModelHelper.enrich(teamService.getTeacher(id).
-                orElseThrow(() -> new TeacherNotFoundException(id))),HttpStatus.OK);
+                orElseThrow(() -> new TeacherNotFoundException(id))), HttpStatus.OK);
     }
 
     @Operation(summary = "get courses in which a teacher teaches")
@@ -50,7 +50,7 @@ public class TeacherController {
                 })
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TeacherController.class).getCourses(id)).withSelfRel();
-        return new ResponseEntity<>(CollectionModel.of(courses, selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(courses, selfLink), HttpStatus.OK);
     }
 
 

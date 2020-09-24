@@ -75,7 +75,7 @@ public class AuthController {
             throw new BadCredentialsException("Invalid username/password supplied");
         } catch (TikaException | IOException e) {
             e.printStackTrace();
-            throw  new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "invalid file content");
         }
     }
 

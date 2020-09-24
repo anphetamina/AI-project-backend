@@ -51,7 +51,7 @@ public class AssignmentController {
                 .orElseThrow(() -> new AssignmentNotFoundException(assignmentId.toString()));
         String courseId = assignmentService.getCourse(assignmentId)
                 .map(CourseDTO::getId).orElseThrow(() -> new CourseNotFoundException(String.format("for assignment %s", assignmentId)));
-        return new ResponseEntity<>(ModelHelper.enrich(assignmentDTO, courseId),HttpStatus.OK);
+        return new ResponseEntity<>(ModelHelper.enrich(assignmentDTO, courseId), HttpStatus.OK);
     }
 
     @Operation(summary = "get the last papers of an assignment")
@@ -65,7 +65,7 @@ public class AssignmentController {
                 }).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getLastPapers(assignmentId)).withSelfRel();
 
-        return  new ResponseEntity<>(CollectionModel.of(lastPapers,selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(lastPapers,selfLink), HttpStatus.OK);
     }
 
     @Operation(summary = "get the papers history of an assignment")
@@ -81,11 +81,10 @@ public class AssignmentController {
                 .stream().map(a -> ModelHelper.enrich(a,studentId,assignmentId)
                 ).collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AssignmentController.class).getHistoryPapers(assignmentId,studentId)).withSelfRel();
-        for (PaperDTO p:paperDTOS
-        ) { System.out.println(p.getId());
+        for (PaperDTO p:paperDTOS) { System.out.println(p.getId());
 
         }
-        return new ResponseEntity<>(CollectionModel.of(paperDTOS,selfLink),HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(paperDTOS,selfLink), HttpStatus.OK);
 
     }
 
