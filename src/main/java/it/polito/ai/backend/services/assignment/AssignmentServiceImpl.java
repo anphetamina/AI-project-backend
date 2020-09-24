@@ -16,10 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import it.polito.ai.backend.services.Utils;
 
@@ -91,9 +88,11 @@ public class AssignmentServiceImpl implements AssignmentService {
             throw  new AssignmentNotFoundException(assignmentId.toString());
 
 
-        List<Student> students = assignment.get().getPapers().stream().map(p -> p.getStudent()).collect(Collectors.toList());
-        List<Paper> lastPapers = new ArrayList<>();
+        List<Student> students = assignment.get().getPapers().stream().map(p -> p.getStudent())
+                .distinct().collect(Collectors.toList());
 
+
+        List<Paper> lastPapers = new ArrayList<>();
 
         for (Student student:students) {
             Paper lastPaper = paperRepository.findByStudentAndAssignment(student,assignment.get())
