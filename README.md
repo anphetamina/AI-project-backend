@@ -9,6 +9,9 @@ There are 2 already compiled docker images. The main difference is the presence 
 - `docker pull sordinho/ai-project-db` for the full db version
 - `docker pull sordinho/ai-project` for an empty db version
 
+### Run the pulled docker image
+docker run -p 8080:8080 -d --name ai-project sordinho/ai-project-db
+
 ## Build the image from sources
 For building the image directly from sources we need:
 - The frontend repository [HERE](https://github.com/sordinho/Applicazioni-Internet-Frontend)
