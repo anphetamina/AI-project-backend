@@ -108,7 +108,7 @@ public class StudentController {
 
     @Operation(summary = "get the owned virtual machines by a student")
     @GetMapping("/{studentId}/virtual-machines")
-    ResponseEntity<CollectionModel<VirtualMachineDTO>> getVirtualMachines (@PathVariable @NotBlank String studentId){
+    ResponseEntity<CollectionModel<VirtualMachineDTO>> getVirtualMachines(@PathVariable @NotBlank String studentId){
         List<VirtualMachineDTO> virtualMachineDTOList = virtualMachineService.getVirtualMachinesForStudent(studentId)
                 .stream()
                 .map(vm -> {
@@ -119,6 +119,21 @@ public class StudentController {
                 .collect(Collectors.toList());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getVirtualMachines(studentId)).withSelfRel();
         return new ResponseEntity<>(CollectionModel.of(virtualMachineDTOList, selfLink), HttpStatus.OK);
+    }
+
+    @Operation(summary = "get active teams by a student")
+    @GetMapping("/{studentId}/teams")
+    ResponseEntity<CollectionModel<TeamDTO>> getTeams(@PathVariable @NotBlank String studentId) {
+        List<TeamDTO> teamDTOList = teamService.getTeamsForStudent(studentId)
+                .stream()
+                .map(t -> {
+                    String courseId = teamService.getCourseForTeam(t.getId()).map(CourseDTO::getId).orElse(null);
+                    Long configurationId = virtualMachineService.getConfigurationForTeam(t.getId()).map(ConfigurationDTO::getId).orElse(null);
+                    return ModelHelper.enrich(t, courseId, configurationId);
+                })
+                .collect(Collectors.toList());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(StudentController.class).getTeams(studentId)).withSelfRel();
+        return new ResponseEntity<>(CollectionModel.of(teamDTOList, selfLink), HttpStatus.OK);
     }
 }
 

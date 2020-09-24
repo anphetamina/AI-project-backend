@@ -323,6 +323,18 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @PreAuthorize("hasRole('TEACHER') or (hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId))")
+    public List<TeamDTO> getTeamsForStudent(String studentId) {
+        return studentRepository.findById(studentId)
+                .orElseThrow(() -> new StudentNotFoundException(studentId))
+                .getTeams()
+                .stream()
+                .filter(team -> team.getStatus().equals(TeamStatus.ACTIVE))
+                .map(t -> modelMapper.map(t, TeamDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @PreAuthorize("(((hasRole('STUDENT') and @securityServiceImpl.isAuthorized(#studentId)) and " +
             "@securityServiceImpl.isEnrolled(#courseId)) OR (hasRole('TEACHER') and @securityServiceImpl.isTaught(#courseId)))")
     public Optional<TeamDTO> getTeamForStudentAndCourse(String studentId, String courseId) {
@@ -414,7 +426,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @PreAuthorize("hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId)")
+    @PreAuthorize("(hasRole('TEACHER')) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public Optional<CourseDTO> getCourseForTeam(Long teamId) {
         Course course = teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))

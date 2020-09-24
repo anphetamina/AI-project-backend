@@ -632,7 +632,7 @@ public class VirtualMachineServiceImpl implements VirtualMachineService {
     }
 
     @Override
-    @PreAuthorize("(hasRole('TEACHER') and @securityServiceImpl.isHelping(#teamId)) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
+    @PreAuthorize("(hasRole('TEACHER') ) or (hasRole('STUDENT') and @securityServiceImpl.isPartOf(#teamId))")
     public Optional<ConfigurationDTO> getConfigurationForTeam(Long teamId) {
         Configuration configuration = teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamNotFoundException(teamId.toString()))
