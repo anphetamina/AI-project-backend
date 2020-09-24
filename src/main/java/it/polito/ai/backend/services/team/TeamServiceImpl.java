@@ -542,6 +542,10 @@ public class TeamServiceImpl implements TeamService {
      */
     public CourseDTO updateCourse(String courseId, CourseDTO courseDTO) {
 
+        if (!courseId.equalsIgnoreCase(courseDTO.getId())) {
+            throw new CourseIdNotCorrespondingException(courseDTO.getId(), courseId);
+        }
+
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new CourseNotFoundException(courseId));
 
         /**
@@ -551,18 +555,7 @@ public class TeamServiceImpl implements TeamService {
             throw new CourseEnabledException(courseId);
         }
 
-        List<Course> courses = courseRepository.findAll();
-
-        /**
-         * check if there's already a course with the same id
-         * the check is done only when the new id is not matching the old one
-         */
-        String id = courseDTO.getId();
-        if (!id.toLowerCase().equalsIgnoreCase(courseId.toLowerCase())) {
-            if (courses.stream().anyMatch((c -> c.getId().toLowerCase().equalsIgnoreCase(id.toLowerCase())))) {
-                throw new DuplicateIdException(id);
-            }
-        }
+        List<Course> courses = courseRepository.findAll().stream().filter(c -> !c.getId().equalsIgnoreCase(courseId)).collect(Collectors.toList());
 
 
         /**

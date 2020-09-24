@@ -43,14 +43,15 @@ public class TeamServiceUnitTests {
     @Test
     void updateCourse() {
 
-        String teacherId = courseRepository.getOne("c5").getTeachers().get(0).getId();
+        Course course = courseRepository.getOne("c5");
+        String teacherId = course.getTeachers().get(0).getId();
 
         CourseDTO courseDTO = CourseDTO.builder()
-                .id("c20")
+                .id(course.getId())
                 .enabled(true)
                 .min(1)
                 .max(20)
-                .name("new_name")
+                .name(course.getName())
                 .teacherId(teacherId)
                 .build();
 
@@ -85,22 +86,6 @@ public class TeamServiceUnitTests {
         Assertions.assertEquals(updatedCourse.getName(), courseDTO.getName());
         Assertions.assertEquals(updatedCourse.getEnabled(), courseDTO.getEnabled());
         Assertions.assertFalse(oldName.equalsIgnoreCase(updatedCourse.getName()));
-    }
-
-    @Test
-    void updateCourse_duplicatedId() {
-        Course course = courseRepository.getOne("c5");
-
-        CourseDTO courseDTO = CourseDTO.builder()
-                .id("c0")
-                .enabled(course.isEnabled())
-                .min(course.getMin())
-                .max(course.getMax())
-                .name("new_name")
-                .teacherId(course.getTeachers().get(0).getId())
-                .build();
-
-        Assertions.assertThrows(DuplicateIdException.class, () -> teamService.updateCourse("c5", courseDTO));
     }
 
     @Test
