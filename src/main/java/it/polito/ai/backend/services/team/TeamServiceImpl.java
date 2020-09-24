@@ -595,6 +595,7 @@ public class TeamServiceImpl implements TeamService {
         course.setName(name);
         course.setMin(min);
         course.setMax(max);
+        course.setEnabled(courseDTO.getEnabled());
 
         courseRepository.save(course);
         return courseDTO;
